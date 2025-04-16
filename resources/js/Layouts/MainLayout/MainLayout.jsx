@@ -5,18 +5,22 @@ import Sidebar from './Sidebar';
 import Body from './Body';
 import SidebarContextState from '@/Context/SidebarContextState';
 
-function MainLayout({ children, sideBarData }) {
+function MainLayout({ children, sideBarData = { children: [] } }) {
   return (
     <SidebarContextState>
-      <div className="grid grid-rows-[60px_1fr] grid-cols-[auto_1fr] h-screen">
-        <div className="row-span-1 col-span-2 z-30">
+      <div className="flex flex-col h-screen">
+        <div className="w-full z-30 shadow-md">
           <Navbar />
         </div>
-        <div className="row-span-2 h-full bg-gray-100 overflow-y-scroll border-r hover-scrollbar">
-          <Sidebar sideBarData={sideBarData}/>
-        </div>
-        <div className="row-span-2 col-span-1 h-full overflow-y-scroll hover-scrollbar">
-          <Body children={ children }/>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-shrink-0 h-full bg-white shadow-md border-r border-gray-200 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
+            <Sidebar sideBarData={sideBarData}/>
+          </div>
+          <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <Body children={children}/>
+            </div>
+          </div>
         </div>
       </div>
     </SidebarContextState>

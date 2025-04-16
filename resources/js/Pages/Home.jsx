@@ -1,18 +1,22 @@
-import React from 'react'
+import React from 'react';
 import HomeComponent from '../Components/HomeComponent';
 import BasicLayout from '../Layouts/BasicLayout/BasicLayout';
-import Edit from './Profile/Edit';
+import { Head } from '@inertiajs/react';
 
-export default function Home() {
-  var sideBarData = 'akash';
-  // return (
-  //   <BasicLayout sideBarData={sideBarData}>
-  //     <HomeComponent />
-  //   </BasicLayout>
-  // )
+export default function Home(props) {
+  // Define sideBarData with empty children array for the home page
+  const sideBarData = {
+    children: []
+  };
+  
   return (
-    <div>
-      <Edit />
-    </div>
-  )
+    <BasicLayout>
+      <Head title="Home" />
+      <div className="py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <HomeComponent />
+        </div>
+      </div>
+    </BasicLayout>
+  );
 }

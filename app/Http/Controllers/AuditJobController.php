@@ -165,13 +165,19 @@ class AuditJobController extends Controller
         $job = AuditJob::where('id',  $id)->first();
         $assesmentDocuments = AssesmentDocuments::where('jobId', $id)->get();
         $supportingDocuments = SupportingDocuments::where('jobId', $id)->get();
-        $history = AuditJob::where('id', $id)->where('jobStatus', 'completed')->get();
+        
+        // Get factory history: similar factory jobs with completed status
+        $factoryHistory = [];
+        if ($job && $job->factoryName) {
+            $factoryHistory = AuditJob::where('factoryName', $job->factoryName)
+                ->where('jobStatus', 'completed')
+                ->get();
+        }
 
-        // dd($job->toArray());
         return Inertia::render('ViewJob', [
             'job' => $job,
             'assesmentDocuments' => $assesmentDocuments,
-            'history' => $history,
+            'factoryHistory' => $factoryHistory, // Renamed from 'history' to 'factoryHistory'
             'supportingDocuments' => $supportingDocuments,
             'dontDelete' => null
         ]);

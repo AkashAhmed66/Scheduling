@@ -1,32 +1,29 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 
 export default forwardRef(function TextInput(
-    { type = 'text', className = '', isFocused = false, isReadOnly = false, ...props },
+    { type = 'text', className = '', isFocused = false, ...props },
     ref,
 ) {
-    const localRef = useRef(null);
-
-    useImperativeHandle(ref, () => ({
-        focus: () => localRef.current?.focus(),
-    }));
+    const input = ref ? ref : useRef();
 
     useEffect(() => {
         if (isFocused) {
-            localRef.current?.focus();
+            input.current.focus();
         }
-    }, [isFocused]);
+    }, []);
 
     return (
-        <input
-            {...props}
-            type={type}
-            readOnly={isReadOnly} // Makes input uneditable if true
-            className={
-                `rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ` +
-                (isReadOnly ? 'bg-gray-200 cursor-not-allowed ' : '') + // Style for read-only
-                className
-            }
-            ref={localRef}
-        />
+        <div className="relative">
+            <input
+                {...props}
+                type={type}
+                className={
+                    `w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-800 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition-all duration-200 ${
+                        props.disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''
+                    } ` + className
+                }
+                ref={input}
+            />
+        </div>
     );
 });

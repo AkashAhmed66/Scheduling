@@ -72,12 +72,14 @@ export default function CreateJobComponent() {
     reviewer: ''
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
+  const [formProgress, setFormProgress] = useState(0);
+
   useEffect(() => {
     if(job != null) {setFormData(job);}
   }, [job]);
   
-
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -88,6 +90,7 @@ export default function CreateJobComponent() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     console.log('Form data submitted:', formData);
     
     if(create == 1){
@@ -95,10 +98,12 @@ export default function CreateJobComponent() {
       Inertia.post('/submit-audit-job', formData, {
         onSuccess: (response) => {
           console.log('Data successfully submitted:', response);
+          setIsSubmitting(false);
           // Handle successful submission (e.g., show a success message)
         },
         onError: (errors) => {
           console.error('Error during submission:', errors);
+          setIsSubmitting(false);
           // Handle form validation errors (if any)
         },
       });
@@ -106,50 +111,176 @@ export default function CreateJobComponent() {
       Inertia.post('/submit-audit-job-edit', formData, {
         onSuccess: (response) => {
           console.log('Data successfully submitted:', response);
+          setIsSubmitting(false);
           // Handle successful submission (e.g., show a success message)
         },
         onError: (errors) => {
           console.error('Error during submission:', errors);
+          setIsSubmitting(false);
           // Handle form validation errors (if any)
         },
       });
     }
   };
 
+  const tabs = [
+    { id: 'basic', label: 'Basic Information', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { id: 'staff', label: 'Staff Role', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    { id: 'contacts', label: 'Contacts', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+    { id: 'additional', label: 'Additional Info', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
+    { id: 'auditor', label: 'Auditor & Reviewer', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+  ];
+
+  // Calculate progress based on active tab
+  useEffect(() => {
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const progressPercentage = (currentIndex / (tabs.length - 1)) * 100;
+    setFormProgress(progressPercentage);
+  }, [activeTab]);
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Create/Update Job</h1>
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-indigo-100">
+          {/* Header with improved gradient */}
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-8 text-white relative">
+            {/* Abstract shapes for visual interest */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-5 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+            
+            <h1 className="text-3xl font-bold relative z-10">{create == 1 ? 'Create New Job' : 'Update Job'}</h1>
+            <p className="mt-2 text-indigo-100 relative z-10 max-w-2xl">Fill out the form below to {create == 1 ? 'create a new job' : 'update the job'}. Navigate through different sections using the tabs below.</p>
+            
+            {/* Progress bar */}
+            <div className="mt-6 bg-white bg-opacity-20 h-2 rounded-full relative z-10 overflow-hidden">
+              <div 
+                className="bg-white h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${formProgress}%` }}
+              ></div>
+            </div>
+          </div>
 
-      <form onSubmit={handleSubmit}>
-        {/* Basic Information Section */}
-        <BasicInformationSection formData={formData} handleChange={handleChange} />
+          {/* Tab Navigation - Redesigned */}
+          <div className="border-b border-gray-200 bg-gray-50">
+            <div className="flex overflow-x-auto gap-1 px-4">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center py-4 px-6 font-medium text-sm whitespace-nowrap transition-all duration-200 rounded-t-lg mt-2 ${
+                    activeTab === tab.id
+                      ? 'bg-white border-t border-l border-r border-gray-200 text-indigo-600 shadow-sm'
+                      : 'text-gray-600 hover:text-indigo-500 hover:bg-white hover:bg-opacity-50'
+                  }`}
+                >
+                  <div className={`flex items-center justify-center mr-3 h-7 w-7 rounded-full ${
+                    activeTab === tab.id 
+                      ? 'bg-indigo-100 text-indigo-600' 
+                      : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {index + 1}
+                  </div>
+                  <div className="flex items-center">
+                    <svg 
+                      className={`mr-2 h-5 w-5 ${activeTab === tab.id ? 'text-indigo-500' : 'text-gray-400'}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24" 
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon}></path>
+                    </svg>
+                    {tab.label}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* Staff Role Section */}
-        <StaffRoleSection formData={formData} handleChange={handleChange} />
+          <form onSubmit={handleSubmit} className="p-8">
+            <div className={activeTab === 'basic' ? 'block' : 'hidden'}>
+              <BasicInformationSection formData={formData} handleChange={handleChange} />
+            </div>
 
-        {/* Contacts Section */}
-        <ContactsSection formData={formData} handleChange={handleChange} />
+            <div className={activeTab === 'staff' ? 'block' : 'hidden'}>
+              <StaffRoleSection formData={formData} handleChange={handleChange} />
+            </div>
 
-        {/* Additional Information Section */}
-        <AdditionalInformationSection formData={formData} handleChange={handleChange} />
+            <div className={activeTab === 'contacts' ? 'block' : 'hidden'}>
+              <ContactsSection formData={formData} handleChange={handleChange} />
+            </div>
 
-        {/* Auditor and reviewer Section */}
-        <AddAuditorReviewer formData={formData} handleChange={handleChange} />
+            <div className={activeTab === 'additional' ? 'block' : 'hidden'}>
+              <AdditionalInformationSection formData={formData} handleChange={handleChange} />
+            </div>
 
-        {/* Assessment Document Section */}
-        {/* <div className="mt-6">
-          <FilesForJob />
-        </div> */}
+            <div className={activeTab === 'auditor' ? 'block' : 'hidden'}>
+              <AddAuditorReviewer formData={formData} handleChange={handleChange} />
+            </div>
 
-        <div className="mt-4">
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Submit
-          </button>
+            <div className="mt-8 pt-5 border-t border-gray-200 flex justify-between">
+              <div>
+                {activeTab !== 'basic' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+                      setActiveTab(tabs[currentIndex - 1].id);
+                    }}
+                    className="inline-flex items-center px-5 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <svg className="mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Previous
+                  </button>
+                )}
+              </div>
+              
+              <div>
+                {activeTab !== tabs[tabs.length - 1].id ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+                      setActiveTab(tabs[currentIndex + 1].id);
+                    }}
+                    className="inline-flex items-center px-5 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Next
+                    <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Submit Job
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

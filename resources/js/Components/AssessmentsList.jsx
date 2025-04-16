@@ -35,69 +35,103 @@ export default function AssessmentsList() {
     };
 
     return (
-        <div className="overflow-x-auto p-4">
-            <h1 className="text-xl font-bold mb-4">Assessments</h1>
+        <div className="p-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+                        <h2 className="text-2xl font-bold">Assessments</h2>
+                        <p className="mt-1 text-indigo-100">View and manage audit assessments</p>
+                    </div>
+                    
+                    <div className="p-6">
+                        {/* Search Bar */}
+                        <div className="relative mb-6">
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search by type or search ID..."
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
 
-            {/* Search Bar */}
-            <input
-                type="text"
-                placeholder="Search by type or search ID..."
-                className="mb-4 p-2 border rounded w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+                        {/* Table */}
+                        <div className="overflow-x-auto shadow-md rounded-lg">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Search ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Created At</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Updated At</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {currentItems.length > 0 ? (
+                                        currentItems.map((assessment) => (
+                                            <tr 
+                                                key={assessment.id} 
+                                                className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                                                onClick={() => onRowClick(assessment)}
+                                            >
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">{assessment.id}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{assessment.type}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{assessment.searchId}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(assessment.created_at).toLocaleString()}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(assessment.updated_at).toLocaleString()}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                                                <div className="py-8">
+                                                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                                    </svg>
+                                                    <h3 className="mt-2 text-sm font-medium text-gray-900">No assessments found</h3>
+                                                    <p className="mt-1 text-sm text-gray-500">There are no assessments matching your search criteria.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-            {/* Table */}
-            <table className="min-w-full bg-white border border-gray-300 shadow-md rounded-lg">
-                <thead>
-                    <tr className="bg-gray-100">
-                        <th className="px-4 py-2 border">ID</th>
-                        <th className="px-4 py-2 border">Type</th>
-                        <th className="px-4 py-2 border">Search ID</th>
-                        <th className="px-4 py-2 border">Created At</th>
-                        <th className="px-4 py-2 border">Updated At</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {currentItems.length > 0 ? (
-                        currentItems.map((assessment) => (
-                            <tr 
-                                key={assessment.id} 
-                                className="hover:bg-gray-200 cursor-pointer"
-                                onClick={() => onRowClick(assessment)}
+                        {/* Pagination Controls */}
+                        <div className="flex justify-center items-center mt-6">
+                            <button 
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => goToPage(currentPage - 1)}
+                                disabled={currentPage === 1}
                             >
-                                <td className="px-4 py-2 border text-blue-600 underline">{assessment.id}</td>
-                                <td className="px-4 py-2 border">{assessment.type}</td>
-                                <td className="px-4 py-2 border">{assessment.searchId}</td>
-                                <td className="px-4 py-2 border">{new Date(assessment.created_at).toLocaleString()}</td>
-                                <td className="px-4 py-2 border">{new Date(assessment.updated_at).toLocaleString()}</td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="5" className="text-center py-4">No assessments available</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-
-            {/* Pagination Controls */}
-            <div className="flex justify-center items-center mt-4">
-                <button 
-                    className="px-3 py-1 mx-1 border rounded bg-gray-200 hover:bg-gray-300"
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                >
-                    Prev
-                </button>
-                <span className="px-4">{currentPage} of {totalPages}</span>
-                <button 
-                    className="px-3 py-1 mx-1 border rounded bg-gray-200 hover:bg-gray-300"
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                >
-                    Next
-                </button>
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Previous
+                            </button>
+                            <span className="px-4 py-2 mx-2 text-sm text-gray-700">
+                                Page {currentPage} of {totalPages || 1}
+                            </span>
+                            <button 
+                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => goToPage(currentPage + 1)}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                            >
+                                Next
+                                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

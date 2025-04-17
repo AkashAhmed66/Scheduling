@@ -152,14 +152,14 @@ export default function Login({ status, canResetPassword }) {
                     </PrimaryButton>
                 </div>
 
-                <div className="text-center mt-6">
+                {/* <div className="text-center mt-6">
                     <p className="text-sm text-gray-600">
                         Need an auditor account?{' '}
                         <Link href={route('register')} className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
                             Register now
                         </Link>
                     </p>
-                </div>
+                </div> */}
             </form>
         </GuestLayout>
     );

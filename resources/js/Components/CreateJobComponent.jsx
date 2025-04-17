@@ -67,14 +67,22 @@ export default function CreateJobComponent() {
     auditors: '',
     reportReview: '',
 
-    //auditors and reviewers
+    // Auditor and Reviewer selections
     auditor: '',
-    reviewer: ''
+    reviewer: '',
+    
+    // Error states
+    jobTypeError: false,
+    reportNoError: false,
+    requestTypeError: false,
+    auditorError: false,
+    reviewerError: false
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [formProgress, setFormProgress] = useState(0);
+  const [validationMessage, setValidationMessage] = useState(null);
 
   useEffect(() => {
     if(job != null) {setFormData(job);}
@@ -82,14 +90,104 @@ export default function CreateJobComponent() {
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    
+    setFormData((prev) => {
+      const updatedData = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      };
+      
+      // Clear validation errors when fields are filled
+      if (name === 'jobType' && value) {
+        updatedData.jobTypeError = false;
+      }
+      if (name === 'reportNo' && value) {
+        updatedData.reportNoError = false;
+      }
+      if (name === 'requestType' && value) {
+        updatedData.requestTypeError = false;
+      }
+      if (name === 'auditor' && value) {
+        updatedData.auditorError = false;
+      }
+      if (name === 'reviewer' && value) {
+        updatedData.reviewerError = false;
+      }
+      
+      return updatedData;
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Check if we're on the last tab before submitting
+    if (activeTab !== tabs[tabs.length - 1].id) {
+      // If not on the last tab, move to the tab with the Basic Information section
+      setActiveTab('basic');
+      return;
+    }
+    
+    let hasErrors = false;
+    const newFormData = {...formData};
+    
+    // Check if required fields are filled in Basic Information section
+    if (!formData.jobType || !formData.reportNo || !formData.requestType) {
+      // Switch to basic tab if required fields are empty
+      setActiveTab('basic');
+      
+      // Add validation feedback
+      if (!formData.jobType) {
+        newFormData.jobTypeError = true;
+        hasErrors = true;
+      }
+      if (!formData.reportNo) {
+        newFormData.reportNoError = true;
+        hasErrors = true;
+      }
+      if (!formData.requestType) {
+        newFormData.requestTypeError = true;
+        hasErrors = true;
+      }
+    }
+    
+    // Check if required fields are filled in Auditor & Reviewer section
+    if (!formData.auditor || !formData.reviewer) {
+      // If basic info is valid but auditor/reviewer is not, switch to auditor tab
+      if (!hasErrors) {
+        setActiveTab('auditor');
+      }
+      
+      // Add validation feedback
+      if (!formData.auditor) {
+        newFormData.auditorError = true;
+        hasErrors = true;
+      }
+      if (!formData.reviewer) {
+        newFormData.reviewerError = true;
+        hasErrors = true;
+      }
+    }
+    
+    // If there are errors, update form data and show message
+    if (hasErrors) {
+      setFormData(newFormData);
+      
+      // Show validation message
+      setValidationMessage("Please fill in all required fields before submitting");
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        setValidationMessage(null);
+      }, 5000);
+      
+      // Prevent form submission
+      return;
+    }
+    
+    // Clear any previous validation messages
+    setValidationMessage(null);
+    
     setIsSubmitting(true);
     console.log('Form data submitted:', formData);
     
@@ -158,6 +256,18 @@ export default function CreateJobComponent() {
                 style={{ width: `${formProgress}%` }}
               ></div>
             </div>
+            
+            {/* Validation message */}
+            {validationMessage && (
+              <div className="mt-4 p-3 bg-red-600 bg-opacity-80 rounded-lg text-white text-sm relative z-10">
+                <div className="flex items-center">
+                  <svg className="h-5 w-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  {validationMessage}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tab Navigation - Redesigned */}
@@ -197,7 +307,7 @@ export default function CreateJobComponent() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8">
+          <form onSubmit={handleSubmit} className="p-8" noValidate>
             <div className={activeTab === 'basic' ? 'block' : 'hidden'}>
               <BasicInformationSection formData={formData} handleChange={handleChange} />
             </div>

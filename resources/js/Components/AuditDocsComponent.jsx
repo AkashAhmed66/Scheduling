@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import { Inertia } from '@inertiajs/inertia';
-import { AuditContext } from '@/Context/AuditContext';
+// import { AuditContext } from '@/Context/AuditContext';
 
 export default function AuditDocsComponent() {
-  const { state } = useContext(AuditContext);
+  // const { state } = useContext(AuditContext);
 
   const extractDocuments = () => {
     if (!state || !state.audit || !state.audit.documents) {

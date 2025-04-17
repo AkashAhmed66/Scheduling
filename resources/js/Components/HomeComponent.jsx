@@ -26,7 +26,10 @@ export default function Profile() {
         <div className="lg:col-span-4">
           <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100">
             {/* Cover Photo & Profile Section */}
-            <div className="h-32 bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700"></div>
+            
+            <div className="h-32 bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 flex justify-center items-center">
+              <h1 className="text-3xl font-bold text-white mb-2"> {user.name} </h1>              
+            </div>
             <div className="relative px-6 pb-6">
               <div className="absolute -top-16 w-full left-0 flex justify-center">
                 <div className="relative">

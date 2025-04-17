@@ -27,15 +27,18 @@ export default function BasicInformationSection({ formData, handleChange }) {
                 name="jobType"
                 value={formData.jobType}
                 onChange={handleChange}
-                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className={`w-full p-3 pl-10 border ${formData.jobTypeError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
                 placeholder="Enter job type"
                 required
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`h-5 w-5 ${formData.jobTypeError ? 'text-red-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
               </div>
+              {formData.jobTypeError && (
+                <div className="text-red-500 text-xs mt-1">Job Type is required</div>
+              )}
             </div>
           </div>
           
@@ -50,15 +53,18 @@ export default function BasicInformationSection({ formData, handleChange }) {
                 name="reportNo"
                 value={formData.reportNo}
                 onChange={handleChange}
-                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className={`w-full p-3 pl-10 border ${formData.reportNoError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
                 placeholder="Enter report number"
                 required
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`h-5 w-5 ${formData.reportNoError ? 'text-red-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
               </div>
+              {formData.reportNoError && (
+                <div className="text-red-500 text-xs mt-1">Report No. is required</div>
+              )}
             </div>
           </div>
           
@@ -72,7 +78,7 @@ export default function BasicInformationSection({ formData, handleChange }) {
                 name="requestType"
                 value={formData.requestType}
                 onChange={handleChange}
-                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                className={`w-full p-3 pl-10 border ${formData.requestTypeError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white`}
                 required
               >
                 <option value="">Select Request Type</option>
@@ -81,7 +87,7 @@ export default function BasicInformationSection({ formData, handleChange }) {
                 <option value="Special">Special</option>
               </select>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`h-5 w-5 ${formData.requestTypeError ? 'text-red-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
               </div>
@@ -90,6 +96,9 @@ export default function BasicInformationSection({ formData, handleChange }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </div>
+              {formData.requestTypeError && (
+                <div className="text-red-500 text-xs mt-1">Request Type is required</div>
+              )}
             </div>
           </div>
         </div>

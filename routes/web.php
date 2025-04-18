@@ -63,4 +63,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Audit Documents Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/audit-docs', [App\Http\Controllers\AuditDocumentsController::class, 'index'])->name('audit-docs.index');
+    
+    // API routes for folders
+    Route::get('/api/audit-docs/folders/{folderId?}', [App\Http\Controllers\AuditDocumentsController::class, 'getFolderContents']);
+    Route::post('/api/audit-docs/folders', [App\Http\Controllers\AuditDocumentsController::class, 'createFolder']);
+    Route::put('/api/audit-docs/folders/{id}', [App\Http\Controllers\AuditDocumentsController::class, 'renameFolder']);
+    Route::delete('/api/audit-docs/folders/{id}', [App\Http\Controllers\AuditDocumentsController::class, 'deleteFolder']);
+    Route::get('/api/audit-docs/folders/{id}/download', [App\Http\Controllers\AuditDocumentsController::class, 'downloadFolder']);
+    
+    // API routes for files
+    Route::post('/api/audit-docs/files', [App\Http\Controllers\AuditDocumentsController::class, 'uploadFiles']);
+    Route::put('/api/audit-docs/files/{id}', [App\Http\Controllers\AuditDocumentsController::class, 'renameFile']);
+    Route::delete('/api/audit-docs/files', [App\Http\Controllers\AuditDocumentsController::class, 'deleteFiles']);
+    Route::get('/api/audit-docs/files/{id}/download', [App\Http\Controllers\AuditDocumentsController::class, 'downloadFile']);
+    Route::post('/api/audit-docs/files/download', [App\Http\Controllers\AuditDocumentsController::class, 'downloadFiles']);
+});
+
 require __DIR__.'/auth.php';

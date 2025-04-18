@@ -62,7 +62,7 @@ export default function Navbar() {
                 alt="logo"
                 className="w-8 h-8 transition-transform duration-300 hover:scale-110"
               />
-              <span className="ml-2 text-xl font-bold text-white hidden sm:block">Audit System</span>
+              <span className="ml-4 text-xl font-bold text-white hidden sm:block">InsighT</span>
             </Link>
           </div>
 
@@ -80,6 +80,9 @@ export default function Navbar() {
               </NavLink>
               <NavLink href="/jobs" active={isActive('/jobs')}>
                 Jobs
+              </NavLink>
+              <NavLink href="/audit-docs" active={isActive('/audit-docs')}>
+                Audit Docs
               </NavLink>
 
               {/* Activate User Dropdown */}

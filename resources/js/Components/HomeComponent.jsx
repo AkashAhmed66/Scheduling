@@ -43,7 +43,7 @@ export default function Profile() {
               </div>
               
               <div className="mt-16 text-center">
-                <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-800">10</h2>
                 <p className="text-indigo-600 font-medium">{user.role || 'System User'}</p>
                 
                 <div className="mt-6 flex flex-wrap justify-center gap-2">

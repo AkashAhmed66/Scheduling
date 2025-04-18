@@ -237,53 +237,6 @@ export default function Index({ rootFolders, canManage }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800">
-                  Audit Documents
-                </h2>
-                
-                {canManage && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setShowNewFolderDialog(true)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150"
-                    >
-                      New Folder
-                    </button>
-                    
-                    <label className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150 cursor-pointer">
-                      Upload Files
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleFileUpload}
-                        disabled={isUploading}
-                      />
-                    </label>
-                    
-                    {selectedFiles.length > 0 && (
-                      <>
-                        <button
-                          onClick={downloadMultipleFiles}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150"
-                        >
-                          Download Selected
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteFiles(selectedFiles)}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150"
-                        >
-                          Delete Selected
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-              
               {/* Upload Progress Indicator */}
               {isUploading && (
                 <div className="mb-4 bg-indigo-50 p-4 rounded-md">
@@ -331,42 +284,6 @@ export default function Index({ rootFolders, canManage }) {
                   </React.Fragment>
                 ))}
               </div>
-              
-              {/* Quick Upload Area */}
-              {canManage && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-700 mb-3">Quick Upload</h3>
-                  <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
-                    <button
-                      onClick={() => setShowNewFolderDialog(true)}
-                      className="flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      <svg className="w-5 h-5 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                        <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-                      </svg>
-                      Create New Folder
-                    </button>
-                    
-                    <div className="flex-1">
-                      <label className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
-                        <svg className="w-5 h-5 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                        Upload Files to {currentFolder ? `"${currentFolder.name}"` : "Root"}
-                        <input
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={handleFileUpload}
-                          disabled={isUploading}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {loading ? (
                 <div className="flex justify-center my-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

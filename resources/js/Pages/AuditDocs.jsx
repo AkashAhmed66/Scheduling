@@ -1,27 +1,23 @@
 import React from 'react'
 import MainLayout from '../Layouts/MainLayout/MainLayout'
-import AuditDocsComponent from '../Components/AuditDocsComponent'
+import { Head } from '@inertiajs/react'
+import AuditDocsIndex from './AuditDocs/Index'
 
-export default function AuditDocs() {
+export default function AuditDocs({ rootFolders, canManage }) {
+  // Use actual root folders data from the backend
   const sideBarData = {
-      children:[
-      {
-        id: 1,
-        name: 'Folder 1',
-        type: 'folder',
-        children: [
-          { id: 2, name: 'Document 1', type: 'document' },
-          { id: 3, name: 'Folder 1.1', type: 'folder', children: [
-            { id: 4, name: 'Document 2', type: 'document' },
-          ] },
-        ],
-      },
-      { id: 5, name: 'Document 3', type: 'document' },
-    ]
+    children: Array.isArray(rootFolders) 
+      ? rootFolders.map(folder => ({
+          ...folder,
+          type: 'folder'
+        }))
+      : []
   };
+  
   return (
     <MainLayout sideBarData={sideBarData}>
-        <AuditDocsComponent />
+      <Head title="Audit Documents" />
+      <AuditDocsIndex rootFolders={rootFolders} canManage={canManage} />
     </MainLayout>
   )
 }

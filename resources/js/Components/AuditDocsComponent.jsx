@@ -6,10 +6,8 @@ export default function AuditDocsComponent() {
   // const { state } = useContext(AuditContext);
 
   const extractDocuments = () => {
-    if (!state || !state.audit || !state.audit.documents) {
-      return [];
-    }
-    return state.audit.documents;
+    // Return empty array since we're not using context in this component
+    return [];
   };
 
   const handleDownload = (documentId, fileName) => {

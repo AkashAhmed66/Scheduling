@@ -1,6 +1,9 @@
 import React, { createContext } from 'react';
 
-const SidebarContext = createContext();
+// Create a context with a default value structure
+const SidebarContext = createContext({
+  state: null,
+  update: () => {}
+});
 
-export default SidebarContext;
-
+export default SidebarContext; 

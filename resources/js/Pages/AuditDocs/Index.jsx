@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import MainLayout from '@/Layouts/MainLayout/MainLayout';
 import { Inertia } from '@inertiajs/inertia';
 import axios from 'axios';
+import SidebarContext from '@/Context/SideBarContext';
 
 export default function Index({ rootFolders, canManage }) {
   const { csrf_token } = usePage().props;
+  
+  // Add a safe check for context and destructure only if available
+  const sidebarContextValue = useContext(SidebarContext);
+  const selectedSidebarFolder = sidebarContextValue ? sidebarContextValue.state : null;
+  
   const [currentFolder, setCurrentFolder] = useState(null);
   const [folders, setFolders] = useState([]);
   const [files, setFiles] = useState([]);
@@ -31,6 +37,13 @@ export default function Index({ rootFolders, canManage }) {
     setFolders(rootFolders || []);
   }, [rootFolders]);
 
+  // Watch for changes to the selected folder in sidebar
+  useEffect(() => {
+    if (selectedSidebarFolder && selectedSidebarFolder.id) {
+      loadFolder(selectedSidebarFolder.id);
+    }
+  }, [selectedSidebarFolder]);
+
   const loadFolder = async (folderId = null) => {
     setLoading(true);
     try {
@@ -41,6 +54,11 @@ export default function Index({ rootFolders, canManage }) {
       setFolders(data.children);
       setFiles(data.files);
       setFolderPath(data.path || []);
+      
+      // Update the sidebar context if we have a sidebarContextValue
+      if (sidebarContextValue && sidebarContextValue.setSelectedFolder) {
+        sidebarContextValue.setSelectedFolder(folderId);
+      }
     } catch (error) {
       console.error("Error loading folder:", error);
     } finally {

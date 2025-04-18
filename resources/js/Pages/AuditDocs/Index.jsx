@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Head, usePage } from '@inertiajs/react';
 import MainLayout from '@/Layouts/MainLayout/MainLayout';
 import { Inertia } from '@inertiajs/inertia';
+import axios from 'axios';
 
 export default function Index({ rootFolders, canManage }) {
+  const { csrf_token } = usePage().props;
   const [currentFolder, setCurrentFolder] = useState(null);
   const [folders, setFolders] = useState([]);
   const [files, setFiles] = useState([]);
@@ -13,11 +15,17 @@ export default function Index({ rootFolders, canManage }) {
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
   const [showRenameFolderDialog, setShowRenameFolderDialog] = useState(false);
   const [folderToRename, setFolderToRename] = useState(null);
   const [newName, setNewName] = useState('');
   const [showRenameFileDialog, setShowRenameFileDialog] = useState(false);
   const [fileToRename, setFileToRename] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Set up Axios defaults to include CSRF token
+  axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
 
   useEffect(() => {
     setFolders(rootFolders || []);
@@ -26,8 +34,8 @@ export default function Index({ rootFolders, canManage }) {
   const loadFolder = async (folderId = null) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/audit-docs/folders/${folderId || ''}`);
-      const data = await response.json();
+      const response = await axios.get(`/api/audit-docs/folders/${folderId || ''}`);
+      const data = response.data;
       
       setCurrentFolder(data.folder);
       setFolders(data.children);
@@ -44,26 +52,20 @@ export default function Index({ rootFolders, canManage }) {
     if (!newFolderName) return;
     
     try {
-      const response = await fetch('/api/audit-docs/folders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-          name: newFolderName,
-          parent_id: currentFolder?.id || null
-        })
+      const response = await axios.post('/api/audit-docs/folders', {
+        name: newFolderName,
+        parent_id: currentFolder?.id || null
       });
       
-      if (response.ok) {
-        const newFolder = await response.json();
+      if (response.status === 201) {
+        const newFolder = response.data;
         setFolders([...folders, newFolder]);
         setNewFolderName('');
         setShowNewFolderDialog(false);
       }
     } catch (error) {
       console.error("Error creating folder:", error);
+      setUploadError(error.response?.data?.message || "Failed to create folder");
     }
   };
 
@@ -71,33 +73,42 @@ export default function Index({ rootFolders, canManage }) {
     const files = event.target.files;
     if (!files.length) return;
     
+    // Reset states
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+    
     const formData = new FormData();
     formData.append('folder_id', currentFolder?.id || folders[0]?.id);
     
+    // Add all files to the FormData
     for (let i = 0; i < files.length; i++) {
       formData.append('files[]', files[i]);
     }
     
     try {
-      const response = await fetch('/api/audit-docs/files', {
-        method: 'POST',
+      const response = await axios.post('/api/audit-docs/files', formData, {
         headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          'Content-Type': 'multipart/form-data',
         },
-        body: formData
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       });
       
-      if (response.ok) {
-        const newFiles = await response.json();
-        setFiles(prevFiles => [...prevFiles, ...newFiles]);
+      // Update the files state with the newly uploaded files
+      setFiles(prevFiles => [...prevFiles, ...response.data]);
+      
+      // Reset the file input
+      if (event.target) {
+        event.target.value = null;
       }
     } catch (error) {
       console.error("Error uploading files:", error);
+      setUploadError(error.response?.data?.message || "Failed to upload files. Please try again.");
     } finally {
       setIsUploading(false);
-      // Reset the file input
-      event.target.value = null;
     }
   };
 
@@ -105,26 +116,20 @@ export default function Index({ rootFolders, canManage }) {
     if (!folderToRename || !newName) return;
     
     try {
-      const response = await fetch(`/api/audit-docs/folders/${folderToRename.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ name: newName })
+      const response = await axios.put(`/api/audit-docs/folders/${folderToRename.id}`, {
+        name: newName
       });
       
-      if (response.ok) {
-        const updatedFolder = await response.json();
-        setFolders(folders.map(folder => 
-          folder.id === updatedFolder.id ? updatedFolder : folder
-        ));
-        setShowRenameFolderDialog(false);
-        setFolderToRename(null);
-        setNewName('');
-      }
+      const updatedFolder = response.data;
+      setFolders(folders.map(folder => 
+        folder.id === updatedFolder.id ? updatedFolder : folder
+      ));
+      setShowRenameFolderDialog(false);
+      setFolderToRename(null);
+      setNewName('');
     } catch (error) {
       console.error("Error renaming folder:", error);
+      setUploadError(error.response?.data?.message || "Failed to rename folder");
     }
   };
 
@@ -132,26 +137,20 @@ export default function Index({ rootFolders, canManage }) {
     if (!fileToRename || !newName) return;
     
     try {
-      const response = await fetch(`/api/audit-docs/files/${fileToRename.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ name: newName })
+      const response = await axios.put(`/api/audit-docs/files/${fileToRename.id}`, {
+        name: newName
       });
       
-      if (response.ok) {
-        const updatedFile = await response.json();
-        setFiles(files.map(file => 
-          file.id === updatedFile.id ? updatedFile : file
-        ));
-        setShowRenameFileDialog(false);
-        setFileToRename(null);
-        setNewName('');
-      }
+      const updatedFile = response.data;
+      setFiles(files.map(file => 
+        file.id === updatedFile.id ? updatedFile : file
+      ));
+      setShowRenameFileDialog(false);
+      setFileToRename(null);
+      setNewName('');
     } catch (error) {
       console.error("Error renaming file:", error);
+      setUploadError(error.response?.data?.message || "Failed to rename file");
     }
   };
 
@@ -159,18 +158,12 @@ export default function Index({ rootFolders, canManage }) {
     if (!confirm('Are you sure you want to delete this folder and all its contents?')) return;
     
     try {
-      const response = await fetch(`/api/audit-docs/folders/${folderId}`, {
-        method: 'DELETE',
-        headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-      });
+      await axios.delete(`/api/audit-docs/folders/${folderId}`);
       
-      if (response.ok) {
-        setFolders(folders.filter(folder => folder.id !== folderId));
-      }
+      setFolders(folders.filter(folder => folder.id !== folderId));
     } catch (error) {
       console.error("Error deleting folder:", error);
+      setUploadError(error.response?.data?.message || "Failed to delete folder");
     }
   };
 
@@ -178,21 +171,15 @@ export default function Index({ rootFolders, canManage }) {
     if (!confirm('Are you sure you want to delete the selected file(s)?')) return;
     
     try {
-      const response = await fetch('/api/audit-docs/files', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ file_ids: Array.isArray(fileIds) ? fileIds : [fileIds] })
+      await axios.delete('/api/audit-docs/files', {
+        data: { file_ids: Array.isArray(fileIds) ? fileIds : [fileIds] }
       });
       
-      if (response.ok) {
-        setFiles(files.filter(file => !fileIds.includes(file.id)));
-        setSelectedFiles([]);
-      }
+      setFiles(files.filter(file => !fileIds.includes(file.id)));
+      setSelectedFiles([]);
     } catch (error) {
       console.error("Error deleting files:", error);
+      setUploadError(error.response?.data?.message || "Failed to delete files");
     }
   };
 
@@ -200,21 +187,26 @@ export default function Index({ rootFolders, canManage }) {
     window.location.href = `/api/audit-docs/files/${fileId}/download`;
   };
 
-  const downloadMultipleFiles = async () => {
+  const downloadFolder = (folderId) => {
+    window.location.href = `/api/audit-docs/folders/${folderId}/download`;
+  };
+
+  const downloadMultipleFiles = () => {
     if (!selectedFiles.length) return;
     
+    // Create a form to post the download request
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '/api/audit-docs/files/download';
     
     // Add CSRF token
-    const csrfToken = document.createElement('input');
-    csrfToken.type = 'hidden';
-    csrfToken.name = '_token';
-    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    form.appendChild(csrfToken);
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = csrf_token;
+    form.appendChild(csrfInput);
     
-    // Add file IDs
+    // Add selected file IDs
     selectedFiles.forEach(fileId => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -223,6 +215,7 @@ export default function Index({ rootFolders, canManage }) {
       form.appendChild(input);
     });
     
+    // Append form to body, submit it, and then remove it
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
@@ -261,6 +254,7 @@ export default function Index({ rootFolders, canManage }) {
                     <label className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150 cursor-pointer">
                       Upload Files
                       <input
+                        ref={fileInputRef}
                         type="file"
                         multiple
                         className="hidden"
@@ -290,6 +284,30 @@ export default function Index({ rootFolders, canManage }) {
                 )}
               </div>
               
+              {/* Upload Progress Indicator */}
+              {isUploading && (
+                <div className="mb-4 bg-indigo-50 p-4 rounded-md">
+                  <div className="mb-1 flex justify-between">
+                    <span className="text-sm font-medium text-indigo-700">Uploading files...</span>
+                    <span className="text-sm font-medium text-indigo-700">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                </div>
+              )}
+              
+              {uploadError && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{uploadError}</span>
+                  </div>
+                </div>
+              )}
+              
               {/* Breadcrumbs */}
               <div className="flex items-center space-x-2 mb-4 overflow-x-auto whitespace-nowrap py-2">
                 <button
@@ -313,6 +331,41 @@ export default function Index({ rootFolders, canManage }) {
                   </React.Fragment>
                 ))}
               </div>
+              
+              {/* Quick Upload Area */}
+              {canManage && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-700 mb-3">Quick Upload</h3>
+                  <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+                    <button
+                      onClick={() => setShowNewFolderDialog(true)}
+                      className="flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      <svg className="w-5 h-5 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                        <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                      </svg>
+                      Create New Folder
+                    </button>
+                    
+                    <div className="flex-1">
+                      <label className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                        <svg className="w-5 h-5 mr-2 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Upload Files to {currentFolder ? `"${currentFolder.name}"` : "Root"}
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={handleFileUpload}
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {loading ? (
                 <div className="flex justify-center my-12">
@@ -338,36 +391,48 @@ export default function Index({ rootFolders, canManage }) {
                                 <span className="ml-2 font-medium text-gray-800 truncate">{folder.name}</span>
                               </div>
                               
-                              {canManage && (
-                                <div className="relative group">
-                                  <button className="text-gray-500 hover:text-gray-700">
-                                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                    </svg>
-                                  </button>
-                                  
-                                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 invisible group-hover:visible">
-                                    <div className="py-1">
-                                      <button
-                                        onClick={() => {
-                                          setFolderToRename(folder);
-                                          setNewName(folder.name);
-                                          setShowRenameFolderDialog(true);
-                                        }}
-                                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                      >
-                                        Rename
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteFolder(folder.id)}
-                                        className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                      >
-                                        Delete
-                                      </button>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => downloadFolder(folder.id)}
+                                  className="text-blue-600 hover:text-blue-900 p-1"
+                                  title="Download folder"
+                                >
+                                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                  </svg>
+                                </button>
+                                
+                                {canManage && (
+                                  <div className="relative group">
+                                    <button className="text-gray-500 hover:text-gray-700">
+                                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                      </svg>
+                                    </button>
+                                    
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 invisible group-hover:visible">
+                                      <div className="py-1">
+                                        <button
+                                          onClick={() => {
+                                            setFolderToRename(folder);
+                                            setNewName(folder.name);
+                                            setShowRenameFolderDialog(true);
+                                          }}
+                                          className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        >
+                                          Rename
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteFolder(folder.id)}
+                                          className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -488,8 +553,14 @@ export default function Index({ rootFolders, canManage }) {
                             : "Upload files to this folder"}
                         </p>
                         {canManage && (
-                          <div className="mt-6">
-                            <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                          <div className="mt-6 space-x-3">
+                            <button
+                              onClick={() => setShowNewFolderDialog(true)}
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                              New Folder
+                            </button>
+                            <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
                               Upload Files
                               <input
                                 type="file"
@@ -522,6 +593,7 @@ export default function Index({ rootFolders, canManage }) {
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              autoFocus
             />
             <div className="mt-4 flex justify-end space-x-2">
               <button
@@ -533,6 +605,7 @@ export default function Index({ rootFolders, canManage }) {
               <button
                 onClick={handleCreateFolder}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                disabled={!newFolderName.trim()}
               >
                 Create
               </button>

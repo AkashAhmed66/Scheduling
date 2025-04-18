@@ -13,11 +13,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Create a test user if it doesn't exist yet
+        if (User::where('email', 'test@example.com')->count() === 0) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]);
+        }
+        
+        // Run other seeders
+        $this->call([
+            UserRoleSeeder::class,
+            AuditDocumentSeeder::class,
         ]);
     }
 }

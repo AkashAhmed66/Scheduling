@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -43,7 +44,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => 'integer',
         ];
+    }
+
+    /**
+     * Check if user can manage audit documents
+     */
+    public function canManageAuditDocs()
+    {
+        return in_array($this->role, [0, 1]);
+    }
+    
+    /**
+     * Get folders created by this user
+     */
+    public function auditFolders()
+    {
+        return $this->hasMany(AuditFolder::class);
+    }
+    
+    /**
+     * Get files uploaded by this user
+     */
+    public function auditFiles()
+    {
+        return $this->hasMany(AuditFile::class);
     }
 
     public function auditJobForReviwers()

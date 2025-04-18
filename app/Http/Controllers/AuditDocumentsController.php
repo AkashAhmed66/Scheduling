@@ -13,6 +13,14 @@ use ZipArchive;
 
 class AuditDocumentsController extends Controller
 {
+    public function __construct()
+    {
+        // Ensure the audit-docs directory exists
+        if (!Storage::disk('public')->exists('audit-docs')) {
+            Storage::disk('public')->makeDirectory('audit-docs');
+        }
+    }
+    
     /**
      * Display the audit documents page
      */

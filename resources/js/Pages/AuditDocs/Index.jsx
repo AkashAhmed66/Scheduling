@@ -69,50 +69,52 @@ export default function Index({ rootFolders, canManage }) {
     }
   };
 
-  const toggleFolder = async (folderId) => {
-    const newExpandedFolders = new Set(expandedFolders);
-    if (expandedFolders.has(folderId)) {
-      newExpandedFolders.delete(folderId);
-      setExpandedFolders(newExpandedFolders);
-    } else {
-      try {
-        const response = await axios.get(`/api/audit-docs/folders/${folderId}`);
-        setFolderChildren(prev => ({
-          ...prev,
-          [folderId]: response.data.children
-        }));
-        newExpandedFolders.add(folderId);
-        setExpandedFolders(newExpandedFolders);
-      } catch (error) {
-        console.error("Error loading nested folders:", error);
-      }
-    }
-  };
-
   const renderFolder = (folder, level = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
-    const nestedFolders = folderChildren[folder.id] || [];
 
     return (
       <div key={folder.id} style={{ paddingLeft: `${level * 16}px` }}>
-        <div className="rounded-md hover:bg-gray-100 transition-colors">
+        <div 
+          className={`rounded-md hover:bg-gray-100 transition-colors ${currentFolder?.id === folder.id ? 'bg-gray-100' : ''}`}
+        >
           <div className="flex items-center justify-between p-2">
-            <div 
-              className="flex items-center cursor-pointer flex-1"
-            >
+            <div className="flex items-center cursor-pointer flex-1">
               <button
-                onClick={() => toggleFolder(folder.id)}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!isExpanded) {
+                    try {
+                      const response = await axios.get(`/api/audit-docs/folders/${folder.id}`);
+                      setFolderChildren(prev => ({
+                        ...prev,
+                        [folder.id]: response.data.children
+                      }));
+                      setExpandedFolders(prev => new Set([...prev, folder.id]));
+                    } catch (error) {
+                      console.error("Error loading nested folders:", error);
+                    }
+                  } else {
+                    setExpandedFolders(prev => {
+                      const next = new Set(prev);
+                      next.delete(folder.id);
+                      return next;
+                    });
+                  }
+                }}
                 className="p-1 mr-1 hover:bg-gray-200 rounded-sm focus:outline-none"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 transform transition-transform duration-200" 
-                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-                  viewBox="0 0 20 20" fill="currentColor">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-4 w-4 text-gray-500 transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                  viewBox="0 0 20 20" 
+                  fill="currentColor"
+                >
                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                 </svg>
               </button>
               <div 
-                className="flex items-center flex-1"
                 onClick={() => loadFolder(folder.id)}
+                className="flex items-center flex-1"
               >
                 <svg className="h-5 w-5 text-yellow-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
@@ -154,9 +156,9 @@ export default function Index({ rootFolders, canManage }) {
           </div>
         </div>
         
-        {isExpanded && nestedFolders.length > 0 && (
+        {isExpanded && folderChildren[folder.id] && (
           <div className="ml-2">
-            {nestedFolders.map(childFolder => renderFolder(childFolder, level + 1))}
+            {folderChildren[folder.id].map(childFolder => renderFolder(childFolder, level + 1))}
           </div>
         )}
       </div>

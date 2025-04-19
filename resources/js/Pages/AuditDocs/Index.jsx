@@ -54,7 +54,7 @@ export default function Index({ rootFolders, canManage }) {
       const data = response.data;
       
       setCurrentFolder(data.folder);
-      setFolders(data.children);
+      // setFolders(data.children);
       setFiles(data.files);
       setFolderPath(data.path || []);
       
@@ -69,58 +69,68 @@ export default function Index({ rootFolders, canManage }) {
     }
   };
 
+  
+  
   const renderFolder = (folder, level = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
+    const hasChildren = folderChildren[folder.id]?.length > 0;
+    
+    const handleDownArrowClick = async (e) => {
+      e.stopPropagation();
+      if (!isExpanded) {
+        try {
+          // Only fetch children if we haven't loaded them yet
+          if (!folderChildren[folder.id]) {
+            const response = await axios.get(`/api/audit-docs/folders/${folder.id}`);
+            setFolderChildren(prev => ({
+              ...prev,
+              [folder.id]: response.data.children
+            }));
+          }
+          setExpandedFolders(prev => new Set([...prev, folder.id]));
+        } catch (error) {
+          console.error("Error loading nested folders:", error);
+        }
+      } else {
+        setExpandedFolders(prev => {
+          const next = new Set(prev);
+          next.delete(folder.id);
+          return next;
+        });
+      }
+    }
 
     return (
       <div key={folder.id} style={{ paddingLeft: `${level * 16}px` }}>
         <div 
           className={`rounded-md hover:bg-gray-100 transition-colors ${currentFolder?.id === folder.id ? 'bg-gray-100' : ''}`}
         >
-          <div className="flex items-center justify-between p-2">
-            <div className="flex items-center cursor-pointer flex-1">
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!isExpanded) {
-                    try {
-                      const response = await axios.get(`/api/audit-docs/folders/${folder.id}`);
-                      setFolderChildren(prev => ({
-                        ...prev,
-                        [folder.id]: response.data.children
-                      }));
-                      setExpandedFolders(prev => new Set([...prev, folder.id]));
-                    } catch (error) {
-                      console.error("Error loading nested folders:", error);
-                    }
-                  } else {
-                    setExpandedFolders(prev => {
-                      const next = new Set(prev);
-                      next.delete(folder.id);
-                      return next;
-                    });
-                  }
-                }}
-                className="p-1 mr-1 hover:bg-gray-200 rounded-sm focus:outline-none"
+          <div className="flex items-center p-2">
+            <button
+              onClick={(e) => handleDownArrowClick(e)}
+              className="p-1 mr-1 hover:bg-gray-200 rounded-sm focus:outline-none"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-4 w-4 text-gray-500 transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                viewBox="0 0 20 20" 
+                fill="currentColor"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className={`h-4 w-4 text-gray-500 transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                  viewBox="0 0 20 20" 
-                  fill="currentColor"
-                >
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <div 
-                onClick={() => loadFolder(folder.id)}
-                className="flex items-center flex-1"
-              >
-                <svg className="h-5 w-5 text-yellow-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                </svg>
-                <span className="truncate text-sm">{folder.name}</span>
-              </div>
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+            
+            <div 
+              onClick={(e) => {
+                loadFolder(folder.id)
+                handleDownArrowClick(e)
+              }}
+              className="flex items-center flex-1 cursor-pointer"
+            >
+              <svg className="h-5 w-5 text-yellow-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+              </svg>
+              <span className="truncate text-sm">{folder.name}</span>
             </div>
             
             {canManage && (
@@ -362,28 +372,12 @@ export default function Index({ rootFolders, canManage }) {
           
           {/* Folders Content */}
           <div className="overflow-y-auto h-[calc(100vh-5rem)]">
-            <div className="p-4">
-              {canManage && (
-                <button
-                  onClick={() => setShowNewFolderDialog(true)}
-                  className="p-1 text-gray-500 hover:text-gray-700 mb-4"
-                  title="New Folder"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              )}
-              
-              {loading ? (
-                <div className="flex justify-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                </div>
-              ) : (
+            <div className="p-4">              
+              {folders ? (
                 <div className="space-y-1">
                   {folders.map(folder => renderFolder(folder))}
                 </div>
-              )}
+              ):null}
             </div>
           </div>
         </div>

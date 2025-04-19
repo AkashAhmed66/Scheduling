@@ -32,6 +32,7 @@ export default function Index({ rootFolders, canManage }) {
   const [fileToRename, setFileToRename] = useState(null);
   const [showFolders, setShowFolders] = useState(true); // State to toggle folders sidebar visibility
   const fileInputRef = useRef(null);
+  const [reRender, setReRender] = useState(true);
 
   // Set up Axios defaults to include CSRF token
   axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
@@ -47,6 +48,23 @@ export default function Index({ rootFolders, canManage }) {
     }
   }, [selectedSidebarFolder]);
 
+  const fetchAllFolders = async (currentFolderId) => {
+    console.log('fetch', currentFolder);
+    try {
+      const response = await axios.get('/api/audit-docs/folders');
+      setFolders(response.data.children);
+      if(currentFolder){
+        const res = await axios.get(`/api/audit-docs/folders/${currentFolderId}`);
+        setFolderChildren(prev => ({
+          ...prev,
+          [currentFolderId]: res.data.children
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+    }
+  };
+
   const loadFolder = async (folderId = null) => {
     setLoading(true);
     try {
@@ -54,7 +72,6 @@ export default function Index({ rootFolders, canManage }) {
       const data = response.data;
       
       setCurrentFolder(data.folder);
-      // setFolders(data.children);
       setFiles(data.files);
       setFolderPath(data.path || []);
       
@@ -69,12 +86,9 @@ export default function Index({ rootFolders, canManage }) {
     }
   };
 
-  
-  
   const renderFolder = (folder, level = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
     const hasChildren = folderChildren[folder.id]?.length > 0;
-    
     const handleDownArrowClick = async (e) => {
       e.stopPropagation();
       if (!isExpanded) {
@@ -154,7 +168,7 @@ export default function Index({ rootFolders, canManage }) {
                       Rename
                     </button>
                     <button
-                      onClick={() => handleDeleteFolder(folder.id)}
+                      onClick={() => handleDeleteFolder(folder.id, folder.parent_id)}
                       className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     >
                       Delete
@@ -185,10 +199,11 @@ export default function Index({ rootFolders, canManage }) {
       });
       
       if (response.status === 201) {
-        const newFolder = response.data;
-        setFolders([...folders, newFolder]);
+        // Clear the input and close dialog
         setNewFolderName('');
         setShowNewFolderDialog(false);
+        // Fetch updated folder list
+        await fetchAllFolders(currentFolder.id);
       }
     } catch (error) {
       console.error("Error creating folder:", error);
@@ -248,12 +263,15 @@ export default function Index({ rootFolders, canManage }) {
       });
       
       const updatedFolder = response.data;
+      // Update local state first for immediate feedback
       setFolders(folders.map(folder => 
         folder.id === updatedFolder.id ? updatedFolder : folder
       ));
       setShowRenameFolderDialog(false);
       setFolderToRename(null);
       setNewName('');
+      // Fetch updated folder list
+      await fetchAllFolders(updatedFolder.parent_id);
     } catch (error) {
       console.error("Error renaming folder:", error);
       setUploadError(error.response?.data?.message || "Failed to rename folder");
@@ -281,13 +299,16 @@ export default function Index({ rootFolders, canManage }) {
     }
   };
 
-  const handleDeleteFolder = async (folderId) => {
+  const handleDeleteFolder = async (folderId, parent_id) => {
     if (!confirm('Are you sure you want to delete this folder and all its contents?')) return;
     
     try {
       await axios.delete(`/api/audit-docs/folders/${folderId}`);
       
+      // Remove from local state for immediate feedback
       setFolders(folders.filter(folder => folder.id !== folderId));
+      // Fetch updated folder list
+      await fetchAllFolders(parent_id);
     } catch (error) {
       console.error("Error deleting folder:", error);
       setUploadError(error.response?.data?.message || "Failed to delete folder");
@@ -364,10 +385,8 @@ export default function Index({ rootFolders, canManage }) {
         {/* Collapsible Folders Sidebar */}
         <div className={`bg-gray-50 border-r border-gray-200 overflow-hidden transition-all duration-300 ${showFolders ? 'w-64' : 'w-0'}`}>
           {/* Top Header with Toggle Button */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-700">Folders</h2>
-            </div>
+          <div className="p-4 border-b border-gray-200 flex justify-center">
+            <h2 className="text-lg font-medium text-gray-700">Audit Documents</h2>
           </div>
           
           {/* Folders Content */}

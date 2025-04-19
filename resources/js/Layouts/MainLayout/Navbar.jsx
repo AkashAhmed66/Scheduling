@@ -60,9 +60,9 @@ export default function Navbar() {
               <img
                 src="/images/logo.png"
                 alt="logo"
-                className="w-8 h-8 transition-transform duration-300 hover:scale-110"
+                className="w-10 h-10 transition-transform duration-300 hover:scale-110"
               />
-              <span className="ml-4 text-xl font-bold text-white hidden sm:block">InsighT</span>
+              <span className="ml-6 text-xl font-bold text-white hidden sm:block">InsighT</span>
             </Link>
           </div>
 

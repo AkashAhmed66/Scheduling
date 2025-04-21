@@ -25,9 +25,22 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title="Log in" />
 
-            <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Secure Audit Portal</h1>
-                <p className="text-gray-600 mt-1">Sign in to access your audit management dashboard</p>
+            <div className="text-center mb-4">
+                <Link href="/">
+                    <div className="flex justify-center mb-3">
+                        <img
+                            src="/images/logo.png"
+                            alt="logo"
+                            className="w-10 h-10 transition-transform duration-300 hover:scale-110"
+                        />
+                    </div>
+                </Link>
+                <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+                    InsighT
+                </h2>
+                <p className="mt-2 text-sm text-gray-600">
+                    Audit Management Platform
+                </p>
             </div>
 
             {status && (
@@ -73,7 +86,7 @@ export default function Login({ status, canResetPassword }) {
                             type="email"
                             name="email"
                             value={data.email}
-                            className="pl-10 block w-full"
+                            // className="pl-10 block w-full"
                             autoComplete="username"
                             isFocused={true}
                             placeholder="name@example.com"
@@ -86,14 +99,6 @@ export default function Login({ status, canResetPassword }) {
                 <div>
                     <div className="flex items-center justify-between">
                         <InputLabel htmlFor="password" value="Password" />
-                        {canResetPassword && (
-                            <Link
-                                href={route('password.request')}
-                                className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
-                            >
-                                Forgot your password?
-                            </Link>
-                        )}
                     </div>
                     <div className="mt-1 relative rounded-md shadow-sm">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,7 +111,7 @@ export default function Login({ status, canResetPassword }) {
                             type="password"
                             name="password"
                             value={data.password}
-                            className="pl-10 block w-full"
+                            // className="pl-10 block w-full"
                             autoComplete="current-password"
                             placeholder="••••••••"
                             onChange={(e) => setData('password', e.target.value)}
@@ -128,11 +133,15 @@ export default function Login({ status, canResetPassword }) {
                             Remember me
                         </span>
                     </label>
-                    <div className="text-xs text-gray-500">
-                        <svg className="inline-block h-4 w-4 mr-1 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
-                        </svg>
-                        Secure connection
+                    <div className="flex items-center justify-between">
+                        {canResetPassword && (
+                            <Link
+                                href={route('password.request')}
+                                className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
+                            >
+                                Forgot your password?
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -147,7 +156,7 @@ export default function Login({ status, canResetPassword }) {
                                 Authenticating...
                             </>
                         ) : (
-                            "Secure Sign In"
+                            "Sign In"
                         )}
                     </PrimaryButton>
                 </div>

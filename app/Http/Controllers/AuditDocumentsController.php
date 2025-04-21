@@ -35,7 +35,7 @@ class AuditDocumentsController extends Controller
         
         return Inertia::render('AuditDocs/Index', [
             'rootFolders' => $rootFolders,
-            'canManage' => $user->role === 0 || $user->role === 1, // Only roles 0 and 1 can manage
+            'canManage' => $user->role === 0, // Only roles 0 and 1 can manage
         ]);
     }
     

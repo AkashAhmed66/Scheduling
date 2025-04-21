@@ -45,11 +45,18 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $request->user()->fill($request->all());
-        
+
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
         }
+    
         $request->user()->gender = $request->gender;
+        $request->user()->countryCode = $request->countryCode;
+        $request->user()->department = $request->department;
+        $request->user()->designation = $request->designation;
+        $request->user()->phone = $request->phone;
+        $request->user()->companyName = $request->companyName;
+        $request->user()->name = $request->name;
         $request->user()->save();
 
         return Redirect::route('profile.edit');

@@ -120,7 +120,7 @@ export default function UpdateProfileInformation({
 
                 {/* Country Code */}
                 <div>
-                    <InputLabel htmlFor="country_code" value="Country Code" />
+                    <InputLabel htmlFor="country_code" value="Country" />
                     <TextInput
                         id="country_code"
                         className="mt-1 block w-full"

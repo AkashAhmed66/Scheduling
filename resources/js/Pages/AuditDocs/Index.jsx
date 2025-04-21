@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import BasicLayout from '@/Layouts/BasicLayout/BasicLayout';
-import { Inertia } from '@inertiajs/inertia';
 import axios from 'axios';
 import SidebarContext from '@/Context/SideBarContext';
 
@@ -32,7 +31,6 @@ export default function Index({ rootFolders, canManage }) {
   const [fileToRename, setFileToRename] = useState(null);
   const [showFolders, setShowFolders] = useState(true); // State to toggle folders sidebar visibility
   const fileInputRef = useRef(null);
-  const [reRender, setReRender] = useState(true);
 
   // Set up Axios defaults to include CSRF token
   axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
@@ -155,7 +153,7 @@ export default function Index({ rootFolders, canManage }) {
                   </svg>
                 </button>
                 
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 invisible group-hover:visible">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible">
                   <div className="py-1">
                     <button
                       onClick={() => {

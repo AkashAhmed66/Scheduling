@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/react';
 import axios from "axios";
@@ -8,6 +6,7 @@ import axios from "axios";
 export default function AssesmentComponent() {
   const { question, user, assessment } = usePage().props;
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setQuestions(question);
@@ -30,38 +29,41 @@ export default function AssesmentComponent() {
     }
   };
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Assessment Report', 14, 20);
-
-    const columns = [
-      'ID',
-      'Question',
-      'Answer',
-      'Findings',
-      'Risk Rating',
-      'Legal Ref',
-      'Recommendation',
-    ];
-
-    const rows = questions.map((ques) => [
-      ques.id,
-      ques.question,
-      ques.answer,
-      ques.answer === 'No' ? ques.findings : 'N/A',
-      ques.answer === 'No' ? ques.risk_rating : 'N/A',
-      ques.answer === 'No' ? ques.legal_ref : 'N/A',
-      ques.answer === 'No' ? ques.recommendation : 'N/A',
-    ]);
-
-    doc.autoTable({
-      head: [columns],
-      body: rows,
-      startY: 30,
-    });
-
-    doc.save('Assessment_Report.pdf');
+  const generatePDF = async () => {
+    try {
+      setLoading(true);
+      
+      // Get assessment ID if available
+      const assessmentId = assessment?.id || '';
+      
+      // Call the Laravel endpoint to generate PDF
+      const response = await axios({
+        url: `/download-assessment-pdf/${assessmentId}`,
+        method: 'GET',
+        responseType: 'blob', // Important for handling the PDF file
+      });
+      
+      // Create a blob URL from the response data
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Assessment_Report_${new Date().getTime()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to generate PDF", error);
+      setLoading(false);
+      // Handle error - perhaps show a notification to the user
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   return (
@@ -77,12 +79,13 @@ export default function AssesmentComponent() {
             <div className="flex flex-wrap gap-3 mb-6">
               <button
                 onClick={generatePDF}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                Download PDF
+                {loading ? 'Generating PDF...' : 'Download PDF'}
               </button>
             </div>
 
@@ -122,7 +125,7 @@ export default function AssesmentComponent() {
                         {question.answer === 'No' ? (
                           <input
                             type="text"
-                            value={question.findings}
+                            value={question.findings || ''}
                             onChange={(e) => handleChange(e, index, 'findings')}
                             className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none"
                             placeholder="Enter findings..."
@@ -133,13 +136,20 @@ export default function AssesmentComponent() {
                       </td>
                       <td className="py-3 px-4">
                         {question.answer === 'No' ? (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            question.risk_rating === 'High' ? 'bg-red-100 text-red-800' :
-                            question.risk_rating === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-blue-100 text-blue-800'
-                          }`}>
-                            {question.risk_rating}
-                          </span>
+                          <select
+                            value={question.risk_rating || ''}
+                            onChange={(e) => handleChange(e, index, 'risk_rating')}
+                            className={`w-full py-2 px-3 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:outline-none transition-colors ${
+                              question.risk_rating === 'High' ? 'text-red-800 bg-red-50' :
+                              question.risk_rating === 'Medium' ? 'text-yellow-800 bg-yellow-50' :
+                              'text-blue-800 bg-blue-50'
+                            }`}
+                          >
+                            <option value="">Select Rating</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                          </select>
                         ) : (
                           <span className="text-gray-400 italic">N/A</span>
                         )}
@@ -148,7 +158,7 @@ export default function AssesmentComponent() {
                         {question.answer === 'No' ? (
                           <input
                             type="text"
-                            value={question.legal_ref}
+                            value={question.legal_ref || ''}
                             onChange={(e) => handleChange(e, index, 'legal_ref')}
                             className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none"
                             placeholder="Enter legal reference..."
@@ -161,7 +171,7 @@ export default function AssesmentComponent() {
                         {question.answer === 'No' ? (
                           <input
                             type="text"
-                            value={question.recommendation}
+                            value={question.recommendation || ''}
                             onChange={(e) => handleChange(e, index, 'recommendation')}
                             className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none"
                             placeholder="Enter recommendation..."

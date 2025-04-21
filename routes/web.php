@@ -24,6 +24,8 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/assesment', [UploadModelController::class, 'index']);
     Route::put('/update-assessment/{id}', [UploadModelController::class, 'updateAssesment'])->name('update-assessment');
+    Route::get('/download-assessment-pdf/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generatePdf'])->name('download-assessment-pdf');
+    Route::get('/generate-assessment-pdf/{id}', [App\Http\Controllers\AssessmentController::class, 'generatePdf'])->name('generate-assessment-pdf');
     Route::get('/upload', [UploadModelController::class, 'index']);
     Route::get('/perform-audit/{id}', [UploadModelController::class, 'PerformAudit'])->name('perform-audit');
 

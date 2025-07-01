@@ -16,5 +16,6 @@ class AssesmentDocuments extends Model
         'jobId',
         'teamId',
         'filePath',
+        'uploader'
     ];
 }

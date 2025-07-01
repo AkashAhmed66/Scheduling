@@ -29,6 +29,7 @@ export default function JobsComponent() {
   // Update data when jobs from props change
   useEffect(() => {
     if (jobs) {
+      console.log("Jobs data received:", jobs);
       setData(jobs); // Set the received data to the local state
     }
   }, [jobs]);
@@ -42,6 +43,7 @@ export default function JobsComponent() {
       { Header: "Report No.", accessor: "reportNo" },
       { Header: "Factory Name", accessor: "factoryName" },
       { Header: "Factory Address", accessor: "factoryAddress" },
+      { Header: "Service Name", accessor: "serviceName" },
       { Header: "Job Status", accessor: "jobStatus", 
         Cell: ({ value }) => (
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -54,8 +56,10 @@ export default function JobsComponent() {
           </span>
         )
       },
+      { Header: "Request received date ", accessor: "requestReceiveDate" },
       { Header: "Request Type", accessor: "requestType" },
       { Header: "Client Name", accessor: "clientName" },
+      { Header: "Field Staff ", accessor: "fieldStaff" },
       { Header: "Start Date", accessor: "startDate" },
       { Header: "End Date", accessor: "endDate" },
       { Header: "Audit Start Date", accessor: "auditStartDate" },

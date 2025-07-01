@@ -181,6 +181,7 @@ export default function AssessmentDocumentComponent() {
                     <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Document Name</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Uploader</th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Files</th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date Uploaded</th>
                         <th scope="col" className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Actions</th>
@@ -191,6 +192,9 @@ export default function AssessmentDocumentComponent() {
                         <tr key={group.documentName} className="hover:bg-gray-50 transition-colors duration-150">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{group.documentName}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{group.files[0].uploader}</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="space-y-1">

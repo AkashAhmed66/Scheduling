@@ -19,5 +19,10 @@ class UploadModel extends Model
         'legal_ref',       // Column 'Legal Ref'
         'recommendation',  // Column 'Recommendation'
         'type',            // Column 'Type'
+        'ncref',          // Column 'NC Ref'
+        'category',        // Column 'Category'
+        'subcategory',     // Column 'Subcategory'
+        'mark',            // Column 'Mark'
+        'color',           // Column 'Color'
     ];
 }

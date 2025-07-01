@@ -41,22 +41,23 @@ export default function JobsComponent() {
       { Header: "Report No.", accessor: "reportNo" },
       { Header: "Factory Name", accessor: "factoryName" },
       { Header: "Factory Address", accessor: "factoryAddress" },
-      { 
-        Header: "Job Status", 
-        accessor: "jobStatus",
+      { Header: "Service Name", accessor: "serviceName" },
+      { Header: "Job Status", accessor: "jobStatus", 
         Cell: ({ value }) => (
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-            value === "Completed" ? "bg-green-100 text-green-800 border border-green-200" : 
-            value === "In Progress" ? "bg-blue-100 text-blue-800 border border-blue-200" : 
-            value === "Pending" ? "bg-yellow-100 text-yellow-800 border border-yellow-200" : 
-            "bg-gray-100 text-gray-800 border border-gray-200"
+            value === "Completed" ? "bg-green-100 text-green-800" : 
+            value === "In Progress" ? "bg-blue-100 text-blue-800" : 
+            value === "Pending" ? "bg-yellow-100 text-yellow-800" : 
+            "bg-gray-100 text-gray-800"
           }`}>
             {value}
           </span>
         )
       },
+      { Header: "Request received date ", accessor: "requestReceiveDate" },
       { Header: "Request Type", accessor: "requestType" },
       { Header: "Client Name", accessor: "clientName" },
+      { Header: "Field Staff ", accessor: "fieldStaff" },
       { Header: "Start Date", accessor: "startDate" },
       { Header: "End Date", accessor: "endDate" },
       { Header: "Audit Start Date", accessor: "auditStartDate" },

@@ -17,13 +17,18 @@ class QuestionImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         return new UploadModel([
-            'question'      => $row['question'],          // Column 'Question' from the Excel file maps to 'question' in the model
-            'answer'        => $row['answer'],            // Column 'Answer' from the Excel file maps to 'answer' in the model
-            'findings'      => $row['findings'],          // Column 'Findings' from the Excel file maps to 'findings' in the model
-            'risk_rating'   => $row['risk_rating'],       // Column 'Risk Rating' from the Excel file maps to 'risk_rating' in the model
-            'legal_ref'     => $row['legal_ref'],         // Column 'Legal Ref' from the Excel file maps to 'legal_ref' in the model
-            'recommendation'=> $row['recommendation'],    // Column 'Recommendation' from the Excel file maps to 'recommendation' in the model
-            'type'=> $row['type'],                        // Column 'Type' from the Excel file maps to 'type' in the model
+            'question'      => $row['question'],
+            'ncref'         => $row['ncref'],
+            'category'      => $row['category'],
+            'subcategory'   => $row['subcategory'],
+            'mark'          => $row['mark'],
+            'color'         => $row['color'],
+            'answer'        => $row['answer'],
+            'findings'      => $row['findings'],
+            'risk_rating'        => $row['risk_rating'],
+            'legal_ref'     => $row['legal_ref'],
+            'recommendation'=> $row['recommendation'],
+            'type'          => $row['type'],
         ]);
     }
 }

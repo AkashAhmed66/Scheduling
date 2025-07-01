@@ -29,6 +29,9 @@ export default function CreateJobComponent() {
     remarks: '',
     dateReportSentToQA: '',
     finalReportSentToClient: '',
+    serviceName: '',
+    requestReceiveDate: '',
+    fieldStaff: '',
 
     // Staff Role
     role: '',
@@ -38,6 +41,7 @@ export default function CreateJobComponent() {
     endDate: '',
     reportWriter: false,
     note: '',
+    
 
     // Contacts
     clientName: '',
@@ -61,6 +65,7 @@ export default function CreateJobComponent() {
     factoryPostalCode: '',
     factoryAddress: '',
     factoryTel: '',
+    assessmentType: '',
 
     // Additional Information
     coordination: '',
@@ -113,7 +118,7 @@ export default function CreateJobComponent() {
       if (name === 'reviewer' && value) {
         updatedData.reviewerError = false;
       }
-      
+      console.log('Updated form data:', updatedData);
       return updatedData;
     });
   };
@@ -165,6 +170,10 @@ export default function CreateJobComponent() {
       }
       if (!formData.reviewer) {
         newFormData.reviewerError = true;
+        hasErrors = true;
+      }
+      if (!formData.assessmentType) {
+        newFormData.assessmentTypeError = true;
         hasErrors = true;
       }
     }

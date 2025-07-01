@@ -12,16 +12,20 @@ export default function OverviewComponent() {
         <h3 className="text-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 p-3 rounded-lg mb-4 shadow-md">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg shadow-sm">
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Job Type:</span> <span className="text-gray-800">{job.jobType}</span></p>
+          <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Service Name:</span> <span className="text-gray-800">{job.serviceName}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Report No:</span> <span className="text-gray-800">{job.reportNo}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Request Type:</span> <span className="text-gray-800">{job.requestType}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Job Status:</span> <span className="text-gray-800">{job.jobStatus}</span></p>
+          <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Assessment Type:</span> <span className="text-gray-800">{job.assessmentType}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Office Country:</span> <span className="text-gray-800">{job.officeCountry}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Staff Days:</span> <span className="text-gray-800">{job.staffDays}</span></p>
+          <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Field Staff:</span> <span className="text-gray-800">{job.fieldStaff}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Client Shadow Audit:</span> <span className="text-gray-800">{job.isClientShadowAudit ? 'Yes' : 'No'}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Date Request Received:</span> <span className="text-gray-800">{job.dateRequestReceived}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Audit Due Date:</span> <span className="text-gray-800">{job.auditDueDate}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Audit Start Date:</span> <span className="text-gray-800">{job.auditStartDate}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Audit End Date:</span> <span className="text-gray-800">{job.auditEndDate}</span></p>
+          <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Request Receive Date:</span> <span className="text-gray-800">{job.requestReceiveDate}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Remarks:</span> <span className="text-gray-800">{job.remarks}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Date Report Sent to QA:</span> <span className="text-gray-800">{job.dateReportSentToQA}</span></p>
           <p className="flex items-center"><span className="font-medium text-gray-700 w-1/2">Final Report Sent to Client:</span> <span className="text-gray-800">{job.finalReportSentToClient}</span></p>

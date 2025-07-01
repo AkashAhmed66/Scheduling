@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivateUserController;
+use App\Http\Controllers\AssessmentInfoController;
 use App\Http\Controllers\AuditJobController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UploadModelController;
@@ -24,8 +25,21 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/assesment', [UploadModelController::class, 'index']);
     Route::put('/update-assessment/{id}', [UploadModelController::class, 'updateAssesment'])->name('update-assessment');
-    Route::get('/download-assessment-pdf/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generatePdf'])->name('download-assessment-pdf');
+    
+    // Reset Assessment Route
+    Route::post('/reset-assessment/{assessmentId}', [UploadModelController::class, 'resetAssessment'])->name('reset-assessment');
+    
+    // Assessment Info Routes
+    Route::post('/assessment-info', [AssessmentInfoController::class, 'store'])->name('assessment-info.store');
+    Route::get('/assessment-info/{assessmentId}', [AssessmentInfoController::class, 'show'])->name('assessment-info.show');
+    Route::put('/assessment-info/{assessmentId}', [AssessmentInfoController::class, 'update'])->name('assessment-info.update');
+    Route::delete('/assessment-info/{assessmentId}', [AssessmentInfoController::class, 'destroy'])->name('assessment-info.destroy');
+    
+    Route::post('/download-assessment-pdf/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generatePdf'])->name('download-assessment-pdf');
+
     Route::get('/generate-assessment-pdf/{id}', [App\Http\Controllers\AssessmentController::class, 'generatePdf'])->name('generate-assessment-pdf');
+    
+    Route::post('/download-capa-pdf/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generateCapaPdf'])->name('download-capa-pdf');
     Route::get('/upload', [UploadModelController::class, 'index']);
     Route::get('/perform-audit/{id}', [UploadModelController::class, 'PerformAudit'])->name('perform-audit');
 

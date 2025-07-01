@@ -87,7 +87,7 @@ export default function AssessmentsList() {
                     <div className="p-6">
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3 mb-6">
-                            {user.role === '0' && (
+                            {user.role == '0' && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
                                     className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-emerald-600 hover:to-green-700 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"

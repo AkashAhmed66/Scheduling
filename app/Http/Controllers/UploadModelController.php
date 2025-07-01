@@ -31,6 +31,56 @@ class UploadModelController extends Controller
         return response()->json(['message' => 'Assessment updated successfully!']);
     }
 
+    /**
+     * Reset assessment drafts by deleting all existing drafts for this assessment 
+     * and recreating them from upload_model questions of the same type.
+     */
+    public function resetAssessment($assessmentId)
+    {
+        try {
+            // Get the assessment to find its type
+            $assessment = Assessment::findOrFail($assessmentId);
+            
+            // Delete all existing assessment drafts for this assessment
+            AssessmentDraft::where('assesment_id', $assessmentId)->delete();
+            
+            // Get fresh questions from upload_model based on assessment type
+            $questions = UploadModel::where('type', $assessment->type)->get();
+            
+            // Create new assessment drafts from the questions
+            foreach ($questions as $question) {
+                $draft = new AssessmentDraft();
+                
+                $draft->ncref = $question->ncref;
+                $draft->category = $question->category;
+                $draft->subcategory = $question->subcategory;
+                $draft->mark = $question->mark;
+                $draft->color = $question->color;
+                $draft->question = $question->question;
+                $draft->answer = $question->answer;
+                $draft->findings = $question->findings;
+                $draft->risk_rating = $question->risk_rating;
+                $draft->legal_ref = $question->legal_ref;
+                $draft->recommendation = $question->recommendation;
+                $draft->assesment_id = $assessmentId;
+                
+                $draft->save();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment reset successfully! ' . count($questions) . ' questions have been restored.',
+                'question_count' => count($questions)
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset assessment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function PerformAudit($id)
     {
         $questions = AssessmentDraft::where('assesment_id', $id)->get();
@@ -46,8 +96,16 @@ class UploadModelController extends Controller
     public function upload(Request $request)
     {
         $file = $request->file('file');
-        UploadModel::truncate();
+        if ($file) {
+            $firstRow = Excel::toArray(function ($reader) {
+                $reader->limit(1); // Only read the first row
+            }, $file)[0][1]; // Access the first row of the first sheet
+    
+            // dd($firstRow['6']); // Output the array containing the values from the first row
+            UploadModel::where('type', $firstRow['10'])->delete();
+        }
         Excel::import(new QuestionImport, $file);
+        UploadModel::where('type', null)->delete();
         return redirect()->back()->with('message', 'File uploaded and data inserted successfully.');
     }
     public function DeleteAssesment($id)
@@ -90,7 +148,9 @@ class UploadModelController extends Controller
                 'jobId' => $request->jobId,
                 'teamId' => Auth::user()->team,
                 'filePath' => $filePath, // Save the file path in the database
-            ];    
+                'uploader' => Auth::user()->name,
+            ];
+            
             // Create a new record in the 'assesment_documents' table
             $uploadedFiles[] = AssesmentDocuments::create($formData);
         }    

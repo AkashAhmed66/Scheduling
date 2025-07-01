@@ -19,5 +19,7 @@ class AssessmentDraft extends Model
         'legal_ref',       // Column 'Legal Ref'
         'recommendation',  // Column 'Recommendation'
         'assesment_id',    // Column 'Assesment ID'
+        'category',        // Column 'Category'
+        'subcategory',     // Column 'Subcategory'
     ];
 }

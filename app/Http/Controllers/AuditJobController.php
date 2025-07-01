@@ -114,11 +114,13 @@ class AuditJobController extends Controller
         $auditors = User::where('role', '2')->get();
         $reviewers = User::where('role', '3')->get();
         $job = AuditJob::where('id', $id)->first();
+        $assessmentTypes = UploadModel::distinct('type')->pluck('type');
         return Inertia::render('CreateJob', [
             'create' => 0,
             'auditors' => $auditors,
             'reviewers' => $reviewers,
-            'job' => $job
+            'job' => $job,
+            'assessmentTypes' => $assessmentTypes,
         ]);
     }
     public function AddFilesToJob($id)
@@ -136,12 +138,13 @@ class AuditJobController extends Controller
     {
         $auditors = User::where('role', '2')->get();
         $reviewers = User::where('role', '3')->get();
-
+        $assessmentTypes = UploadModel::distinct('type')->pluck('type');
         return Inertia::render('CreateJob', [
             'create' => 1,
             'auditors' => $auditors,
             'reviewers' => $reviewers,
-            'job' => null
+            'job' => null,
+            'assessmentTypes' => $assessmentTypes,
         ]);
     }
     /**
@@ -221,30 +224,43 @@ class AuditJobController extends Controller
     {
         $formData = $request->toArray();
         $formData['team'] = Auth::user()->team;
+
         $auditJob = AuditJob::create($formData);
+        
+        $auditJob->fieldStaff = $request->fieldStaff;
+        $auditJob->serviceName = $request->serviceName;
+        $auditJob->requestReceiveDate = $request->requestReceiveDate;
+        $auditJob->save();
 
         $auditor = User::where('id', $formData['auditor'])->first();
         $reviewer = User::where('id', $formData['reviewer'])->first();
         
         $assesment = new Assessment();
-        $assesment->type = 'social';
+        $assesment->type = $auditJob->assessmentType;
         $assesment->searchId = 'NBM' . now()->format('YmdHis');
         $assesment->userss()->associate($auditor);
         $assesment->save();
 
         $questions = UploadModel::where('type', $assesment->type)->get();
         foreach ($questions as $question) {
-            AssessmentDraft::create([
-                'question' => $question->question,
-                'answer' => $question->answer,
-                'findings' => $question->findings,
-                'risk_rating' => $question->risk_rating,
-                'legal_ref' => $question->legal_ref,
-                'recommendation' => $question->recommendation,
-                'created_at' => $question->created_at,
-                'updated_at' => $question->updated_at,
-                'assesment_id' => $assesment->id,
-            ]);
+            $draft = new AssessmentDraft();
+
+            $draft->ncref = $question->ncref;
+            $draft->category = $question->category;
+            $draft->subcategory = $question->subcategory;
+            $draft->mark = $question->mark;
+            $draft->color = $question->color;
+            $draft->question = $question->question;
+            $draft->answer = $question->answer;
+            $draft->findings = $question->findings;
+            $draft->risk_rating = $question->risk_rating;
+            $draft->legal_ref = $question->legal_ref;
+            $draft->recommendation = $question->recommendation;
+            $draft->created_at = $question->created_at;
+            $draft->updated_at = $question->updated_at;
+            $draft->assesment_id = $assesment->id;
+
+            $draft->save();
         }
         $auditJob->auditors()->associate($auditor);
         $auditJob->reviewer()->associate($reviewer);

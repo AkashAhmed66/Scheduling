@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Assessment Report</title>
+    <title>PDF Title</title>
     <style>
         @page {
             margin: 50px 50px 50px 50px;
         }
         body{
-            margin-bottom: 20px;
+            margin-bottom: 50px;
             margin-top: 70px;
+            font-family: Arial, sans-serif;
         }
 
         p:last-child {
@@ -18,8 +19,9 @@
 
         table {
             border-collapse: collapse;
+            /* border: 1px; */
             width: 100% !important;
-            table-layout: fixed;
+            table-layout : fixed;
         }
 
         .info {
@@ -29,6 +31,8 @@
             margin-bottom: 20px;
         }
 
+        .customer {}
+        
         th,
         tr,
         td {
@@ -51,10 +55,20 @@
             text-align: center;
         }
 
+        .company-info {}
+
+        .firstline th {
+            border: 0;
+        }
+
         p {
             line-height: 0.5;
         }
 
+        #recTable tr td {
+            height:10px !important
+            border:1px solid red !important
+        }
         .multiCharts{
             display: flex;
             flex-wrap: wrap;
@@ -67,8 +81,8 @@
             margin: 10px; 
         }
         .logo{
-            height: 80px;
-            width: 120px;
+            height: 70px;
+            width: 100px;
             position: relative;
             bottom: 15px;
             right: 7px;
@@ -85,17 +99,18 @@
             width: 100%;
             height: 80px;
         }
-        .header,
-        .footer {
+        .header {
             width: 100%;
             position: fixed;
-        }
-        .header {
             top: 0px;
         }
         .footer {
-            bottom: 0px;
+            position: fixed;
+            bottom: 20px;
+            right: 0px;
+            width: auto;
             text-align: right;
+            font-size: 12px;
         }
         .pagenum:before {
             content: counter(page);
@@ -103,6 +118,7 @@
         .coverinfo{
             border: 0px;
             height: 25px;
+            /* background-color: red; */
         }
         .factoryimg{
             height: 270px;
@@ -112,26 +128,16 @@
             top: 40px;
             border: 1px solid black;
         }
-        .section {
-            margin-bottom: 20px;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ddd;
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="headcontainer">
-            <img class="logo" src="../public/img/ecotech_logo.png" alt="logo">
-            <div class="infoh">
-                <p>www.example.com</p>
-                <p>info@example.com</p>
-            </div>
+            <img class="logo" src="../public/images/logo.png" alt="logo">
+                <div class="infoh">
+                    <p>www.ecotecglobal.net</p>
+                    <p>info@ecotecglobal.net</p>
+                </div>
         </div>
     </div>
     
@@ -140,38 +146,50 @@
             <br>
             <br>
             <br>
-            <img class="factoryimg" src="https://via.placeholder.com/520x270" alt="factory">
+            @if($assessmentInfo && $assessmentInfo->facility_image_path)
+                @php
+                    $imagePath = public_path('storage/' . $assessmentInfo->facility_image_path);
+                    $imageExists = file_exists($imagePath);
+                @endphp
+                @if($imageExists)
+                    <img class="factoryimg" src="{{ $imagePath }}" alt="facility image">
+                @else
+                    <img class="factoryimg" src="{{ public_path('images/background.jpg') }}" alt="factory">
+                @endif
+            @else
+                <img class="factoryimg" src="{{ public_path('images/background.jpg') }}" alt="factory">
+            @endif
             <br>
             <br>
-            <h1 style="text-align: center; position: relative; top: 40px; height: 40px;">Facility Assessment Report</h1>
+            <h1 style="text-align: center; position: relative; top: 40px; height: 40px;">{{ $assessmentInfo && $assessmentInfo->report_heading ? $assessmentInfo->report_heading : 'Assessment Report' }}</h1>
             <br>
             <br>
             <div style="background-color: rgb(239, 238, 238); position: relative; top: 35px; padding: 20px; height: 250px;"> 
-                <h2>Sample Facility Name</h2>
+                <h2>{{ $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Facility Name Not Provided' }}</h2>
                 <table class="coverinfo">
                     <tr class="coverinfo">
                         <td class="coverinfo" width="30%">Audit Company:</td>
-                        <td class="coverinfo">Example Audit Ltd</td>
+                        <td class="coverinfo">{{ $assessmentInfo && $assessmentInfo->audit_company ? $assessmentInfo->audit_company : 'Not Specified' }}</td>
                     </tr>
                     <tr class="coverinfo">
                         <td class="coverinfo">Report No:</td>
-                        <td class="coverinfo">AS-2023-001</td>
+                        <td class="coverinfo">{{ $assessmentInfo && $assessmentInfo->report_no ? $assessmentInfo->report_no : 'Not Specified' }}</td>
                     </tr>
                     <tr class="coverinfo">
                         <td class="coverinfo">Assessment Type:</td>
-                        <td class="coverinfo">Comprehensive</td>
+                        <td class="coverinfo">{{ $assessmentInfo && $assessmentInfo->assessment_type ? $assessmentInfo->assessment_type : 'Not Specified' }}</td>
                     </tr>
                     <tr class="coverinfo">
                         <td class="coverinfo">Schedule Type:</td>
-                        <td class="coverinfo">Regular</td>
+                        <td class="coverinfo">{{ $assessmentInfo && $assessmentInfo->schedule_type ? $assessmentInfo->schedule_type : 'Not Specified' }}</td>
                     </tr>
                     <tr class="coverinfo">
                         <td class="coverinfo">Assessors:</td>
-                        <td class="coverinfo">John Doe, Jane Smith</td>
+                        <td class="coverinfo">{{ $assessmentInfo && $assessmentInfo->assessors ? $assessmentInfo->assessors : 'Not Specified' }}</td>
                     </tr>
                     <tr class="coverinfo">
                         <td class="coverinfo">Assessment Date:</td>
-                        <td class="coverinfo">2023-05-15</td>
+                        <td class="coverinfo">{{ $assessmentInfo && $assessmentInfo->assessment_date ? $assessmentInfo->assessment_date->format('F d, Y') : 'Not Specified' }}</td>
                     </tr>
                 </table>
             </div>
@@ -183,7 +201,7 @@
             <h2 style="color: #0070C0">Report Summary</h2>
             <div class="ratingTableDiv">
                 <div class="ratingTable">
-                    <table>
+                    <table >
                         <tr>
                             <td style="background-color: green">Green/A</td>
                             <td>>90%</td>
@@ -211,76 +229,88 @@
                         <td style="background-color: yellow; text-align: center">Yellow (B)</td>
                         <td style="background-color: orange; text-align: center">Orange (C)</td>
                         <td style="background-color: red; text-align: center">Red (D)</td>
-                        <td style="text-align: center">85%</td>
+                        <td style="text-align: center">{{ $scores['overall_percentage'] ?? 0 }}%</td>
                     </tr>
                     <tr style="border: 0px">
-                        <td style="border: 0px"></td>
-                        <td style="border: 0px"><img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"></td>
-                        <td style="border: 0px"></td>
-                        <td style="border: 0px"></td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 90)  <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 71 && ($scores['overall_percentage'] ?? 0) < 90)  <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 41 && ($scores['overall_percentage'] ?? 0) < 71)  <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) < 41) <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
                         <td style="border: 0px"></td>
                     </tr>
                 </table>
             </div>
             </br>
             <p style="font-weight: bold">Section Rating:</p>
-            <div style="height: 310px;">
+            <div style="">
                 <table>
                     <tbody>
                         <tr>
-                            <th style="background-color: #c0c0c0">Performance Area</th>
+                            <th style="background-color: #c0c0c0" >Performance Area</th>
                             <th style="background-color: #c0c0c0" width='20%'>Rating</th>
                             <th style="background-color: #c0c0c0" width='20%'>Score</th>
                         </tr>
-                        <tr>
-                            <td>Health & Safety</td>
-                            <td style="background-color: green"></td>
-                            <td style="text-align: center;">92.50</td>
-                        </tr>
-                        <tr>
-                            <td>Environmental Compliance</td>
-                            <td style="background-color: yellow"></td>
-                            <td style="text-align: center;">85.75</td>
-                        </tr>
-                        <tr>
-                            <td>Labor Practices</td>
-                            <td style="background-color: yellow"></td>
-                            <td style="text-align: center;">78.20</td>
-                        </tr>
-                        <tr>
-                            <td>Business Ethics</td>
-                            <td style="background-color: orange"></td>
-                            <td style="text-align: center;">65.30</td>
-                        </tr>
-                        <tr>
-                            <td>Management Systems</td>
-                            <td style="background-color: green"></td>
-                            <td style="text-align: center;">95.10</td>
-                        </tr>
+                        @if(isset($scores['category_percentages']) && count($scores['category_percentages']) > 0)
+                            @foreach($scores['category_percentages'] as $category => $percentage)
+                                <tr>
+                                    <td>{{ $category }}</td>
+                                    @if($percentage >= 90) 
+                                        <td style="background-color: green"></td>
+                                    @elseif($percentage >= 71) 
+                                        <td style="background-color: yellow"></td>
+                                    @elseif($percentage >= 41) 
+                                        <td style="background-color: orange"></td>
+                                    @else 
+                                        <td style="background-color: red"></td>
+                                    @endif
+                                    <td style="text-align: center;">{{ $percentage }}</td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #666;">No category data available</td>
+                            </tr>
+                        @endif
                     </tbody>       
                 </table>
             </div>
-            
             <div>
-                <img style="height: 320px; width: 100%" src="https://quickchart.io/chart?c={
-                    'type': 'horizontalBar',
-                    'data': {
-                      'labels': [
-                        'Health & Safety','Environmental Compliance','Labor Practices','Business Ethics','Management Systems'
-                      ],
-                      'datasets': [
-                        {
-                          'label': 'Section Rating(%)',
-                          'backgroundColor': 'rgba(153, 102, 255, 1)',
-                          'data': [
-                            92.50,85.75,78.20,65.30,95.10,0,100
-                          ]
-                        }
-                      ]
-                    },
-                  }" alt="">
-
+                <h3 style="color: #0070C0; margin-bottom: 15px;">Section Rating Chart</h3>
+                @if(isset($scores['category_percentages']) && count($scores['category_percentages']) > 0)
+                    <div style="border: 1px solid #ccc; padding: 15px; background-color: #f9f9f9;">
+                        @foreach($scores['category_percentages'] as $category => $percentage)
+                            <div style="margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                                    <span style="width: 200px; font-size: 12px; font-weight: bold;">{{ $category }}</span>
+                                    <span style="font-size: 12px; color: #666; margin-left: 10px;">{{ number_format($percentage, 1) }}%</span>
+                                </div>
+                                <div style="width: 100%; background-color: #e0e0e0; height: 20px; border-radius: 10px; position: relative;">
+                                    @php
+                                        $barColor = '#9966ff'; // Default purple
+                                        if($percentage >= 90) $barColor = '#4CAF50'; // Green
+                                        elseif($percentage >= 71) $barColor = '#FFC107'; // Yellow  
+                                        elseif($percentage >= 41) $barColor = '#FF9800'; // Orange
+                                        else $barColor = '#F44336'; // Red
+                                    @endphp
+                                    <div style="width: {{ $percentage }}%; background-color: {{ $barColor }}; height: 100%; border-radius: 10px; position: relative;">
+                                        @if($percentage > 15)
+                                            <span style="position: absolute; right: 5px; top: 2px; color: white; font-size: 10px; font-weight: bold;">{{ number_format($percentage, 1) }}%</span>
+                                        @endif
+                                    </div>
+                                    @if($percentage <= 15)
+                                        <span style="position: absolute; left: {{ $percentage + 2 }}%; top: 2px; color: #333; font-size: 10px; font-weight: bold;">{{ number_format($percentage, 1) }}%</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div style="border: 1px solid #ccc; padding: 15px; background-color: #f9f9f9; text-align: center; color: #666;">
+                        No category data available for chart
+                    </div>
+                @endif
             </div>
+            <br>
             <div class="facility">
                 <table>
                     <tr style="background-color: red;">
@@ -288,107 +318,107 @@
                     </tr>
                     <tr>
                         <td>Facility Name</td>
-                        <td>Sample Facility Name</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Facility Address</td>
-                        <td>123 Example Street, Industrial Zone, Sample City</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->facility_address ? $assessmentInfo->facility_address : 'Not Provided' }}</td>
                     </tr>
                     <tr>
-                        <td>Business License #</td>
-                        <td>BL-12345-2023</td>
+                        <td>Business License</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->business_license ? $assessmentInfo->business_license : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Country</td>
-                        <td>Example Country</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->country ? $assessmentInfo->country : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Year of establishment</td>
-                        <td>2010</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->year_establishment ? $assessmentInfo->year_establishment : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Building description</td>
-                        <td>5-story concrete structure with 2 production floors</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->building_description ? $assessmentInfo->building_description : 'Not Provided' }}</td>
                     </tr>
                     <tr>
-                        <td>Multiple Tenants?</td>
-                        <td>No</td>
+                        <td>Multiple Tenants</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->multiple_tenants ? $assessmentInfo->multiple_tenants : 'Not Provided' }}</td>
                     </tr>
                     <tr>
-                        <td>Site owned or rented?</td>
-                        <td>Owned</td>
+                        <td>Site owned or rented</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->site_owned ? $assessmentInfo->site_owned : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Monthly Production Capacity</td>
-                        <td>50,000 units</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->monthly_production ? $assessmentInfo->monthly_production : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Primary Contact Name</td>
-                        <td>John Manager</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->primary_contact_name ? $assessmentInfo->primary_contact_name : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Position</td>
-                        <td>Facility Manager</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->position ? $assessmentInfo->position : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>E-mail</td>
-                        <td>john.manager@example.com</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->email ? $assessmentInfo->email : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Contact Number</td>
-                        <td>+1-555-123-4567</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->contact_number ? $assessmentInfo->contact_number : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Social Compliance Contact</td>
-                        <td>Sarah Compliance</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->social_compliance_contact ? $assessmentInfo->social_compliance_contact : 'Not Provided' }}</td>
                     </tr>
                 </table>
             </div>
             <br>
-            <div class="employee">
+            <div class="employee" >
                 <table>
                     <tr style="background-color: red;">
                         <th colspan="2" style="color: white; font-weight: bold">Employee Information</th>
                     </tr>
                     <tr>
-                        <td>Number of employees</td>
-                        <td>250</td>
+                        <td>Number of employees </td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->number_of_employees ? $assessmentInfo->number_of_employees : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Number of workers</td>
-                        <td>220</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->number_of_workers ? $assessmentInfo->number_of_workers : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Male employees</td>
-                        <td>150</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->male_employees ? $assessmentInfo->male_employees : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Female Employees</td>
-                        <td>100</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->female_employees ? $assessmentInfo->female_employees : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Local workers</td>
-                        <td>225</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->local_workers ? $assessmentInfo->local_workers : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Foreign Migrant Workers</td>
-                        <td>25</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->foreign_workers ? $assessmentInfo->foreign_workers : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Worker Turnover Rate</td>
-                        <td>15% annually</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->worker_turnover_rate ? $assessmentInfo->worker_turnover_rate : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Labor Agent Used</td>
-                        <td>Yes</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->labor_agent_used ? $assessmentInfo->labor_agent_used : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Management Spoken Language</td>
-                        <td>English</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->management_language ? $assessmentInfo->management_language : 'Not Provided' }}</td>
                     </tr>
                     <tr>
                         <td>Workers Spoken Language</td>
-                        <td>English, Spanish</td>
+                        <td>{{ $assessmentInfo && $assessmentInfo->workers_language ? $assessmentInfo->workers_language : 'Not Provided' }}</td>
                     </tr>
                 </table>
             </div>
@@ -402,7 +432,7 @@
                     </tr>
                     <tr>
                         <td>
-                            This facility assessment was conducted to evaluate compliance with industry standards and regulations. The facility demonstrated strong performance in Health & Safety and Management Systems, with good performance in Environmental Compliance and Labor Practices. Some improvements are needed in Business Ethics area.
+                            {{ $assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.' }}
                         </td>
                     </tr>
                 </table>
@@ -417,7 +447,7 @@
                     </tr>
                     <tr>
                         <td>
-                            The facility has implemented an excellent occupational health monitoring program, comprehensive waste management system, and regular safety training for all employees. Employee engagement is strong with regular town hall meetings and suggestion programs.
+                            {{ $assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.' }}
                         </td>
                     </tr>
                 </table>
@@ -425,155 +455,110 @@
 
             <div class="findings">
                 <h2 style="color: #0070C0">Audit Findings</h2>
-                <table>
-                    <tr style="border: 1px solid black;">
-                        <th style="background-color: #c0c0c0; text-align: left;">
-                            Health & Safety
-                        </th>
-                        <th width='20%'>
-                            <table style="border: 1px solid black;">
+                
+                @if(isset($audit_findings) && count($audit_findings) > 0)
+                    @foreach($audit_findings as $category => $categoryData)
+                        <table>
+                            <tr style="border: 1px solid black;">
+                                <th style="background-color: #c0c0c0; text-align: left;">
+                                    {{ $category }}
+                                </th>
+                                <th width='20%'>
+                                    <table style="border: 1px solid black;">
+                                        <tr>
+                                            No. of Findings
+                                        </tr>
+                                        <tr>
+                                            <td style="background-color: green; text-align: center">{{ $categoryData['color_counts']['green'] ?? 0 }}</td>
+                                            <td style="background-color: yellow; text-align: center">{{ $categoryData['color_counts']['yellow'] ?? 0 }}</td>
+                                            <td style="background-color: orange; text-align: center">{{ $categoryData['color_counts']['orange'] ?? 0 }}</td>
+                                            <td style="background-color: red; text-align: center">{{ $categoryData['color_counts']['red'] ?? 0 }}</td>
+                                        </tr>
+                                    </table>
+                                </th>
+                                <th width='10%' style="padding: 0px; margin: 0px">
+                                    <table style="padding: 0px; margin: 0px">
+                                        <tr><th><p style="font-size: 10px; margin: 2px;">Audit Score</p></th></tr>
+                                        <tr><th><p style="font-size: 10px; margin: 2px;">{{ number_format($categoryData['percentage'], 1) }}</p></th></tr>
+                                    </table>
+                                </th>
+                            </tr>
+                            @if(count($categoryData['findings']) == 0)
                                 <tr>
-                                    No. of Findings
+                                    <td colspan='3'>No findings noted under this section on the assessment day.</td>
                                 </tr>
-                                <tr>
-                                    <td style="background-color: green; text-align: center">1</td>
-                                    <td style="background-color: yellow; text-align: center">0</td>
-                                    <td style="background-color: orange; text-align: center">0</td>
-                                    <td style="background-color: red; text-align: center">0</td>
-                                </tr>
-                            </table>
-                        </th>
-                        <th width='10%' style="padding: 0px; margin: 0px">
-                            <table style="padding: 0px; margin: 0px">
-                                <tr><th><p style="font-size: 10px; margin: 2px;">Audit Score</p></th></tr>
-                                <tr><th><p style="font-size: 10px; margin: 2px;">92.50</p></th></tr>
-                            </table>
-                        </th>
-                    </tr>
-                </table>
-                <br>
+                            @endif
+                        </table>
+                        <br>
+                        
+                        @if(count($categoryData['findings']) > 0)
+                            @foreach($categoryData['findings'] as $index => $finding)
+                                @php
+                                    $color = isset($finding['color']) ? strtolower(trim($finding['color'])) : 'unknown';
+                                    $colorName = ucfirst($color);
+                                    $riskRating = isset($finding['risk_rating']) ? $finding['risk_rating'] : 'Not Specified';
+                                    
+                                    // Generate finding ID
+                                    $categoryPrefix = strtoupper(substr($category, 0, 2));
+                                    $findingId = $categoryPrefix . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT);
+                                @endphp
+                                
+                                <table>
+                                    <tr style="border: 0px solid black;">
+                                        <td width="20%">{{ $findingId }}</td>
+                                        <td style="background-color: {{ $color }}; color: {{ $color == 'yellow' ? 'black' : 'white' }}" width="20%">{{ $riskRating }}</td>
+                                        <td style="border: 0px solid black"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Findings</td>
+                                        <td colspan="2">{{ $finding['findings'] ?? 'No findings description provided.' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td scope="col">Legal Reference</td>
+                                        <td colspan="2">{{ $finding['legal_ref'] ?? 'No legal reference provided.' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Recommendation</td>
+                                        <td colspan="2">{{ $finding['recommendation'] ?? 'No recommendation provided.' }}</td>
+                                    </tr>
+                                </table>
+                                <br>
+                            @endforeach
+                        @endif
+                    @endforeach
+                @else
+                    <table>
+                        <tr style="border: 1px solid black;">
+                            <th style="background-color: #c0c0c0; text-align: left;">
+                                Assessment Results
+                            </th>
+                            <th width='20%'>
+                                <table style="border: 1px solid black;">
+                                    <tr>
+                                        No. of Findings
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: green; text-align: center">0</td>
+                                        <td style="background-color: yellow; text-align: center">0</td>
+                                        <td style="background-color: orange; text-align: center">0</td>
+                                        <td style="background-color: red; text-align: center">0</td>
+                                    </tr>
+                                </table>
+                            </th>
+                            <th width='10%' style="padding: 0px; margin: 0px">
+                                <table style="padding: 0px; margin: 0px">
+                                    <tr><th><p style="font-size: 10px; margin: 2px;">Audit Score</p></th></tr>
+                                    <tr><th><p style="font-size: 10px; margin: 2px;">{{ $scores['overall_percentage'] ?? 0 }}</p></th></tr>
+                                </table>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td colspan='3'>No audit findings available. All assessment questions were answered as "Yes" or no findings were recorded.</td>
+                        </tr>
+                    </table>
+                    <br>
+                @endif
 
-                <table>
-                    <tr style="border: 0px solid black;">
-                        <td width="20%">HS-01</td>
-                        <td style="background-color: green" width="20%">Minor</td>
-                        <td style="border: 0px solid black"></td>
-                    </tr>
-                    <tr>
-                        <td>Findings</td>
-                        <td colspan="2">Some fire extinguishers were found to be missing monthly inspection tags.</td>
-                    </tr>
-                    <tr>
-                        <td scope="col">Legal Reference</td>
-                        <td colspan="2">Fire Safety Regulation 2021, Article 15</td>
-                    </tr>
-                    <tr>
-                        <td>Recommendation</td>
-                        <td colspan="2">Implement a regular monthly inspection system for all fire extinguishers with proper documentation.</td>
-                    </tr>
-                </table>
-                </br>
-
-                <table>
-                    <tr style="border: 1px solid black;">
-                        <th style="background-color: #c0c0c0; text-align: left;">
-                            Environmental Compliance
-                        </th>
-                        <th width='20%'>
-                            <table style="border: 1px solid black;">
-                                <tr>
-                                    No. of Findings
-                                </tr>
-                                <tr>
-                                    <td style="background-color: green; text-align: center">1</td>
-                                    <td style="background-color: yellow; text-align: center">1</td>
-                                    <td style="background-color: orange; text-align: center">0</td>
-                                    <td style="background-color: red; text-align: center">0</td>
-                                </tr>
-                            </table>
-                        </th>
-                        <th width='10%' style="padding: 0px; margin: 0px">
-                            <table style="padding: 0px; margin: 0px">
-                                <tr><th><p style="font-size: 10px; margin: 2px;">Audit Score</p></th></tr>
-                                <tr><th><p style="font-size: 10px; margin: 2px;">85.75</p></th></tr>
-                            </table>
-                        </th>
-                    </tr>
-                </table>
-                <br>
-
-                <table>
-                    <tr style="border: 0px solid black;">
-                        <td width="20%">ENV-01</td>
-                        <td style="background-color: green" width="20%">Minor</td>
-                        <td style="border: 0px solid black"></td>
-                    </tr>
-                    <tr>
-                        <td>Findings</td>
-                        <td colspan="2">Waste segregation not properly implemented in production area 2.</td>
-                    </tr>
-                    <tr>
-                        <td scope="col">Legal Reference</td>
-                        <td colspan="2">Environmental Protection Act, Section 23</td>
-                    </tr>
-                    <tr>
-                        <td>Recommendation</td>
-                        <td colspan="2">Provide additional waste bins with clear labeling and employee training.</td>
-                    </tr>
-                </table>
-                </br>
-
-                <table>
-                    <tr style="border: 0px solid black;">
-                        <td width="20%">ENV-02</td>
-                        <td style="background-color: yellow" width="20%">Major</td>
-                        <td style="border: 0px solid black"></td>
-                    </tr>
-                    <tr>
-                        <td>Findings</td>
-                        <td colspan="2">Water quality testing not performed as per the required schedule.</td>
-                    </tr>
-                    <tr>
-                        <td scope="col">Legal Reference</td>
-                        <td colspan="2">Water Resource Management Act, Article 42</td>
-                    </tr>
-                    <tr>
-                        <td>Recommendation</td>
-                        <td colspan="2">Establish a regular water testing schedule with third-party lab and maintain proper records.</td>
-                    </tr>
-                </table>
-                </br>
-
-                <table>
-                    <tr style="border: 1px solid black;">
-                        <th style="background-color: #c0c0c0; text-align: left;">
-                            Labor Practices
-                        </th>
-                        <th width='20%'>
-                            <table style="border: 1px solid black;">
-                                <tr>
-                                    No. of Findings
-                                </tr>
-                                <tr>
-                                    <td style="background-color: green; text-align: center">0</td>
-                                    <td style="background-color: yellow; text-align: center">0</td>
-                                    <td style="background-color: orange; text-align: center">0</td>
-                                    <td style="background-color: red; text-align: center">0</td>
-                                </tr>
-                            </table>
-                        </th>
-                        <th width='10%' style="padding: 0px; margin: 0px">
-                            <table style="padding: 0px; margin: 0px">
-                                <tr><th><p style="font-size: 10px; margin: 2px;">Audit Score</p></th></tr>
-                                <tr><th><p style="font-size: 10px; margin: 2px;">100.00</p></th></tr>
-                            </table>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td colspan='3'>No findings noted under this section on the assessment day.</td>
-                    </tr>
-                </table>
-                <br>
             </div>
         </div>
         <div class="disclaimer">
@@ -583,7 +568,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: justify; padding: 3px;">
-                        This assessment report is for informational purposes only. The information contained herein represents the observations and findings of the assessment team at the time of inspection. While every effort has been made to ensure accuracy, the audit company makes no warranty, expressed or implied, as to the accuracy, completeness, or timeliness of this information. The report should not be relied upon as legal advice or as a substitute for consultation with professional advisors.
+                        {{ $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility. The audit was conducted in accordance with local law and different international standards and guidelines along with specific COC. However, it is important to note that the findings and recommendations presented in this report are subject to the following disclaimers and limitations that the intended user is the ultimate owner of the report. ECOTEC is not representing any buyers by this assessment. It is intended to assist the facility to comply the requirement of law and buyers COC and enhance the understanding the standards and requirements. The report shall be read as a whole, and sections should not be read or relied upon out of context. All recommendations, where given, are for the purpose of providing directional advice only. Recommendations are not exhaustive and relate solely to identifying key and obvious improvements related to findings in this report, and do not represent a comprehensive solution to any issue. This report is based only on the date herein and ECOTEC has no responsibility to update this report. ECOTEC takes no responsibility for any loss that any party may suffer in connection with any actions, or lack of action, taken to address the findings in the report.' }}
                     </td>
                 </tr>
             </table>
@@ -594,4 +579,4 @@
         Page <span class="pagenum"></span>
     </div>
 </body>
-</html> 
+</html>

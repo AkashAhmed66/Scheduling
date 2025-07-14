@@ -1,0 +1,34 @@
+// MainLayout.js
+import React from "react";
+import Navbar from "../MainLayout/Navbar";
+import Body from "../MainLayout/Body";
+
+function BasicLayout({ children, sideBarData }) {
+    return (
+        <div className="flex flex-col h-screen">
+            <div className="w-full z-30 shadow-md">
+                <Navbar />
+            </div>
+            <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="w-full">
+                    <Body children={children} />
+                </div>
+            </div>
+            <footer className="bg-gray-100 shadow-lg">
+                <div className="flex justify-between items-center py-4 px-4">
+                    <div className="text-gray-600">
+                        &copy; {new Date().getFullYear()} NBM International Limited
+                    </div>
+                    <div
+                        className="text-gray-600"
+                        style={{ marginLeft: "auto" }}
+                    >
+                        Developed by <strong>SourceExpert</strong>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    );
+}
+
+export default BasicLayout;

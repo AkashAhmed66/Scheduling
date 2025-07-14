@@ -1,17 +1,16 @@
-import { usePage } from "@inertiajs/react";
+import { usePage, router } from "@inertiajs/react";
 import React, { useEffect, useState } from "react";
 
 export default function DateRangeCalendar() {
   const { jobs } = usePage().props;
 
-  // Convert jobs array into tasks format
+  // Convert jobs array into tasks format - store full job objects grouped by endDate
   const tasks = jobs.reduce((acc, job) => {
-    const { endDate, reportNo, jobStatus } = job;
+    const { endDate } = job;
     if (!acc[endDate]) {
       acc[endDate] = [];
     }
-    acc[endDate].push(reportNo);
-    acc[endDate].push(jobStatus);
+    acc[endDate].push(job);
     return acc;
   }, {});
 
@@ -35,6 +34,7 @@ export default function DateRangeCalendar() {
 
   // Initialize calendar with the first 7 days from today
   useEffect(() => {
+    console.log('tasks', tasks)
     const today = new Date();
     const formattedToday = today.toISOString().split("T")[0];
     setCurrentStartDate(formattedToday);
@@ -99,9 +99,14 @@ export default function DateRangeCalendar() {
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  // Handle navigation to specific job
+  const handleJobClick = (jobId) => {
+    router.visit(`/view-job/${jobId}`);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen">
+      <div className="w-full">
         <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Schedule Calendar</h2>
@@ -194,7 +199,7 @@ export default function DateRangeCalendar() {
           {/* Calendar */}
           {calendarDays.length > 0 ? (
             <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {calendarDays.map((day) => (
                   <div
                     key={day}
@@ -210,31 +215,60 @@ export default function DateRangeCalendar() {
                         </span>
                       </div>
                     </div>
-                    <div className="p-3 bg-white">
+                    <div className="p-3 bg-white max-h-96 overflow-y-auto">{/* Scrollable content */}
                       {tasks[day] && tasks[day].length > 0 ? (
-                        <div className="space-y-2">
-                          {tasks[day].map((task, index) => {
-                            // Every other item is a status
-                            if (index % 2 === 1) {
-                              return (
-                                <div 
-                                  key={index} 
-                                  className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(task)}`}
+                        <div className="space-y-3">
+                          {tasks[day].map((job, index) => (
+                            <div key={index} className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow duration-200">
+                              {/* Report Number - Clickable */}
+                              <div className="flex items-center justify-between mb-2">
+                                <button
+                                  onClick={() => handleJobClick(job.id)}
+                                  className="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors duration-200"
                                 >
-                                  {task}
+                                  {job.reportNo}
+                                </button>
+                                <div className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(job.jobStatus)}`}>
+                                  {job.jobStatus}
                                 </div>
-                              );
-                            } else if (index % 2 === 0 && index + 1 < tasks[day].length) {
-                              // This is a report number, and we have its status
-                              return (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                                  <span className="text-sm font-medium text-gray-800">{task}</span>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })}
+                              </div>
+                              
+                              {/* Factory Name */}
+                              <div className="mb-1">
+                                <span className="text-xs font-medium text-gray-600">Factory:</span>
+                                <p className="text-sm text-gray-800 truncate" title={job.factoryName}>
+                                  {job.factoryName || 'N/A'}
+                                </p>
+                              </div>
+                              
+                              {/* Factory Address */}
+                              <div className="mb-1">
+                                <span className="text-xs font-medium text-gray-600">Address:</span>
+                                <p className="text-sm text-gray-800 truncate" title={`${job.factoryAddress || ''}, ${job.factoryCity || ''}, ${job.factoryCountry || ''}`}>
+                                  {job.factoryAddress || job.factoryCity || job.factoryCountry ? 
+                                    `${job.factoryAddress || ''}, ${job.factoryCity || ''}, ${job.factoryCountry || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',') 
+                                    : 'N/A'
+                                  }
+                                </p>
+                              </div>
+                              
+                              {/* Service Name */}
+                              <div className="mb-1">
+                                <span className="text-xs font-medium text-gray-600">Service:</span>
+                                <p className="text-sm text-gray-800 truncate" title={job.serviceName}>
+                                  {job.serviceName || job.jobType || 'N/A'}
+                                </p>
+                              </div>
+                              
+                              {/* Auditors */}
+                              <div>
+                                <span className="text-xs font-medium text-gray-600">Auditors:</span>
+                                <p className="text-sm text-gray-800 truncate" title={job.auditors}>
+                                  {job.auditors || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <div className="py-2 text-center text-sm text-gray-500">

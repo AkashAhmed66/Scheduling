@@ -12,8 +12,8 @@ export default function Home(props) {
   return (
     <BasicLayout>
       <Head title="Home" />
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div>
+        <div className="w-full">
           <HomeComponent />
         </div>
       </div>

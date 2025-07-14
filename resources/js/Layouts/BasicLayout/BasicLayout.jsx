@@ -10,12 +10,12 @@ function BasicLayout({ children, sideBarData }) {
                 <Navbar />
             </div>
             <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="w-full">
                     <Body children={children} />
                 </div>
             </div>
-            <footer className="bg-gray-100 shadow-lg mt-6 py-4">
-                <div className="flex justify-between items-center px-6">
+            <footer className="bg-gray-100 shadow-lg">
+                <div className="flex justify-between items-center py-4 px-4">
                     <div className="text-gray-600">
                         &copy; {new Date().getFullYear()} NBM International Limited
                     </div>

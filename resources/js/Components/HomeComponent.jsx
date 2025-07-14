@@ -20,8 +20,8 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="min-h-screen">
+      <div className="grid grid-cols-1 lg:grid-cols-12 space-y-6 lg:space-y-0 lg:gap-6">
         {/* Profile Card - 4 columns on large screens */}
         <div className="lg:col-span-4">
           <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100">            

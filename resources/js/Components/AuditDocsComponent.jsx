@@ -1,9 +1,12 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Inertia } from '@inertiajs/inertia';
+import ConfirmationModal from './ConfirmationModal';
 // import { AuditContext } from '@/Context/AuditContext';
 
 export default function AuditDocsComponent() {
   // const { state } = useContext(AuditContext);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
 
   const extractDocuments = () => {
     // Return empty array since we're not using context in this component
@@ -30,9 +33,16 @@ export default function AuditDocsComponent() {
   };
 
   const handleDelete = (documentId) => {
-    if (confirm('Are you sure you want to delete this document?')) {
-      Inertia.delete(`/document/${documentId}`);
+    setDocumentToDelete(documentId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (documentToDelete) {
+      Inertia.delete(`/document/${documentToDelete}`);
     }
+    setShowDeleteConfirm(false);
+    setDocumentToDelete(null);
   };
 
   const getDocumentIcon = (fileType) => {
@@ -149,6 +159,17 @@ export default function AuditDocsComponent() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Document"
+        message="Are you sure you want to delete this document? This action cannot be undone."
+        confirmButtonText="Delete Document"
+        type="danger"
+      />
     </div>
   );
 }

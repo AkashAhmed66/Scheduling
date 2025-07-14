@@ -49,8 +49,8 @@ export default function ActivateUserComponent() {
   ];
 
   return (
-    <div className="p-6">
-      <div className="max-w-7xl mx-auto">
+    <div>
+      <div className="w-full">
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
             <h2 className="text-2xl font-bold">Activate User</h2>
@@ -75,14 +75,15 @@ export default function ActivateUserComponent() {
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Full Name
-                </label>
+            <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Full Name
+                  </label>
                 <input
                   type="text"
                   id="name"
@@ -113,7 +114,8 @@ export default function ActivateUserComponent() {
                   required
                 />
               </div>
-              
+              </div>
+
               <div>
                 <label
                   htmlFor="role"
@@ -168,7 +170,7 @@ export default function ActivateUserComponent() {
               </div>
             </form>
             
-            <div className="mt-8 pt-8 border-t border-gray-200 max-w-md mx-auto">
+            <div className="mt-8 pt-8 border-t border-gray-200 max-w-2xl">
               <div className="flex items-center text-sm text-gray-500">
                 <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>

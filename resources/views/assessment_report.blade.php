@@ -135,8 +135,8 @@
         <div class="headcontainer">
             <img class="logo" src="../public/images/logo.png" alt="logo">
                 <div class="infoh">
-                    <p>www.ecotecglobal.net</p>
-                    <p>info@ecotecglobal.net</p>
+                    <p>www.nbm-intl.com</p>
+                    <p>info@nbm-intl.com</p>
                 </div>
         </div>
     </div>
@@ -198,7 +198,8 @@
             </div>
         </div>
         <div class="summary">
-            <h2 style="color: #0070C0">Report Summary</h2>
+            <h2 style="color: #0070C0">Report Summary of</h2>
+            <h2 style="color: #000000; margin-top: 5px; margin-bottom: 20px; font-weight: bold;">{{ $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Facility Name Not Provided' }}</h2>
             <div class="ratingTableDiv">
                 <div class="ratingTable">
                     <table >
@@ -232,10 +233,10 @@
                         <td style="text-align: center">{{ $scores['overall_percentage'] ?? 0 }}%</td>
                     </tr>
                     <tr style="border: 0px">
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 90)  <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 71 && ($scores['overall_percentage'] ?? 0) < 90)  <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 41 && ($scores['overall_percentage'] ?? 0) < 71)  <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) < 41) <img style="height: 25px; width: 30px; position:relative; top:1px; left: 50px" class="logo" src="../public/img/up.png" alt="logo"> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 90)  <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 71 && ($scores['overall_percentage'] ?? 0) < 90)  <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 41 && ($scores['overall_percentage'] ?? 0) < 71)  <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
+                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) < 41) <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
                         <td style="border: 0px"></td>
                     </tr>
                 </table>

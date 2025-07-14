@@ -244,7 +244,7 @@ class AssessmentController extends Controller
 
         // Generate and download the CAPA PDF
         $pdf = PDF::loadView('cocCapa', $data);
-        $pdf->setPaper('a4', 'portrait');
+        $pdf->setPaper('a4', 'landscape');
 
         return $pdf->download('capa_report_' . $id . '.pdf');
     }

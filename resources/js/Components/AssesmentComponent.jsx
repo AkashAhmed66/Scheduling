@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/react';
 import axios from "axios";
+import ConfirmationModal from './ConfirmationModal';
 
 export default function AssesmentComponent() {
   const { question, user, assessment } = usePage().props;
@@ -10,6 +11,36 @@ export default function AssesmentComponent() {
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState({});
+  const [collapsedSubcategories, setCollapsedSubcategories] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Toggle functions for collapsible sections
+  const toggleCategory = (category) => {
+    setCollapsedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const toggleSubcategory = (categorySubcategoryKey) => {
+    setCollapsedSubcategories(prev => ({
+      ...prev,
+      [categorySubcategoryKey]: !prev[categorySubcategoryKey]
+    }));
+  };
+
+  const scrollToCategory = (category) => {
+    const categoryElement = document.getElementById(`category-${category}`);
+    if (categoryElement) {
+      categoryElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+    }
+  };
   const [assessmentInfo, setAssessmentInfo] = useState({
     // Assessor Information
     auditCompany: '',
@@ -330,10 +361,6 @@ export default function AssesmentComponent() {
   };
 
   const resetAssessment = async () => {
-    if (!confirm('Are you sure you want to reset this assessment? This will delete all current answers and restore the original questions. This action cannot be undone.')) {
-      return;
-    }
-
     try {
       setResetLoading(true);
       
@@ -363,9 +390,18 @@ export default function AssesmentComponent() {
     }
   };
 
+  const handleResetClick = () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    setShowResetConfirm(false);
+    resetAssessment();
+  };
+
   return (
-    <div className="p-6">
-      <div className="max-w-7xl mx-auto">
+    <div>
+      <div className="w-full">
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
             <h2 className="text-2xl font-bold">Assessment Evaluation</h2>
@@ -373,56 +409,113 @@ export default function AssesmentComponent() {
           </div>
           
           <div className="p-6">
-            <div className="flex flex-wrap gap-3 mb-6">
-              <button
-                onClick={generatePDF}
-                disabled={loading}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                {loading ? 'Generating PDF...' : 'Download PDF'}
-              </button>
-              
-              <button
-                onClick={generateCAPAPDF}
-                disabled={loading}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                {loading ? 'Generating CAPA...' : 'CAPA'}
-              </button>
-              
-              <button
-                onClick={() => setShowModal(true)}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Info
-              </button>
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={generatePDF}
+                  disabled={loading}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  {loading ? 'Generating Report...' : 'Report'}
+                </button>
+                
+                <button
+                  onClick={generateCAPAPDF}
+                  disabled={loading}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  {loading ? 'Generating CAPA...' : 'CAPA'}
+                </button>
+                
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Info
+                </button>
 
-              <button
-                onClick={resetAssessment}
-                disabled={resetLoading}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-red-600 hover:to-pink-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                {resetLoading ? 'Resetting...' : 'Reset'}
-              </button>
+                <button
+                  onClick={handleResetClick}
+                  disabled={resetLoading}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-red-600 hover:to-pink-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  {resetLoading ? 'Resetting...' : 'Reset'}
+                </button>
+              </div>
+
+              {/* Statistics Buttons */}
+              <div className="flex gap-3 items-center">
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg shadow-md">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Yes: {questions.filter(q => q.answer === 'Yes').length}
+                </div>
+                
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg shadow-md">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                  No: {questions.filter(q => q.answer === 'No').length}
+                </div>
+                
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Total: {questions.length}
+                </div>
+
+                {/* Category Navigation Dropdown */}
+                <div className="relative">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        scrollToCategory(e.target.value);
+                        setSelectedCategory(''); // Reset to show placeholder
+                      }
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50 transition-all duration-200 cursor-pointer border-none appearance-none pr-10 min-w-[160px]"
+                    style={{
+                      color: selectedCategory === '' ? '#acafb5ff' : 'white'
+                    }}
+                  >
+                    <option value="" disabled style={{color: '#6b7280', backgroundColor: '#f9fafb'}}>
+                      {Object.keys(groupedQuestions).length > 0 ? 'Jump to Category' : 'Loading Categories...'}
+                    </option>
+                    {Object.keys(groupedQuestions).map((category) => (
+                      <option key={category} value={category} style={{color: '#374151'}}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none ">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="overflow-x-auto shadow-md rounded-lg">
-              <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead className="sticky top-0 z-40">
+              <table className="w-full bg-white rounded-lg overflow-hidden">
+                <thead className="sticky z-50" style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question ID</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question Ref</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Answer</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Findings</th>
@@ -435,9 +528,21 @@ export default function AssesmentComponent() {
                   {Object.keys(groupedQuestions).map((category) => (
                     <React.Fragment key={category}>
                       {/* Category Header - Show only once per category */}
-                      <tr className="bg-gradient-to-r from-indigo-500 to-purple-500 sticky top-12 z-30">
+                      <tr id={`category-${category}`} className="bg-gradient-to-r from-indigo-500 to-purple-500 sticky z-40" style={{ top: '48px' }}>
                         <td colSpan="7" className="py-4 px-6 text-left font-bold text-base text-white uppercase tracking-wide border-b-2 border-indigo-300 shadow-md">
-                          <div className="flex items-center gap-2">
+                          <div 
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white hover:bg-opacity-10 rounded p-2 -m-2 transition-colors"
+                            onClick={() => toggleCategory(category)}
+                          >
+                            <svg 
+                              className={`w-5 h-5 text-white transition-transform duration-200 ${collapsedCategories[category] ? '-rotate-90' : 'rotate-0'}`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24" 
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                             </svg>
@@ -447,23 +552,34 @@ export default function AssesmentComponent() {
                       </tr>
                       
                       {/* Render all subcategories under this category */}
-                      {Object.keys(groupedQuestions[category]).map((subcategory) => (
-                        <React.Fragment key={`${category}-${subcategory}`}>
-                          {/* Subcategory Header */}
-                          <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky top-20 z-20">
-                            <td colSpan="7" className="py-3 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
-                              <div className="flex items-center gap-2 pl-4">
-                                <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                                {subcategory}
-                              </div>
-                            </td>
-                          </tr>
-                          
-                          {/* All questions under this subcategory */}
-                          {groupedQuestions[category][subcategory].map((questionItem) => (
-                            <tr key={questionItem.id} className="hover:bg-gray-50 transition-colors duration-150">
+                      {!collapsedCategories[category] && Object.keys(groupedQuestions[category]).map((subcategory) => {
+                        const subcategoryKey = `${category}-${subcategory}`;
+                        return (
+                          <React.Fragment key={subcategoryKey}>
+                            {/* Subcategory Header */}
+                            <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky z-30" style={{ top: '112px' }}>
+                              <td colSpan="7" className="py-3 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
+                                <div 
+                                  className="flex items-center gap-2 pl-4 cursor-pointer hover:bg-indigo-200 hover:bg-opacity-50 rounded p-2 -m-2 transition-colors"
+                                  onClick={() => toggleSubcategory(subcategoryKey)}
+                                >
+                                  <svg 
+                                    className={`w-4 h-4 text-indigo-600 transition-transform duration-200 ${collapsedSubcategories[subcategoryKey] ? '-rotate-90' : 'rotate-0'}`} 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24" 
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                  </svg>
+                                  {subcategory}
+                                </div>
+                              </td>
+                            </tr>
+                            
+                            {/* All questions under this subcategory */}
+                            {!collapsedSubcategories[subcategoryKey] && groupedQuestions[category][subcategory].map((questionItem) => (
+                            <tr key={questionItem.ncref} className="hover:bg-gray-50 transition-colors duration-150">
                               <td className="py-3 px-4 text-sm font-medium text-gray-900">{questionItem.id}</td>
                               <td className="py-3 px-4 text-sm text-gray-800">{questionItem.question}</td>
                               <td className="py-3 px-4">
@@ -539,10 +655,10 @@ export default function AssesmentComponent() {
                                   <span className="text-gray-400 italic">N/A</span>
                                 )}
                               </td>
-                            </tr>
-                          ))}
-                        </React.Fragment>
-                      ))}
+                            </tr>                            ))}
+                          </React.Fragment>
+                        );
+                      })}
                     </React.Fragment>
                   ))}
                 </tbody>
@@ -789,12 +905,13 @@ export default function AssesmentComponent() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Building description</label>
-                      <input
+                      <textarea
                         type="text"
                         value={assessmentInfo.buildingDescription}
                         onChange={(e) => handleInfoChange('buildingDescription', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
+
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
@@ -987,6 +1104,17 @@ export default function AssesmentComponent() {
           </div>
         </div>
       )}
+
+      {/* Reset Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={confirmReset}
+        title="Reset Assessment"
+        message="Are you sure you want to reset this assessment? This will delete all current answers and restore the original questions. This action cannot be undone."
+        confirmButtonText="Reset Assessment"
+        type="danger"
+      />
     </div>
   );
 }

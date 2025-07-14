@@ -152,8 +152,8 @@ export default function AssessmentDocumentComponent() {
     };
   
     return (
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+      <div>
+        <div className="w-full">
           <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
               <h2 className="text-2xl font-bold">Assessment Documents</h2>
@@ -177,7 +177,7 @@ export default function AssessmentDocumentComponent() {
               
               <div className="overflow-x-auto shadow-md rounded-lg">
                 {Object.keys(groupedDocuments).length > 0 ? (
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Document Name</th>

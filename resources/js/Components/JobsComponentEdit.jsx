@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useTable, usePagination, useGlobalFilter } from "react-table";
 import { usePage } from '@inertiajs/react';  // Inertia.js hook
 import { Inertia } from "@inertiajs/inertia";
+import ConfirmationModal from './ConfirmationModal';
 
 // Search component
 function GlobalFilter({ filter, setFilter }) {
@@ -25,6 +26,8 @@ function GlobalFilter({ filter, setFilter }) {
 export default function JobsComponent() {
   const { jobs, user } = usePage().props; // Get data from Inertia.js props
   const [data, setData] = useState([]); // Local state to store jobs data
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState(null);
 
   useEffect(() => {
     if (jobs) {
@@ -150,14 +153,21 @@ export default function JobsComponent() {
   };
 
   const handleDelete = (id) => {
-    if (confirm("Are you sure you want to delete this job?")) {
-      Inertia.delete(`/delete-job/${id}`);
+    setJobToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (jobToDelete) {
+      Inertia.delete(`/delete-job/${jobToDelete}`);
     }
+    setShowDeleteConfirm(false);
+    setJobToDelete(null);
   };
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="w-full">
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -178,7 +188,7 @@ export default function JobsComponent() {
           </div>
           
           <div className="overflow-x-auto">
-            <table {...getTableProps()} className="min-w-full divide-y divide-gray-200">
+            <table {...getTableProps()} className="w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-indigo-600 to-purple-600">
                 {headerGroups.map((headerGroup) => (
                   <tr {...headerGroup.getHeaderGroupProps()}>
@@ -249,6 +259,17 @@ export default function JobsComponent() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Job"
+        message="Are you sure you want to delete this job? This action cannot be undone."
+        confirmButtonText="Delete Job"
+        type="danger"
+      />
     </div>
   );
 }

@@ -10,7 +10,7 @@ function JobLayout({ children, sideBarData }) {
         <Navbar />
       </div>
       <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full">
           <Body children={children} />
         </div>
       </div>

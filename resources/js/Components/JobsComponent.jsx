@@ -38,6 +38,41 @@ export default function JobsComponent() {
     Inertia.post("/pass-job", { id, status });
   };
 
+  // Function to check if user can perform forward/backward actions
+  const canPerformAction = (jobStatus, userRole, actionType) => {
+    const status = jobStatus?.toLowerCase();
+    
+    // Admin (0) and Coordinator (1) can always do both actions, except when job is completed/done
+    if ((userRole === 0 || userRole === 1) && !['completed', 'done'].includes(status)) {
+      // Coordinator cannot do anything when status is completed
+      if (userRole === 1 && status === 'completed') {
+        return false;
+      }
+      return true;
+    }
+    
+    // Auditor (2) permissions
+    if (userRole === 2) {
+      // Can do actions when job is NOT in review status and NOT completed/done
+      if (!['review', 'completed', 'done'].includes(status)) {
+        return true;
+      }
+      // Can do actions when job is in 're-audit' status
+      if (status === 're-audit') {
+        return true;
+      }
+      return false;
+    }
+    
+    // Reviewer (3) permissions
+    if (userRole === 3) {
+      // Can only do actions when job is in 'review' status
+      return status === 'review';
+    }
+    
+    return false;
+  };
+
   const columns = useMemo(
     () => [
       { Header: "Report No.", accessor: "reportNo" },
@@ -69,22 +104,70 @@ export default function JobsComponent() {
       {
         Header: "Action",
         accessor: "action",
-        Cell: ({ row }) => (
-          <div className="flex gap-2">
-            <button
-              onClick={() => handlePass(row.original.id, 0)}
-              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:from-red-600 hover:to-red-700 transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-            >
-              Backward
-            </button>
-            <button
-              onClick={() => handlePass(row.original.id, 1)}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:from-green-600 hover:to-emerald-700 transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-            >
-              Forward
-            </button>
-          </div>
-        ),
+        Cell: ({ row }) => {
+          const jobStatus = row.original.jobStatus;
+          const canForward = canPerformAction(jobStatus, user.role, 'forward');
+          const canBackward = canPerformAction(jobStatus, user.role, 'backward');
+          
+          const getDisabledReason = (actionType) => {
+            const status = jobStatus?.toLowerCase();
+            const roleName = user.role === 0 ? 'Admin' : 
+                           user.role === 1 ? 'Coordinator' : 
+                           user.role === 2 ? 'Auditor' : 'Reviewer';
+            
+            if (['completed', 'done'].includes(status)) {
+              return `Cannot ${actionType} - Job is ${status}`;
+            }
+            
+            if (user.role === 2 && status === 'review') {
+              return `Cannot ${actionType} - Job is in review (Reviewer only)`;
+            }
+            
+            if (user.role === 3 && status !== 'review') {
+              return `Cannot ${actionType} - Reviewers can only act on jobs in review status`;
+            }
+            
+            return `${roleName} cannot ${actionType} job with status: ${jobStatus}`;
+          };
+          
+          return (
+            <div className="flex gap-2">
+              {canBackward ? (
+                <button
+                  onClick={() => handlePass(row.original.id, 0)}
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:from-red-600 hover:to-red-700 transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                >
+                  Backward
+                </button>
+              ) : (
+                <button
+                  disabled
+                  title={getDisabledReason('move backward')}
+                  className="bg-gray-300 text-gray-500 px-3 py-1.5 rounded-md text-sm font-medium cursor-not-allowed opacity-50"
+                >
+                  Backward
+                </button>
+              )}
+              
+              {canForward ? (
+                <button
+                  onClick={() => handlePass(row.original.id, 1)}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:from-green-600 hover:to-emerald-700 transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                >
+                  Forward
+                </button>
+              ) : (
+                <button
+                  disabled
+                  title={getDisabledReason('move forward')}
+                  className="bg-gray-300 text-gray-500 px-3 py-1.5 rounded-md text-sm font-medium cursor-not-allowed opacity-50"
+                >
+                  Forward
+                </button>
+              )}
+            </div>
+          );
+        },
       },
     ],
     []
@@ -120,13 +203,28 @@ export default function JobsComponent() {
   };
 
   return (
-    <div className="p-6 min-h-screen">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="min-h-screen">
+      <div className="w-full bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">Jobs Management</h2>
+          <div className="flex justify-between items-center mb-6 border-b pb-3">
+            <h2 className="text-2xl font-bold text-gray-800">Jobs Management</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Role:</span>
+              <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                user.role === 0 ? 'bg-purple-100 text-purple-800' :
+                user.role === 1 ? 'bg-blue-100 text-blue-800' :
+                user.role === 2 ? 'bg-green-100 text-green-800' :
+                'bg-orange-100 text-orange-800'
+              }`}>
+                {user.role === 0 ? 'Admin' : 
+                 user.role === 1 ? 'Coordinator' : 
+                 user.role === 2 ? 'Auditor' : 'Reviewer'}
+              </span>
+            </div>
+          </div>
           <GlobalFilter filter={globalFilter} setFilter={setGlobalFilter} />
           <div className="overflow-x-auto rounded-lg shadow">
-            <table {...getTableProps()} className="min-w-full divide-y divide-gray-200">
+            <table {...getTableProps()} className="w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-indigo-600 to-purple-600">
                 {headerGroups.map((headerGroup) => (
                   <tr {...headerGroup.getHeaderGroupProps()}>

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { Inertia } from '@inertiajs/inertia';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function ActivateUserListComponent() {
   const { users, unactive } = usePage().props;
   const [data, setData] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   
   // Role mapping function
   const getRoleName = (roleValue) => {
@@ -22,14 +25,23 @@ export default function ActivateUserListComponent() {
   }, []);
   
   const handleDelete = (id, image_url) => {
+    setUserToDelete({ id, image_url });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (userToDelete) {
       Inertia.post('delete-user', {
-        id,
-        image_url
+        id: userToDelete.id,
+        image_url: userToDelete.image_url
       });
     }
+    setShowDeleteConfirm(false);
+    setUserToDelete(null);
+  };
   return (
-    <div className="p-6">
-      <div className="max-w-7xl mx-auto">
+    <div>
+      <div className="w-full">
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
             <h2 className="text-2xl font-bold">User Management</h2>
@@ -38,7 +50,7 @@ export default function ActivateUserListComponent() {
           
           <div className="p-6">
             <div className="overflow-x-auto shadow-md rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="w-full divide-y divide-gray-200">
                 <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
@@ -100,6 +112,17 @@ export default function ActivateUserListComponent() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone and will permanently remove all user data."
+        confirmButtonText="Delete User"
+        type="danger"
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 import BasicLayout from '@/Layouts/BasicLayout/BasicLayout';
 import axios from 'axios';
 import SidebarContext from '@/Context/SideBarContext';
+import ConfirmationModal from '@/Components/ConfirmationModal';
 
 export default function Index({ rootFolders, canManage }) {
   const { csrf_token } = usePage().props;
@@ -30,6 +31,8 @@ export default function Index({ rootFolders, canManage }) {
   const [showRenameFileDialog, setShowRenameFileDialog] = useState(false);
   const [fileToRename, setFileToRename] = useState(null);
   const [showFolders, setShowFolders] = useState(true); // State to toggle folders sidebar visibility
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // Can be folder or files
   const fileInputRef = useRef(null);
 
   // Set up Axios defaults to include CSRF token
@@ -298,35 +301,41 @@ export default function Index({ rootFolders, canManage }) {
   };
 
   const handleDeleteFolder = async (folderId, parent_id) => {
-    if (!confirm('Are you sure you want to delete this folder and all its contents?')) return;
-    
-    try {
-      await axios.delete(`/api/audit-docs/folders/${folderId}`);
-      
-      // Remove from local state for immediate feedback
-      setFolders(folders.filter(folder => folder.id !== folderId));
-      // Fetch updated folder list
-      await fetchAllFolders(parent_id);
-    } catch (error) {
-      console.error("Error deleting folder:", error);
-      setUploadError(error.response?.data?.message || "Failed to delete folder");
-    }
+    setDeleteTarget({ type: 'folder', folderId, parent_id });
+    setShowDeleteConfirm(true);
   };
 
   const handleDeleteFiles = async (fileIds) => {
-    if (!confirm('Are you sure you want to delete the selected file(s)?')) return;
-    
+    setDeleteTarget({ type: 'files', fileIds });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
     try {
-      await axios.delete('/api/audit-docs/files', {
-        data: { file_ids: Array.isArray(fileIds) ? fileIds : [fileIds] }
-      });
-      
-      setFiles(files.filter(file => !fileIds.includes(file.id)));
-      setSelectedFiles([]);
+      if (deleteTarget.type === 'folder') {
+        await axios.delete(`/api/audit-docs/folders/${deleteTarget.folderId}`);
+        
+        // Remove from local state for immediate feedback
+        setFolders(folders.filter(folder => folder.id !== deleteTarget.folderId));
+        // Fetch updated folder list
+        await fetchAllFolders(deleteTarget.parent_id);
+      } else if (deleteTarget.type === 'files') {
+        await axios.delete('/api/audit-docs/files', {
+          data: { file_ids: Array.isArray(deleteTarget.fileIds) ? deleteTarget.fileIds : [deleteTarget.fileIds] }
+        });
+        
+        setFiles(files.filter(file => !deleteTarget.fileIds.includes(file.id)));
+        setSelectedFiles([]);
+      }
     } catch (error) {
-      console.error("Error deleting files:", error);
-      setUploadError(error.response?.data?.message || "Failed to delete files");
+      console.error("Error deleting:", error);
+      setUploadError(error.response?.data?.message || "Failed to delete");
     }
+
+    setShowDeleteConfirm(false);
+    setDeleteTarget(null);
   };
 
   const downloadFile = (fileId) => {
@@ -420,10 +429,10 @@ export default function Index({ rootFolders, canManage }) {
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div>
+            <div className="w-full">
               <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div className="p-6">
+                <div>
                   {/* Upload Progress Indicator */}
                   {isUploading && (
                     <div className="mb-4 bg-indigo-50 p-4 rounded-md">
@@ -527,7 +536,7 @@ export default function Index({ rootFolders, canManage }) {
                           </div>
                           
                           <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
+                            <table className="w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
                                 <tr>
                                   {canManage && (
@@ -753,6 +762,21 @@ export default function Index({ rootFolders, canManage }) {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title={deleteTarget?.type === 'folder' ? 'Delete Folder' : 'Delete Files'}
+        message={
+          deleteTarget?.type === 'folder'
+            ? 'Are you sure you want to delete this folder and all its contents? This action cannot be undone.'
+            : 'Are you sure you want to delete the selected file(s)? This action cannot be undone.'
+        }
+        confirmButtonText={deleteTarget?.type === 'folder' ? 'Delete Folder' : 'Delete Files'}
+        type="danger"
+      />
     </BasicLayout>
   );
 }

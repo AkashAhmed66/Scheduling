@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react'; 
 import { Inertia } from '@inertiajs/inertia'; 
+import ConfirmationModal from './ConfirmationModal'; 
 
 export default function FilesForJob() {
   const { fileStructure, jobId } = usePage().props;
@@ -8,6 +9,8 @@ export default function FilesForJob() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadFolder, setUploadFolder] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const simplifyFiles = (files, parent) => {
     var obj = {};
@@ -89,6 +92,14 @@ export default function FilesForJob() {
 
   // Delete File or Folder
   const handleDelete = (parentPath, key) => {
+    setDeleteTarget({ parentPath, key });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    const { parentPath, key } = deleteTarget;
     const pathParts = parentPath.split('/');
     let current = fileSystem;
 
@@ -100,6 +111,8 @@ export default function FilesForJob() {
 
     delete current[key];
     setFileSystem({ ...fileSystem });
+    setShowDeleteConfirm(false);
+    setDeleteTarget(null);
   };
 
   // Submit form data
@@ -227,6 +240,17 @@ export default function FilesForJob() {
           Submit All Files and Folders
         </button>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Item"
+        message="Are you sure you want to delete this item? This action cannot be undone."
+        confirmButtonText="Delete"
+        type="danger"
+      />
     </div>
   );
 }

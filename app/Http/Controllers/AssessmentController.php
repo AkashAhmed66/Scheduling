@@ -212,6 +212,7 @@ class AssessmentController extends Controller
             'assessors' => $assessmentInfo ? $assessmentInfo->assessors : 'N/A',
             'assesmentDate' => $assessmentInfo ? $assessmentInfo->assessment_date : 'N/A',
             'scheduleType' => $assessmentInfo ? $assessmentInfo->schedule_type : 'N/A',
+            'assessmentType' => $assessmentInfo ? $assessmentInfo->assessment_type : 'N/A',
             'primaryContact' => $assessmentInfo ? $assessmentInfo->primary_contact_name : 'N/A',
             'position' => $assessmentInfo ? $assessmentInfo->position : 'N/A',
         ];

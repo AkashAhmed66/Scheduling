@@ -65,14 +65,21 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 px-4">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/home" className="flex items-center">
+            <Link href="/home" className="flex items-center group">
               <img
                 src="/images/logo.png"
                 alt="logo"
-                className="w-10 h-10 transition-transform duration-300 hover:scale-110"
+                className="w-8 h-8 transition-transform duration-300 hover:scale-110"
                 onError={(e) => {e.target.style.display = 'none'}}
               />
-              <span className="ml-3 text-xl font-bold text-white hidden sm:block">InsighT</span>
+              <div className="ml-3 hidden sm:block">
+                <span className="text-2xl font-bold text-white tracking-wide transition-all duration-300 group-hover:text-indigo-100">
+                  <span className="bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent font-serif">
+                    InsighT
+                  </span>
+                </span>
+                <div className="h-0.5 bg-gradient-to-r from-white via-indigo-200 to-transparent w-0 group-hover:w-full transition-all duration-500 ease-out"></div>
+              </div>
             </Link>
           </div>
 

@@ -6,7 +6,7 @@
 /storage/*.key
 /storage/pail
 /vendor
-firebase_insight.json
+/public/firebase_insight.json
 .env
 .env.backup
 .env.production

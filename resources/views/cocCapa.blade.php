@@ -93,7 +93,7 @@
 
 <body>
     <header>
-        <h2>{{$info->capaTitile }}</h2>
+        <h2> {{ $info->capaTitile }}</h2>
     </header>
     <footer></footer>
     <main>
@@ -104,11 +104,11 @@
             </tr>  
             <tr>      
                 <th style="text-align:left">Facility Address: {{$info->facilityAddress}}</th>
-                <th style="text-align:left">Assessor Name: {{$info->assessors}}</th>
+                <th style="text-align:left">Assessor(s) Name: {{$info->assessors}}</th>
             </tr>  
             <tr>
                 <th style="text-align:left">Audit Date: {{ \Carbon\Carbon::parse($info->assesmentDate)->format('F d, Y') }}</th>
-                <th style="text-align:left">Audit Scheme & Type: {{$info->scheduleType}}</th>
+                <th style="text-align:left">Assessment & Schedule Type: {{$info->assessmentType." (".$info->scheduleType.")"}}</th>
             </tr>
         </table>
         </br>

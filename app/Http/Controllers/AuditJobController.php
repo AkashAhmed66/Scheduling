@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAuditJobRequest;
 use App\Models\AssesmentDocuments;
 use App\Models\Assessment;
 use App\Models\AssessmentDraft;
+use App\Models\StaffInformation;
 use App\Models\SupportingDocuments;
 use App\Models\UploadModel;
 use App\Models\User;
@@ -105,7 +106,33 @@ class AuditJobController extends Controller
 
     public function DeleteJob($id)
     {
-        AuditJob::where('id', $id)->delete();
+        $job = AuditJob::find($id);
+        if ($job) {
+            // Get the assessment before deleting the job
+            $assessment = $job->assesmentts;
+            $assessmentId = $assessment ? $assessment->id : null;
+            
+            // Delete related staff information
+            StaffInformation::where('job_id', $id)->delete();
+            
+            // Delete supporting documents
+            SupportingDocuments::where('jobId', $id)->delete();
+            
+            // Delete assessment documents
+            AssesmentDocuments::where('jobId', $id)->delete();
+            
+            // Delete the job first (this removes the foreign key constraint)
+            $job->delete();
+            
+            // Now delete the assessment and its related data
+            if ($assessment && $assessmentId) {
+                // Delete assessment drafts
+                AssessmentDraft::where('assesment_id', $assessmentId)->delete();
+                // Delete assessment
+                $assessment->delete();
+            }
+        }
+        
         return redirect()->back();
     }
     
@@ -114,7 +141,25 @@ class AuditJobController extends Controller
         $auditors = User::where('role', '2')->get();
         $reviewers = User::where('role', '3')->get();
         $job = AuditJob::where('id', $id)->first();
+        $staffInformation = StaffInformation::where('job_id', $id)->get();
         $assessmentTypes = UploadModel::distinct('type')->pluck('type');
+        
+        // Add staff information to job object for easy access in frontend
+        $job->staffList = $staffInformation->map(function ($staff) use ($auditors) {
+            $user = $auditors->firstWhere('id', $staff->user_id);
+            return [
+                'id' => $staff->id,
+                'user' => $staff->user_id,
+                'userName' => $user ? $user->name : 'Unknown User',
+                'staffDay' => $staff->stuff_day,
+                'startDate' => $staff->start_date->format('Y-m-d'),
+                'endDate' => $staff->end_date->format('Y-m-d'),
+                'note' => $staff->note,
+                'assessment_id' => $staff->assessment_id,
+                'reportWriter' => $staff->report_write
+            ];
+        });
+        
         return Inertia::render('CreateJob', [
             'create' => 0,
             'auditors' => $auditors,
@@ -152,10 +197,37 @@ class AuditJobController extends Controller
      */
     public function GetJobsForCalender()
     {
-        $jobs = AuditJob::where('team',  Auth::user()->team)->get();
-        if(Auth::user()->role == 0){
-            $jobs = AuditJob::get();
+        $user = Auth::user();
+        $jobs = collect();
+        
+        if ($user->role == 0) {
+            // Super admin sees all jobs
+            $jobs = AuditJob::with(['staffInformation.user'])->get();
+        } elseif ($user->role == 1) {
+            // Team admin sees jobs from their team
+            $jobs = AuditJob::with(['staffInformation.user'])->where('team', $user->team)->get();
+        } elseif ($user->role == 2 || $user->role == 3) {
+            // Auditors and reviewers see jobs where they are assigned as staff
+            $assignedJobIds = StaffInformation::where('user_id', $user->id)
+                                             ->pluck('job_id')
+                                             ->unique();
+            $jobs = AuditJob::with(['staffInformation.user'])->whereIn('id', $assignedJobIds)->get();
+            
+            // Also include jobs where they are assigned as reviewer (for role 3)
+            if ($user->role == 3) {
+                $reviewerJobs = AuditJob::with(['staffInformation.user'])->where('reviewers', $user->id)->get();
+                $jobs = $jobs->merge($reviewerJobs)->unique('id');
+            }
         }
+        
+        // Add field staff names to each job
+        $jobs = $jobs->map(function ($job) {
+            $fieldStaffNames = $job->staffInformation->pluck('user.name')->filter()->toArray();
+            $job->fieldStaffNames = $fieldStaffNames;
+            $job->totalStaffDays = $job->staffInformation->sum('stuff_day');
+            return $job;
+        });
+        
         return Inertia::render('Calender', [
             'jobs' => $jobs,
         ]);
@@ -191,18 +263,37 @@ class AuditJobController extends Controller
      */
     public function index()
     {
-        $jobs = AuditJob::where('team',  Auth::user()->team)->get();
         $user = Auth::user();
-        if($user->role == 2){
-            $jobs = $user->auditJobForAuditors;
+        $jobs = collect();
+        
+        if ($user->role == 0) {
+            // Super admin sees all jobs
+            $jobs = AuditJob::with(['staffInformation.user'])->get();
+        } elseif ($user->role == 1) {
+            // Team admin sees jobs from their team
+            $jobs = AuditJob::with(['staffInformation.user'])->where('team', $user->team)->get();
+        } elseif ($user->role == 2 || $user->role == 3) {
+            // Auditors and reviewers see jobs where they are assigned as staff
+            $assignedJobIds = StaffInformation::where('user_id', $user->id)
+                                             ->pluck('job_id')
+                                             ->unique();
+            $jobs = AuditJob::with(['staffInformation.user'])->whereIn('id', $assignedJobIds)->get();
+            
+            // Also include jobs where they are assigned as reviewer (for role 3)
+            if ($user->role == 3) {
+                $reviewerJobs = AuditJob::with(['staffInformation.user'])->where('reviewers', $user->id)->get();
+                $jobs = $jobs->merge($reviewerJobs)->unique('id');
+            }
         }
-        if($user->role == 3){
-            $jobs = $user->auditJobForReviwers;
-        }
-        // dd($jobs->toArray());
-        if(Auth::user()->role == 0){
-            $jobs = AuditJob::get();
-        }
+        
+        // Add field staff names to each job
+        $jobs = $jobs->map(function ($job) {
+            $fieldStaffNames = $job->staffInformation->pluck('user.name')->filter()->toArray();
+            $job->fieldStaffNames = $fieldStaffNames;
+            $job->totalStaffDays = $job->staffInformation->sum('stuff_day');
+            return $job;
+        });
+        
         return Inertia::render('Jobs', [
             'user' => $user,
             'jobs' => $jobs,
@@ -225,6 +316,12 @@ class AuditJobController extends Controller
         $formData = $request->toArray();
         $formData['team'] = Auth::user()->team;
 
+        // Remove individual staff fields and staffList from audit job data
+        $staffFields = ['user', 'staffDay', 'startDate', 'endDate', 'reportWriter', 'note', 'staffList'];
+        foreach ($staffFields as $field) {
+            unset($formData[$field]);
+        }
+
         $auditJob = AuditJob::create($formData);
         
         // Update the additional fields
@@ -237,13 +334,11 @@ class AuditJobController extends Controller
         $auditJob->clientShadowing = $request->clientShadowing;
         $auditJob->save();
 
-        $auditor = User::where('id', $formData['auditor'])->first();
         $reviewer = User::where('id', $formData['reviewer'])->first();
         
         $assesment = new Assessment();
         $assesment->type = $auditJob->assessmentType;
         $assesment->searchId = 'NBM' . now()->format('YmdHis');
-        $assesment->userss()->associate($auditor);
         $assesment->save();
 
         $questions = UploadModel::where('type', $assesment->type)->get();
@@ -267,11 +362,26 @@ class AuditJobController extends Controller
 
             $draft->save();
         }
-        $auditJob->auditors()->associate($auditor);
         $auditJob->reviewer()->associate($reviewer);
         $auditJob->assesmentts()->associate($assesment);
 
         $auditJob->save();
+
+        // Handle staff information
+        if ($request->has('staffList') && is_array($request->staffList)) {
+            foreach ($request->staffList as $staff) {
+                StaffInformation::create([
+                    'user_id' => $staff['user'],
+                    'stuff_day' => $staff['staffDay'],
+                    'start_date' => $staff['startDate'],
+                    'end_date' => $staff['endDate'],
+                    'note' => $staff['note'] ?? null,
+                    'job_id' => $auditJob->id,
+                    'assessment_id' => $staff['reportWriter'] ? $assesment->id : null,
+                    'report_write' => $staff['reportWriter'] ?? false
+                ]);
+            }
+        }
 
         return redirect()->route('jobs');
     }
@@ -280,6 +390,13 @@ class AuditJobController extends Controller
     {
         $formData = $request->toArray();
         $formData['team'] = Auth::user()->team;
+        
+        // Remove individual staff fields and staffList from audit job data
+        $staffFields = ['user', 'staffDay', 'startDate', 'endDate', 'reportWriter', 'note', 'staffList'];
+        foreach ($staffFields as $field) {
+            unset($formData[$field]);
+        }
+        
         $auditJob = AuditJob::findOrFail($formData['id']);
         $auditJob->update($formData);
         
@@ -292,6 +409,29 @@ class AuditJobController extends Controller
         $auditJob->scheduleType = $request->scheduleType;
         $auditJob->clientShadowing = $request->clientShadowing;
         $auditJob->save();
+        
+        // Get the existing assessment for this job
+        $assessment = $auditJob->assesmentts;
+        
+        // Handle staff information for edit
+        if ($request->has('staffList') && is_array($request->staffList)) {
+            // First, delete existing staff information for this job
+            StaffInformation::where('job_id', $auditJob->id)->delete();
+            
+            // Then create new staff information records
+            foreach ($request->staffList as $staff) {
+                StaffInformation::create([
+                    'user_id' => $staff['user'],
+                    'stuff_day' => $staff['staffDay'],
+                    'start_date' => $staff['startDate'],
+                    'end_date' => $staff['endDate'],
+                    'note' => $staff['note'] ?? null,
+                    'job_id' => $auditJob->id,
+                    'assessment_id' => $staff['reportWriter'] && $assessment ? $assessment->id : null,
+                    'report_write' => $staff['reportWriter'] ?? false
+                ]);
+            }
+        }
         
         // redirect to jobs route
         return redirect()->route('jobs');

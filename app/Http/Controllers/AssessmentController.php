@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assessment;
+use App\Models\AuditJob;
+use App\Models\StaffInformation;
 use App\Http\Requests\StoreAssessmentRequest;
 use App\Http\Requests\UpdateAssessmentRequest;
 use Illuminate\Http\Request;
@@ -20,7 +22,31 @@ class AssessmentController extends Controller
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+        $assessments = collect();
+        
+        if ($user->role == 0) {
+            // Super admin sees all assessments
+            $assessments = Assessment::all();
+        } elseif ($user->role == 1) {
+            // Team admin sees assessments from jobs in their team
+            $teamJobIds = AuditJob::where('team', $user->team)->pluck('id');
+            $assessmentIds = StaffInformation::whereIn('job_id', $teamJobIds)
+                                            ->whereNotNull('assessment_id')
+                                            ->pluck('assessment_id')
+                                            ->unique();
+            $assessments = Assessment::whereIn('id', $assessmentIds)->get();
+        } elseif ($user->role == 2 || $user->role == 3) {
+            // Auditors and reviewers see only assessments where they are assigned as report writers
+            $assessmentIds = StaffInformation::where('user_id', $user->id)
+                                            ->where('report_write', true)
+                                            ->whereNotNull('assessment_id')
+                                            ->pluck('assessment_id')
+                                            ->unique();
+            $assessments = Assessment::whereIn('id', $assessmentIds)->get();
+        }
+        
+        return response()->json($assessments);
     }
 
     /**

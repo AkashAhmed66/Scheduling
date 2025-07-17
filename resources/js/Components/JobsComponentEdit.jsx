@@ -41,32 +41,109 @@ export default function JobsComponent() {
 
   const columns = useMemo(
     () => [
-      { Header: "Report No.", accessor: "reportNo" },
-      { Header: "Factory Name", accessor: "factoryName" },
-      { Header: "Factory Address", accessor: "factoryAddress" },
-      { Header: "Service Name", accessor: "serviceName" },
-      { Header: "Job Status", accessor: "jobStatus", 
+      { 
+        Header: "Report No.", 
+        accessor: "reportNo",
+        Cell: ({ value }) => (
+          <span className="font-medium text-gray-900">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Factory", 
+        accessor: "factoryName",
+        Cell: ({ value }) => (
+          <span className="text-gray-700">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Factory Location", 
+        accessor: (row) => `${row.factoryCity || ''}, ${row.factoryCountry || ''}`.replace(/^,\s*|,\s*$/g, '') || 'N/A',
+        Cell: ({ value }) => (
+          <span className="text-gray-600 text-sm">{value}</span>
+        )
+      },
+      { 
+        Header: "Service Name", 
+        accessor: "serviceName",
+        Cell: ({ value }) => (
+          <span className="text-gray-700">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Staff Day", 
+        accessor: "totalStaffDays",
+        Cell: ({ value }) => (
+          <span className="text-center text-gray-700 font-medium">{value || 0}</span>
+        )
+      },
+      { 
+        Header: "Job Status", 
+        accessor: "jobStatus", 
         Cell: ({ value }) => (
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-            value === "Completed" ? "bg-green-100 text-green-800" : 
-            value === "In Progress" ? "bg-blue-100 text-blue-800" : 
-            value === "Pending" ? "bg-yellow-100 text-yellow-800" : 
+            value?.toLowerCase() === "completed" ? "bg-green-100 text-green-800" : 
+            value?.toLowerCase() === "in progress" ? "bg-blue-100 text-blue-800" : 
+            value?.toLowerCase() === "pending" ? "bg-yellow-100 text-yellow-800" : 
+            value?.toLowerCase() === "review" ? "bg-purple-100 text-purple-800" :
+            value?.toLowerCase() === "re-audit" ? "bg-red-100 text-red-800" :
             "bg-gray-100 text-gray-800"
           }`}>
-            {value}
+            {value || 'N/A'}
           </span>
         )
       },
-      { Header: "Request received date ", accessor: "requestReceiveDate" },
-      { Header: "Request Type", accessor: "requestType" },
-      { Header: "Client Name", accessor: "clientName" },
-      { Header: "Field Staff ", accessor: "fieldStaff" },
-      { Header: "Start Date", accessor: "startDate" },
-      { Header: "End Date", accessor: "endDate" },
-      { Header: "Audit Start Date", accessor: "auditStartDate" },
-      { Header: "Audit End Date", accessor: "auditEndDate" },
-      { Header: "Staff Days", accessor: "staffDay" },
-      { Header: "Remarks", accessor: "remarks" },
+      { 
+        Header: "Request Received Date", 
+        accessor: "requestReceiveDate",
+        Cell: ({ value }) => (
+          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Audit Start Date", 
+        accessor: "auditStartDate",
+        Cell: ({ value }) => (
+          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Audit End Date", 
+        accessor: "auditEndDate",
+        Cell: ({ value }) => (
+          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Audit Due Date", 
+        accessor: "auditDueDate",
+        Cell: ({ value }) => (
+          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Client Name", 
+        accessor: "clientName",
+        Cell: ({ value }) => (
+          <span className="text-gray-700">{value || 'N/A'}</span>
+        )
+      },
+      { 
+        Header: "Field Staffs", 
+        accessor: "fieldStaffNames",
+        Cell: ({ value }) => (
+          <div className="text-sm">
+            {value && value.length > 0 ? (
+              <ul className="space-y-1">
+                {value.map((name, index) => (
+                  <li key={index} className="text-gray-600">• {name}</li>
+                ))}
+              </ul>
+            ) : (
+              <span className="text-gray-400">No staff assigned</span>
+            )}
+          </div>
+        )
+      },
       {
         Header: "Action",
         accessor: "action",

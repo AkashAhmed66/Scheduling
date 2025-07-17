@@ -104,7 +104,13 @@ export default function CreateJobComponent() {
   const [staffList, setStaffList] = useState([]);
 
   useEffect(() => {
-    if(job != null) {setFormData(job);}
+    if(job != null) {
+      setFormData(job);
+      // Load existing staff list if editing
+      if(job.staffList) {
+        setStaffList(job.staffList);
+      }
+    }
   }, [job]);
   
   const handleChange = (e) => {

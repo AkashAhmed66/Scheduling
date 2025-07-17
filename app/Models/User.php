@@ -81,8 +81,47 @@ class User extends Authenticatable
     {
         return $this->hasMany(AuditJob::class, 'auditors', 'id');
     }
+    
     public function assessmentss()
     {
         return $this->hasMany(Assessment::class, 'users', 'id');
+    }
+    
+    /**
+     * Get staff information records for this user
+     */
+    public function staffInformation()
+    {
+        return $this->hasMany(StaffInformation::class, 'user_id', 'id');
+    }
+    
+    /**
+     * Get jobs where this user is assigned as staff
+     */
+    public function assignedJobs()
+    {
+        return $this->hasManyThrough(
+            AuditJob::class,
+            StaffInformation::class,
+            'user_id', // Foreign key on staff_information table
+            'id', // Foreign key on audit_jobs table
+            'id', // Local key on users table
+            'job_id' // Local key on staff_information table
+        );
+    }
+    
+    /**
+     * Get assessments where this user is assigned as report writer
+     */
+    public function assignedAssessments()
+    {
+        return $this->hasManyThrough(
+            Assessment::class,
+            StaffInformation::class,
+            'user_id', // Foreign key on staff_information table
+            'id', // Foreign key on assessments table
+            'id', // Local key on users table
+            'assessment_id' // Local key on staff_information table
+        )->where('staff_information.report_write', true);
     }
 }

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\AuditJob;
+use App\Models\Assessment;
+use App\Models\StaffInformation;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,9 +26,51 @@ class ProfileController extends Controller
     public function GetUserData()
     {
         $user = Auth::user();
+        
+        // Get user's assigned jobs based on staff information
+        $assignedJobIds = collect();
+        $assignedAssessmentIds = collect();
+        
+        if ($user->role == 0) {
+            // Super admin sees all
+            $assignedJobs = AuditJob::all();
+            $assignedAssessments = Assessment::all();
+        } elseif ($user->role == 1) {
+            // Team admin sees jobs from their team
+            $assignedJobs = AuditJob::where('team', $user->team)->get();
+            $teamJobIds = $assignedJobs->pluck('id');
+            $assessmentIds = StaffInformation::whereIn('job_id', $teamJobIds)
+                                            ->whereNotNull('assessment_id')
+                                            ->pluck('assessment_id')
+                                            ->unique();
+            $assignedAssessments = Assessment::whereIn('id', $assessmentIds)->get();
+        } else {
+            // Auditors and reviewers
+            $assignedJobIds = StaffInformation::where('user_id', $user->id)
+                                             ->pluck('job_id')
+                                             ->unique();
+            $assignedJobs = AuditJob::whereIn('id', $assignedJobIds)->get();
+            
+            // Also include jobs where they are assigned as reviewer (for role 3)
+            if ($user->role == 3) {
+                $reviewerJobs = AuditJob::where('reviewers', $user->id)->get();
+                $assignedJobs = $assignedJobs->merge($reviewerJobs)->unique('id');
+            }
+            
+            // Get assessments where user is report writer
+            $assignedAssessmentIds = StaffInformation::where('user_id', $user->id)
+                                                    ->where('report_write', true)
+                                                    ->whereNotNull('assessment_id')
+                                                    ->pluck('assessment_id')
+                                                    ->unique();
+            $assignedAssessments = Assessment::whereIn('id', $assignedAssessmentIds)->get();
+        }
+        
         return Inertia::render('Home', [
             'user' => $user,
             'image_url' => asset('storage/'.$user->image_url),
+            'assignedJobs' => $assignedJobs,
+            'assignedAssessments' => $assignedAssessments,
         ]);
     }
     /**

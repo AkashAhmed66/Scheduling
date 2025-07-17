@@ -261,7 +261,11 @@ export default function AddAuditorReviewer({ formData, handleChange, staffList, 
             <div className="flex items-end">
               <button
                 type="button"
-                onClick={addStaffMember}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addStaffMember();
+                }}
                 className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
               >
                 <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +293,9 @@ export default function AddAuditorReviewer({ formData, handleChange, staffList, 
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
                         <div>
                           <span className="font-medium text-gray-700">User:</span>
-                          <p className="text-gray-600">{staff.user}</p>
+                          <p className="text-gray-600">
+                            {auditors.find(auditor => auditor.id == staff.user)?.name || staff.user}
+                          </p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Staff Day:</span>
@@ -311,7 +317,11 @@ export default function AddAuditorReviewer({ formData, handleChange, staffList, 
                       
                       <button
                         type="button"
-                        onClick={() => removeStaffMember(staff.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeStaffMember(staff.id);
+                        }}
                         className="ml-4 inline-flex items-center justify-center w-8 h-8 rounded-full text-red-600 hover:bg-red-100 transition-colors flex-shrink-0"
                         title="Remove staff member"
                       >

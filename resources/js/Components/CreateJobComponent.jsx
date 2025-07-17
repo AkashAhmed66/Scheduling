@@ -38,8 +38,7 @@ export default function CreateJobComponent() {
     dateRequestReceived: '',
     fieldStaff: '',
 
-    // Staff Role
-    role: '',
+    // Staff Role (for temporary input)
     user: '',
     staffDay: '',
     startDate: '',
@@ -78,7 +77,6 @@ export default function CreateJobComponent() {
     reportReview: '',
 
     // Auditor and Reviewer selections
-    auditor: '',
     reviewer: '',
     
     // Error states for required fields
@@ -96,7 +94,6 @@ export default function CreateJobComponent() {
     
     // Legacy error states (kept for compatibility)
     requestTypeError: false,
-    auditorError: false,
     reviewerError: false
   });
 
@@ -104,6 +101,7 @@ export default function CreateJobComponent() {
   const [activeTab, setActiveTab] = useState('basic');
   const [formProgress, setFormProgress] = useState(0);
   const [validationMessage, setValidationMessage] = useState(null);
+  const [staffList, setStaffList] = useState([]);
 
   useEffect(() => {
     if(job != null) {setFormData(job);}
@@ -157,9 +155,6 @@ export default function CreateJobComponent() {
       if (name === 'requestType' && value) {
         updatedData.requestTypeError = false;
       }
-      if (name === 'auditor' && value) {
-        updatedData.auditorError = false;
-      }
       if (name === 'reviewer' && value) {
         updatedData.reviewerError = false;
       }
@@ -167,6 +162,44 @@ export default function CreateJobComponent() {
       console.log('Updated form data:', updatedData);
       return updatedData;
     });
+  };
+
+  const addStaffMember = () => {
+    // Validate required fields for staff member
+    if (!formData.user || !formData.staffDay || !formData.startDate || !formData.endDate) {
+      setValidationMessage("Please fill in all required staff fields (User, Staff Day, Start Date, End Date)");
+      setTimeout(() => {
+        setValidationMessage(null);
+      }, 5000);
+      return;
+    }
+
+    const newStaffMember = {
+      id: Date.now(), // Simple ID for list management
+      user: formData.user,
+      staffDay: formData.staffDay,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      reportWriter: formData.reportWriter,
+      note: formData.note
+    };
+
+    setStaffList(prev => [...prev, newStaffMember]);
+    
+    // Clear staff form fields
+    setFormData(prev => ({
+      ...prev,
+      user: '',
+      staffDay: '',
+      startDate: '',
+      endDate: '',
+      reportWriter: false,
+      note: ''
+    }));
+  };
+
+  const removeStaffMember = (id) => {
+    setStaffList(prev => prev.filter(staff => staff.id !== id));
   };
 
   const handleSubmit = (e) => {
@@ -212,17 +245,13 @@ export default function CreateJobComponent() {
     }
     
     // Check if required fields are filled in Auditor & Reviewer section
-    if (!formData.auditor || !formData.reviewer) {
-      // If basic info is valid but auditor/reviewer is not, switch to auditor tab
+    if (!formData.reviewer) {
+      // If basic info is valid but reviewer is not, switch to auditor tab
       if (!basicFieldErrors) {
         setActiveTab('auditor');
       }
       
       // Add validation feedback
-      if (!formData.auditor) {
-        newFormData.auditorError = true;
-        hasErrors = true;
-      }
       if (!formData.reviewer) {
         newFormData.reviewerError = true;
         hasErrors = true;
@@ -254,10 +283,17 @@ export default function CreateJobComponent() {
     
     setIsSubmitting(true);
     console.log('Form data submitted:', formData);
+    console.log('Staff list:', staffList);
+    
+    // Prepare submission data including staff list
+    const submissionData = {
+      ...formData,
+      staffList: staffList
+    };
     
     if(create == 1){
       // Post data to the Laravel API endpoint using Inertia
-      Inertia.post('/submit-audit-job', formData, {
+      Inertia.post('/submit-audit-job', submissionData, {
         onSuccess: (response) => {
           console.log('Data successfully submitted:', response);
           setIsSubmitting(false);
@@ -270,7 +306,7 @@ export default function CreateJobComponent() {
         },
       });
     }else{
-      Inertia.post('/submit-audit-job-edit', formData, {
+      Inertia.post('/submit-audit-job-edit', submissionData, {
         onSuccess: (response) => {
           console.log('Data successfully submitted:', response);
           setIsSubmitting(false);
@@ -384,7 +420,13 @@ export default function CreateJobComponent() {
             </div>
 
             <div className={activeTab === 'auditor' ? 'block' : 'hidden'}>
-              <AddAuditorReviewer formData={formData} handleChange={handleChange} />
+              <AddAuditorReviewer 
+                formData={formData} 
+                handleChange={handleChange} 
+                staffList={staffList}
+                addStaffMember={addStaffMember}
+                removeStaffMember={removeStaffMember}
+              />
             </div>
 
             <div className="mt-8 pt-5 border-t border-gray-200 flex justify-between">

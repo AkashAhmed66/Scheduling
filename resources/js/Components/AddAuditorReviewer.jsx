@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import React from 'react';
 
-export default function AddAuditorReviewer({ formData, handleChange }) {
+export default function AddAuditorReviewer({ formData, handleChange, staffList, addStaffMember, removeStaffMember }) {
   const {create, auditors, reviewers, assessmentTypes} = usePage().props;
   return (
     <div className="mb-8 bg-white rounded-xl shadow-md border border-indigo-50">
@@ -17,42 +17,6 @@ export default function AddAuditorReviewer({ formData, handleChange }) {
 
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Auditor Selection */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 flex items-center">
-              <span>Select Auditor</span>
-              <span className="ml-1 text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <select
-                name="auditor"
-                onChange={handleChange}
-                className={`w-full p-3 pl-10 border ${formData.auditorError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white`}
-                required
-              >
-                <option value="">Choose an auditor</option>
-                {auditors.map((auditor) => (
-                  <option key={auditor.id} value={auditor.id}>
-                    {auditor.name}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className={`h-5 w-5 ${formData.auditorError ? 'text-red-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-              </div>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </div>
-              {formData.auditorError && (
-                <div className="text-red-500 text-xs mt-1">Auditor selection is required</div>
-              )}
-            </div>
-          </div>
-
           {/* Reviewer Selection */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 flex items-center">
@@ -134,50 +98,48 @@ export default function AddAuditorReviewer({ formData, handleChange }) {
             <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
-            Staff Role Information
+            Add Staff Information
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Role</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span>User</span>
+                <span className="ml-1 text-red-500">*</span>
+              </label>
               <div className="relative">
-                <input
-                  type="text"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                  placeholder="Enter role"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 002 2h2a2 2 0 002-2V8a2 2 0 00-2-2h-2z"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">User</label>
-              <div className="relative">
-                <input
-                  type="text"
+                <select
                   name="user"
                   value={formData.user}
                   onChange={handleChange}
-                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                  placeholder="Enter user"
-                />
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                  required
+                >
+                  <option value="">Choose a user</option>
+                  {auditors.map((auditor) => (
+                    <option key={auditor.id} value={auditor.id}>
+                      {auditor.name}
+                    </option>
+                  ))}
+                </select>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
                 </div>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Staff Day</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span>Staff Day</span>
+                <span className="ml-1 text-red-500">*</span>
+              </label>
               <div className="relative">
                 <input
                   type="number"
@@ -196,9 +158,12 @@ export default function AddAuditorReviewer({ formData, handleChange }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Start Date</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span>Start Date</span>
+                <span className="ml-1 text-red-500">*</span>
+              </label>
               <div className="relative">
                 <input
                   type="date"
@@ -216,7 +181,10 @@ export default function AddAuditorReviewer({ formData, handleChange }) {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">End Date</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span>End Date</span>
+                <span className="ml-1 text-red-500">*</span>
+              </label>
               <div className="relative">
                 <input
                   type="date"
@@ -232,7 +200,21 @@ export default function AddAuditorReviewer({ formData, handleChange }) {
                 </div>
               </div>
             </div>
+          </div>
 
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Note</label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleChange}
+              rows="3"
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
+              placeholder="Enter any additional notes..."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Report Writer</label>
               <div className="flex items-center mt-3">
@@ -275,19 +257,74 @@ export default function AddAuditorReviewer({ formData, handleChange }) {
                 </div>
               </div>
             </div>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={addStaffMember}
+                className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+              >
+                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Staff Member
+              </button>
+            </div>
           </div>
 
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Note</label>
-            <textarea
-              name="note"
-              value={formData.note}
-              onChange={handleChange}
-              rows="3"
-              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
-              placeholder="Enter any additional notes..."
-            />
-          </div>
+          {/* Staff List */}
+          {staffList.length > 0 && (
+            <div className="mt-8">
+              <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+                Added Staff Members ({staffList.length})
+              </h4>
+              
+              <div className="space-y-3">
+                {staffList.map((staff, index) => (
+                  <div key={staff.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-700">User:</span>
+                          <p className="text-gray-600">{staff.user}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Staff Day:</span>
+                          <p className="text-gray-600">{staff.staffDay}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Period:</span>
+                          <p className="text-gray-600">{staff.startDate} to {staff.endDate}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Report Writer:</span>
+                          <p className="text-gray-600">{staff.reportWriter ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Note:</span>
+                          <p className="text-gray-600">{staff.note || 'No note provided'}</p>
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={() => removeStaffMember(staff.id)}
+                        className="ml-4 inline-flex items-center justify-center w-8 h-8 rounded-full text-red-600 hover:bg-red-100 transition-colors flex-shrink-0"
+                        title="Remove staff member"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -28,69 +28,7 @@ export default function BasicInformationSection({ formData, handleChange }) {
 
             <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* General */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 flex items-center">
-                            <span>Job Type</span>
-                            <span className="ml-1 text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                name="jobType"
-                                value={formData.jobType}
-                                onChange={handleChange}
-                                className={`w-full p-3 pl-10 border ${
-                                    formData.jobTypeError
-                                        ? "border-red-500 ring-1 ring-red-500"
-                                        : "border-gray-300"
-                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
-                                placeholder="Enter job type"
-                                required
-                            />
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg
-                                    className={`h-5 w-5 ${
-                                        formData.jobTypeError
-                                            ? "text-red-500"
-                                            : "text-gray-400"
-                                    }`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                    ></path>
-                                </svg>
-                            </div>
-                            {formData.jobTypeError && (
-                                <div className="text-red-500 text-xs mt-1">
-                                    Job Type is required
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="block text-sm">Service Name</label>
-                        <input
-                                type="text"
-                                name="serviceName"
-                                value={formData.serviceName}
-                                onChange={handleChange}
-                                className={`w-full p-3 border ${
-                                    formData.jobTypeError
-                                        ? "border-red-500 ring-1 ring-red-500"
-                                        : "border-gray-300"
-                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
-                                placeholder="Enter job type"
-                            />
-                    </div>
-
+                    {/* Report No. */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center">
                             <span>Report No.</span>
@@ -137,32 +75,30 @@ export default function BasicInformationSection({ formData, handleChange }) {
                         </div>
                     </div>
 
+                    {/* Service Name */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 flex items-center">
-                            <span>Request Type</span>
+                            <span>Service Name</span>
                             <span className="ml-1 text-red-500">*</span>
                         </label>
                         <div className="relative">
-                            <select
-                                name="requestType"
-                                value={formData.requestType}
+                            <input
+                                type="text"
+                                name="serviceName"
+                                value={formData.serviceName}
                                 onChange={handleChange}
                                 className={`w-full p-3 pl-10 border ${
-                                    formData.requestTypeError
+                                    formData.serviceNameError
                                         ? "border-red-500 ring-1 ring-red-500"
                                         : "border-gray-300"
-                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white`}
+                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                placeholder="Enter service name"
                                 required
-                            >
-                                <option value="">Select Request Type</option>
-                                <option value="Standard">Standard</option>
-                                <option value="Urgent">Urgent</option>
-                                <option value="Special">Special</option>
-                            </select>
+                            />
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg
                                     className={`h-5 w-5 ${
-                                        formData.requestTypeError
+                                        formData.serviceNameError
                                             ? "text-red-500"
                                             : "text-gray-400"
                                     }`}
@@ -174,13 +110,221 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                                     ></path>
                                 </svg>
                             </div>
-                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            {formData.serviceNameError && (
+                                <div className="text-red-500 text-xs mt-1">
+                                    Service Name is required
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Request received date */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 flex items-center">
+                            <span>Request Received Date</span>
+                            <span className="ml-1 text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="requestReceiveDate"
+                                value={formData.requestReceiveDate}
+                                onChange={handleChange}
+                                className={`w-full p-3 pl-10 border ${
+                                    formData.requestReceiveDateError
+                                        ? "border-red-500 ring-1 ring-red-500"
+                                        : "border-gray-300"
+                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                required
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg
-                                    className="h-5 w-5 text-gray-400"
+                                    className={`h-5 w-5 ${
+                                        formData.requestReceiveDateError
+                                            ? "text-red-500"
+                                            : "text-gray-400"
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            {formData.requestReceiveDateError && (
+                                <div className="text-red-500 text-xs mt-1">
+                                    Request Received Date is required
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Audit Due Date */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 flex items-center">
+                            <span>Audit Due Date</span>
+                            <span className="ml-1 text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="auditDueDate"
+                                value={formData.auditDueDate}
+                                onChange={handleChange}
+                                className={`w-full p-3 pl-10 border ${
+                                    formData.auditDueDateError
+                                        ? "border-red-500 ring-1 ring-red-500"
+                                        : "border-gray-300"
+                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                required
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg
+                                    className={`h-5 w-5 ${
+                                        formData.auditDueDateError
+                                            ? "text-red-500"
+                                            : "text-gray-400"
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            {formData.auditDueDateError && (
+                                <div className="text-red-500 text-xs mt-1">
+                                    Audit Due Date is required
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Audit Start Date */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 flex items-center">
+                            <span>Audit Start Date</span>
+                            <span className="ml-1 text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="auditStartDate"
+                                value={formData.auditStartDate}
+                                onChange={handleChange}
+                                className={`w-full p-3 pl-10 border ${
+                                    formData.auditStartDateError
+                                        ? "border-red-500 ring-1 ring-red-500"
+                                        : "border-gray-300"
+                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                required
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg
+                                    className={`h-5 w-5 ${
+                                        formData.auditStartDateError
+                                            ? "text-red-500"
+                                            : "text-gray-400"
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            {formData.auditStartDateError && (
+                                <div className="text-red-500 text-xs mt-1">
+                                    Audit Start Date is required
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Audit End Date */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 flex items-center">
+                            <span>Audit End Date</span>
+                            <span className="ml-1 text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="auditEndDate"
+                                value={formData.auditEndDate}
+                                onChange={handleChange}
+                                className={`w-full p-3 pl-10 border ${
+                                    formData.auditEndDateError
+                                        ? "border-red-500 ring-1 ring-red-500"
+                                        : "border-gray-300"
+                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                required
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg
+                                    className={`h-5 w-5 ${
+                                        formData.auditEndDateError
+                                            ? "text-red-500"
+                                            : "text-gray-400"
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            {formData.auditEndDateError && (
+                                <div className="text-red-500 text-xs mt-1">
+                                    Audit End Date is required
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Job Type */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 flex items-center">
+                            <span>Job Type</span>
+                            <span className="ml-1 text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="jobType"
+                                value={formData.jobType}
+                                onChange={handleChange}
+                                className={`w-full p-3 pl-10 border ${
+                                    formData.jobTypeError
+                                        ? "border-red-500 ring-1 ring-red-500"
+                                        : "border-gray-300"
+                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                placeholder="Assessment / Training / Advisory / Others"
+                                required
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg
+                                    className={`h-5 w-5 ${
+                                        formData.jobTypeError
+                                            ? "text-red-500"
+                                            : "text-gray-400"
+                                    }`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -189,54 +333,32 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
-                                        d="M19 9l-7 7-7-7"
+                                        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                     ></path>
                                 </svg>
                             </div>
-                            {formData.requestTypeError && (
+                            {formData.jobTypeError && (
                                 <div className="text-red-500 text-xs mt-1">
-                                    Request Type is required
+                                    Job Type is required
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
 
-                <div className="space-y-2">
-                        <label className="block text-sm">Field Stuff</label>
-                        <input
-                                type="text"
-                                name="fieldStaff"
-                                value={formData.fieldStaff}
-                                onChange={handleChange}
-                                className={`w-full p-3 border ${
-                                    formData.jobTypeError
-                                        ? "border-red-500 ring-1 ring-red-500"
-                                        : "border-gray-300"
-                                } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
-                                placeholder="Enter job type"
-                            />
-                    </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                    {/* Job Status */}
+                    {/* Service Type */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Job Status
+                            Service Type
                         </label>
                         <div className="relative">
-                            <select
-                                name="jobStatus"
-                                value={formData.jobStatus}
+                            <input
+                                type="text"
+                                name="serviceType"
+                                value={formData.serviceType}
                                 onChange={handleChange}
-                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
-                            >
-                                <option value="">Select Job Status</option>
-                                <option value="Pending">Pending</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Canceled">Canceled</option>
-                            </select>
+                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                placeholder="Onsite / Desktop / Virtual / Hybrid"
+                            />
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg
                                     className="h-5 w-5 text-gray-400"
@@ -248,11 +370,28 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                     ></path>
                                 </svg>
                             </div>
-                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        </div>
+                    </div>
+
+                    {/* Service Scope */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Service Scope
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="serviceScope"
+                                value={formData.serviceScope}
+                                onChange={handleChange}
+                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                placeholder="Initial / Follow-up / Annual"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg
                                     className="h-5 w-5 text-gray-400"
                                     fill="none"
@@ -263,16 +402,49 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
-                                        d="M19 9l-7 7-7-7"
+                                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                                     ></path>
                                 </svg>
                             </div>
                         </div>
                     </div>
 
+                    {/* Schedule Type */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                            Office Location
+                            Schedule Type
+                        </label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="scheduleType"
+                                value={formData.scheduleType}
+                                onChange={handleChange}
+                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                placeholder="Announced / Semi-Announced / Unannounced"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg
+                                    className="h-5 w-5 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    ></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Office Country */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Office Country
                         </label>
                         <div className="relative">
                             <select
@@ -320,242 +492,82 @@ export default function BasicInformationSection({ formData, handleChange }) {
                             </div>
                         </div>
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Staff Days
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                name="staffDays"
-                                value={formData.staffDays}
-                                onChange={handleChange}
-                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                placeholder="0"
-                                min="0"
-                            />
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg
-                                    className="h-5 w-5 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    ></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Is Client Shadow Audit */}
+                {/* Client Shadowing */}
                 <div className="mt-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                     <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="isClientShadowAudit"
-                            name="isClientShadowAudit"
-                            checked={formData.isClientShadowAudit}
-                            onChange={handleChange}
-                            className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <label
-                            htmlFor="isClientShadowAudit"
-                            className="ml-2 block text-sm font-medium text-gray-700"
-                        >
-                            Is Client Shadow Audit?
+                        <label className="block text-sm font-medium text-gray-700 flex items-center">
+                            <span>Client Shadowing</span>
+                            <span className="ml-1 text-red-500">*</span>
                         </label>
                     </div>
+                    <div className="mt-3 space-y-2">
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center">
+                                <input
+                                    type="radio"
+                                    id="clientShadowingYes"
+                                    name="clientShadowing"
+                                    value="yes"
+                                    checked={formData.clientShadowing === "yes"}
+                                    onChange={handleChange}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                />
+                                <label htmlFor="clientShadowingYes" className="ml-2 text-sm text-gray-700">
+                                    Yes
+                                </label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    type="radio"
+                                    id="clientShadowingNo"
+                                    name="clientShadowing"
+                                    value="no"
+                                    checked={formData.clientShadowing === "no"}
+                                    onChange={handleChange}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                />
+                                <label htmlFor="clientShadowingNo" className="ml-2 text-sm text-gray-700">
+                                    No
+                                </label>
+                            </div>
+                        </div>
+                        {formData.clientShadowingError && (
+                            <div className="text-red-500 text-xs mt-1">
+                                Client Shadowing selection is required
+                            </div>
+                        )}
+                    </div>
                     <p className="mt-1 text-xs text-gray-500">
-                        Check this if the client will be shadowing during the
-                        audit process
+                        Select whether the client will be shadowing during the audit process
                     </p>
                 </div>
 
-                {/* Scheduling Section */}
-                <div className="mt-8">
-                    <div className="flex items-center mb-4 border-b border-gray-200 pb-2">
-                        <svg
-                            className="w-5 h-5 mr-2 text-indigo-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            ></path>
-                        </svg>
-                        <h3 className="text-lg font-semibold text-indigo-600">
-                            Scheduling
-                        </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Date Request Received
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="dateRequestReceived"
-                                    value={formData.dateRequestReceived}
-                                    onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg
-                                        className="h-5 w-5 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
+                {/* Remarks */}
+                <div className="mt-6 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 flex items-center">
+                        <span>Remarks</span>
+                        <span className="ml-1 text-red-500">*</span>
+                    </label>
+                    <textarea
+                        name="remarks"
+                        value={formData.remarks}
+                        onChange={handleChange}
+                        rows="3"
+                        className={`w-full p-3 border ${
+                            formData.remarksError
+                                ? "border-red-500 ring-1 ring-red-500"
+                                : "border-gray-300"
+                        } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                        placeholder="Add any relevant notes here..."
+                        required
+                    ></textarea>
+                    {formData.remarksError && (
+                        <div className="text-red-500 text-xs mt-1">
+                            Remarks is required
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Audit Due Date
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="auditDueDate"
-                                    value={formData.auditDueDate}
-                                    onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg
-                                        className="h-5 w-5 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Audit Start Date
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="auditStartDate"
-                                    value={formData.auditStartDate}
-                                    onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg
-                                        className="h-5 w-5 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Audit End Date
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="auditEndDate"
-                                    value={formData.auditEndDate}
-                                    onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg
-                                        className="h-5 w-5 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Request received date
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    name="requestReceiveDate"
-                                    value={formData.requestReceiveDate}
-                                    onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg
-                                        className="h-5 w-5 text-gray-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Remarks
-                            </label>
-                            <textarea
-                                name="remarks"
-                                value={formData.remarks}
-                                onChange={handleChange}
-                                rows="3"
-                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                placeholder="Add any relevant notes here..."
-                            ></textarea>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Review Section */}
@@ -582,8 +594,9 @@ export default function BasicInformationSection({ formData, handleChange }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Date Report Sent to QA
+                            <label className="block text-sm font-medium text-gray-700 flex items-center">
+                                <span>Date Report Sent to QA</span>
+                                <span className="ml-1 text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -591,11 +604,20 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                     name="dateReportSentToQA"
                                     value={formData.dateReportSentToQA}
                                     onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                    className={`w-full p-3 pl-10 border ${
+                                        formData.dateReportSentToQAError
+                                            ? "border-red-500 ring-1 ring-red-500"
+                                            : "border-gray-300"
+                                    } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                    required
                                 />
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg
-                                        className="h-5 w-5 text-gray-400"
+                                        className={`h-5 w-5 ${
+                                            formData.dateReportSentToQAError
+                                                ? "text-red-500"
+                                                : "text-gray-400"
+                                        }`}
                                         fill="currentColor"
                                         viewBox="0 0 20 20"
                                     >
@@ -606,12 +628,18 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         />
                                     </svg>
                                 </div>
+                                {formData.dateReportSentToQAError && (
+                                    <div className="text-red-500 text-xs mt-1">
+                                        Date Report Sent to QA is required
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Final Report Sent to Client
+                            <label className="block text-sm font-medium text-gray-700 flex items-center">
+                                <span>Date Report Sent to Client</span>
+                                <span className="ml-1 text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -619,11 +647,20 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                     name="finalReportSentToClient"
                                     value={formData.finalReportSentToClient}
                                     onChange={handleChange}
-                                    className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                    className={`w-full p-3 pl-10 border ${
+                                        formData.finalReportSentToClientError
+                                            ? "border-red-500 ring-1 ring-red-500"
+                                            : "border-gray-300"
+                                    } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                                    required
                                 />
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg
-                                        className="h-5 w-5 text-gray-400"
+                                        className={`h-5 w-5 ${
+                                            formData.finalReportSentToClientError
+                                                ? "text-red-500"
+                                                : "text-gray-400"
+                                        }`}
                                         fill="currentColor"
                                         viewBox="0 0 20 20"
                                     >
@@ -634,6 +671,11 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         />
                                     </svg>
                                 </div>
+                                {formData.finalReportSentToClientError && (
+                                    <div className="text-red-500 text-xs mt-1">
+                                        Date Report Sent to Client is required
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

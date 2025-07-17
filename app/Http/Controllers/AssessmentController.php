@@ -197,61 +197,108 @@ class AssessmentController extends Controller
      */
     public function generateCapaPdf($id, Request $request)
     {
-        $questions = $request->input('qestions', []);
+        try {
+            $questions = $request->input('qestions', []);
 
-        // Get assessment info
-        $assessment = \App\Models\Assessment::findOrFail($id);
-        $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
+            // Get assessment info
+            $assessment = \App\Models\Assessment::findOrFail($id);
+            $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
 
-        // Create info object for CAPA template
-        $info = (object) [
-            'capaTitile' => $assessmentInfo ? $assessmentInfo->capa_heading ?? ($assessmentInfo->facility_name . ' - CAPA Report') : 'CAPA Report',
-            'facilityName' => $assessmentInfo ? $assessmentInfo->facility_name : 'N/A',
-            'reportNo' => $assessmentInfo ? $assessmentInfo->report_no : 'N/A',
-            'facilityAddress' => $assessmentInfo ? $assessmentInfo->facility_address : 'N/A',
-            'assessors' => $assessmentInfo ? $assessmentInfo->assessors : 'N/A',
-            'assesmentDate' => $assessmentInfo ? $assessmentInfo->assessment_date : 'N/A',
-            'scheduleType' => $assessmentInfo ? $assessmentInfo->schedule_type : 'N/A',
-            'assessmentType' => $assessmentInfo ? $assessmentInfo->assessment_type : 'N/A',
-            'primaryContact' => $assessmentInfo ? $assessmentInfo->primary_contact_name : 'N/A',
-            'position' => $assessmentInfo ? $assessmentInfo->position : 'N/A',
-        ];
+            // Create info object for CAPA template with proper null checks
+            $assessmentDate = 'N/A';
+            if ($assessmentInfo && $assessmentInfo->assessment_date) {
+                try {
+                    $assessmentDate = \Carbon\Carbon::parse($assessmentInfo->assessment_date)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $assessmentDate = date('Y-m-d'); // fallback to current date
+                }
+            } else {
+                $assessmentDate = date('Y-m-d'); // fallback to current date
+            }
 
-        // Filter questions to get only those with 'No' as an answer (non-compliances)
-        $nonComplianceQuestions = array_filter($questions, function ($q) {
-            return isset($q['answer']) && strtolower(trim($q['answer'])) === 'no';
-        });
-
-        // Format audit answer data for CAPA template
-        $auditAnswerData = [];
-        $ncCounter = 1;
-
-        foreach ($nonComplianceQuestions as $question) {
-            $auditAnswerData[] = (object) [
-                'category' => $question['category'] ?? 'Uncategorized',
-                'sub_category' => $question['sub_category'] ?? 'General',
-                'nc_ref' => 'NC-' . str_pad($ncCounter++, 3, '0', STR_PAD_LEFT),
-                'findings' => $question['findings'] ?? 'Non-compliance identified',
-                'rating' => $question['risk_rating'] ?? 'N/A',
-                'corrective_action_plan' => $question['legal_ref'] ?? 'N/A',
-                'target_completion_date' => $question['recommendation'] ?? 'N/A',
+            $info = (object) [
+                'capaTitile' => $assessmentInfo && $assessmentInfo->capa_heading 
+                    ? $assessmentInfo->capa_heading 
+                    : ($assessmentInfo && $assessmentInfo->facility_name 
+                        ? $assessmentInfo->facility_name . ' - CAPA Report' 
+                        : 'CAPA Report'),
+                'facilityName' => $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'N/A',
+                'reportNo' => $assessmentInfo && $assessmentInfo->report_no ? $assessmentInfo->report_no : 'N/A',
+                'facilityAddress' => $assessmentInfo && $assessmentInfo->facility_address ? $assessmentInfo->facility_address : 'N/A',
+                'assessors' => $assessmentInfo && $assessmentInfo->assessors ? $assessmentInfo->assessors : 'N/A',
+                'assesmentDate' => $assessmentDate,
+                'scheduleType' => $assessmentInfo && $assessmentInfo->schedule_type ? $assessmentInfo->schedule_type : 'N/A',
+                'assessmentType' => $assessmentInfo && $assessmentInfo->assessment_type ? $assessmentInfo->assessment_type : 'N/A',
+                'primaryContact' => $assessmentInfo && $assessmentInfo->primary_contact_name ? $assessmentInfo->primary_contact_name : 'N/A',
+                'position' => $assessmentInfo && $assessmentInfo->position ? $assessmentInfo->position : 'N/A',
             ];
+
+            // Filter questions to get only those with 'No' as an answer (non-compliances)
+            $nonComplianceQuestions = array_filter($questions, function ($q) {
+                return isset($q['answer']) && strtolower(trim($q['answer'])) === 'no';
+            });
+
+            // Format audit answer data for CAPA template
+            $auditAnswerData = [];
+            $ncCounter = 1;
+
+            foreach ($nonComplianceQuestions as $question) {
+                // Ensure question is an array and has basic structure
+                if (!is_array($question)) {
+                    continue;
+                }
+                
+                $auditAnswerData[] = (object) [
+                    'category' => isset($question['category']) ? $question['category'] : 'Uncategorized',
+                    'sub_category' => isset($question['subcategory']) ? $question['subcategory'] : (isset($question['sub_category']) ? $question['sub_category'] : 'General'),
+                    'nc_ref' => 'NC-' . str_pad($ncCounter++, 3, '0', STR_PAD_LEFT),
+                    'findings' => isset($question['findings']) ? $question['findings'] : 'Non-compliance identified',
+                    'rating' => isset($question['risk_rating']) ? $question['risk_rating'] : 'N/A',
+                    'corrective_action_plan' => isset($question['legal_ref']) ? $question['legal_ref'] : 'N/A',
+                    'target_completion_date' => isset($question['recommendation']) ? $question['recommendation'] : 'N/A',
+                ];
+            }
+
+            // Determine the audit type based on assessment type
+            $type = $assessment && $assessment->type ? strtolower($assessment->type) : 'general';
+
+            $data = [
+                'info' => $info,
+                'auditAnswerData' => $auditAnswerData,
+                'type' => $type,
+            ];
+
+            // Validate data before passing to view
+            if (empty($data['info'])) {
+                throw new \Exception('Info object is empty');
+            }
+
+            // Generate and download the CAPA PDF
+            $pdf = PDF::loadView('cocCapa', $data);
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf->download('capa_report_' . $id . '.pdf');
+
+        } catch (\Exception $e) {
+            Log::error('CAPA PDF generation error: ' . $e->getMessage());
+            Log::error('Error file: ' . $e->getFile() . ' on line ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Assessment ID: ' . $id);
+            Log::error('Questions count: ' . count($request->input('qestions', [])));
+            Log::error('AssessmentInfo exists: ' . ($assessmentInfo ? 'Yes' : 'No'));
+            
+            return response()->json([
+                'error' => 'Failed to generate CAPA PDF',
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile()),
+                'debug' => [
+                    'assessment_id' => $id,
+                    'questions_count' => count($request->input('qestions', [])),
+                    'assessment_info_exists' => $assessmentInfo ? true : false
+                ]
+            ], 500);
         }
-
-        // Determine the audit type based on assessment type
-        $type = strtolower($assessment->type ?? 'general');
-
-        $data = [
-            'info' => $info,
-            'auditAnswerData' => $auditAnswerData,
-            'type' => $type,
-        ];
-
-        // Generate and download the CAPA PDF
-        $pdf = PDF::loadView('cocCapa', $data);
-        $pdf->setPaper('a4', 'landscape');
-
-        return $pdf->download('capa_report_' . $id . '.pdf');
     }
 
     /**
@@ -274,7 +321,10 @@ class AssessmentController extends Controller
             // Group questions by category and calculate scores
             $grouped_questions = [];
             foreach ($questions as $question) {
-                $category = $question['category'] ?? 'Uncategorized';
+                if (!is_array($question)) {
+                    continue;
+                }
+                $category = isset($question['category']) ? $question['category'] : 'Uncategorized';
                 $grouped_questions[$category][] = $question;
             }
 
@@ -287,14 +337,14 @@ class AssessmentController extends Controller
                 foreach ($categoryQuestions as $question) {
                     $marks = 0;
                     if (isset($question['answer'])) {
-                        if ($question['answer'] === 'Yes') {
+                        if (strtolower(trim($question['answer'])) === 'yes') {
                             $marks = 5;
-                        } elseif ($question['answer'] === 'No') {
+                        } elseif (strtolower(trim($question['answer'])) === 'no') {
                             $marks = 0;
                             // Add finding if answer is No
                             $color = 'red';
-                            if (isset($question['riskRating'])) {
-                                $riskRating = strtolower(trim($question['riskRating']));
+                            if (isset($question['risk_rating'])) {
+                                $riskRating = strtolower(trim($question['risk_rating']));
                                 if (in_array($riskRating, ['low', 'green'])) $color = 'green';
                                 elseif (in_array($riskRating, ['medium', 'yellow'])) $color = 'yellow';
                                 elseif (in_array($riskRating, ['high', 'orange'])) $color = 'orange';
@@ -302,11 +352,11 @@ class AssessmentController extends Controller
                             }
 
                             $findings[] = [
-                                'question_ref' => $question['questionRef'] ?? 'N/A',
-                                'findings' => $question['findings'] ?? 'No findings description provided.',
-                                'risk_rating' => $question['riskRating'] ?? 'Not Specified',
-                                'legal_ref' => $question['legalRef'] ?? 'No legal reference provided.',
-                                'recommendation' => $question['recommendation'] ?? 'No recommendation provided.',
+                                'question_ref' => isset($question['ncref']) ? $question['ncref'] : 'N/A',
+                                'findings' => isset($question['findings']) ? $question['findings'] : 'No findings description provided.',
+                                'risk_rating' => isset($question['risk_rating']) ? $question['risk_rating'] : 'Not Specified',
+                                'legal_ref' => isset($question['legal_ref']) ? $question['legal_ref'] : 'No legal reference provided.',
+                                'recommendation' => isset($question['recommendation']) ? $question['recommendation'] : 'No recommendation provided.',
                                 'color' => $color
                             ];
                         }
@@ -321,7 +371,9 @@ class AssessmentController extends Controller
                 if (!empty($findings)) {
                     $color_counts = ['green' => 0, 'yellow' => 0, 'orange' => 0, 'red' => 0];
                     foreach ($findings as $finding) {
-                        $color_counts[$finding['color']]++;
+                        if (isset($color_counts[$finding['color']])) {
+                            $color_counts[$finding['color']]++;
+                        }
                     }
 
                     $audit_findings[$category] = [
@@ -348,7 +400,7 @@ class AssessmentController extends Controller
             $properties = $phpWord->getDocInfo();
             $properties->setCreator('Assessment System');
             $properties->setTitle('Assessment Report');
-            $properties->setDescription('Assessment Report for ' . ($assessmentInfo->facility_name ?? 'Unknown Facility'));
+            $properties->setDescription('Assessment Report for ' . ($assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Unknown Facility'));
 
             // Define styles
             $phpWord->addFontStyle('titleFont', ['size' => 24, 'bold' => true]);
@@ -369,125 +421,160 @@ class AssessmentController extends Controller
             $header = $section->addHeader();
             $headerTable = $header->addTable();
             $headerRow = $headerTable->addRow();
-            $headerRow->addCell(4500)->addText('www.nbm-intl.com', ['size' => 10]);
-            $headerRow->addCell(4500)->addText('info@nbm-intl.com', ['size' => 10], ['alignment' => 'right']);
+            
+            // Left cell with logo
+            $leftCell = $headerRow->addCell(4500);
+            $logoPath = public_path('images/logo.png');
+            if (file_exists($logoPath)) {
+                $leftCell->addImage($logoPath, [
+                    'width' => 60,
+                    'height' => 30,
+                    'positioning' => \PhpOffice\PhpWord\Style\Image::POSITION_RELATIVE,
+                    'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
+                    'posVertical' => \PhpOffice\PhpWord\Style\Image::POSITION_VERTICAL_TOP,
+                ]);
+            }
+            
+            // Right cell with company info
+            $rightCell = $headerRow->addCell(4500);
+            $rightCell->addText('www.nbm-intl.com', ['size' => 10], ['alignment' => 'right']);
+            $rightCell->addText('info@nbm-intl.com', ['size' => 10], ['alignment' => 'right']);
 
             // Add footer with page number
             $footer = $section->addFooter();
             $footer->addPreserveText('Page {PAGE}', ['size' => 10], ['alignment' => 'right']);
 
             // COVER PAGE
-            $section->addTextBreak(3);
+            $section->addTextBreak(2);
+            
+            // Add centered logo above title
+            $logoPath = public_path('images/background.jpg');
+            if (file_exists($logoPath)) {
+                $section->addImage($logoPath, [
+                    'width' => 380,
+                    'height' => 220,
+                    'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER
+                ]);
+            }
+            $section->addTextBreak(2);
             
             // Title
-            $section->addText($assessmentInfo->report_heading ?? 'Assessment Report', 'titleFont', ['alignment' => 'center']);
-            $section->addTextBreak(3);
-
-            // Facility name
-            $section->addText($assessmentInfo->facility_name ?? 'Facility Name Not Provided', 'facilityNameFont');
+            $section->addText($assessmentInfo && $assessmentInfo->report_heading ? $assessmentInfo->report_heading : 'Assessment Report', 'titleFont', ['alignment' => 'center']);
             $section->addTextBreak(2);
 
-            // Cover information table
+            // Facility name
+            $section->addText($assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Facility Name Not Provided', 'facilityNameFont');
+
+            // Cover information table - full width
             $coverTable = $section->addTable([
-                'borderSize' => 6,
-                'borderColor' => '000000',
-                'cellMargin' => 100,
-                'width' => 100 * 50
+                'borderSize' => 1,
+                'borderColor' => 'CCCCCC',
+                'cellMargin' => 80,
+                'width' => 100 * 50,
+                'unit' => 'pct'
             ]);
             
-            $this->addSimpleTableRow($coverTable, 'Audit Company:', $assessmentInfo->audit_company ?? 'Not Specified');
-            $this->addSimpleTableRow($coverTable, 'Report No:', $assessmentInfo->report_no ?? 'Not Specified');
-            $this->addSimpleTableRow($coverTable, 'Assessment Type:', $assessmentInfo->assessment_type ?? 'Not Specified');
-            $this->addSimpleTableRow($coverTable, 'Schedule Type:', $assessmentInfo->schedule_type ?? 'Not Specified');
-            $this->addSimpleTableRow($coverTable, 'Assessors:', $assessmentInfo->assessors ?? 'Not Specified');
-            $this->addSimpleTableRow($coverTable, 'Assessment Date:', $assessmentInfo->assessment_date ? $assessmentInfo->assessment_date->format('F d, Y') : 'Not Specified');
+            $this->addStyledTableRow($coverTable, 'Audit Company:', $assessmentInfo && $assessmentInfo->audit_company ? $assessmentInfo->audit_company : 'Not Specified', 'F8F8F8');
+            $this->addStyledTableRow($coverTable, 'Report No:', $assessmentInfo && $assessmentInfo->report_no ? $assessmentInfo->report_no : 'Not Specified', 'FFFFFF');
+            $this->addStyledTableRow($coverTable, 'Assessment Type:', $assessmentInfo && $assessmentInfo->assessment_type ? $assessmentInfo->assessment_type : 'Not Specified', 'F8F8F8');
+            $this->addStyledTableRow($coverTable, 'Schedule Type:', $assessmentInfo && $assessmentInfo->schedule_type ? $assessmentInfo->schedule_type : 'Not Specified', 'FFFFFF');
+            $this->addStyledTableRow($coverTable, 'Assessors:', $assessmentInfo && $assessmentInfo->assessors ? $assessmentInfo->assessors : 'Not Specified', 'F8F8F8');
+            
+            // Handle assessment date safely
+            $assessmentDateFormatted = 'Not Specified';
+            if ($assessmentInfo && $assessmentInfo->assessment_date) {
+                try {
+                    $assessmentDateFormatted = \Carbon\Carbon::parse($assessmentInfo->assessment_date)->format('F d, Y');
+                } catch (\Exception $e) {
+                    $assessmentDateFormatted = 'Not Specified';
+                }
+            }
+            $this->addStyledTableRow($coverTable, 'Assessment Date:', $assessmentDateFormatted, 'FFFFFF');
 
             $section->addPageBreak();
 
             // REPORT SUMMARY PAGE
             $section->addText('Report Summary of', 'sectionHeadingFont');
-            $section->addText($assessmentInfo->facility_name ?? 'Facility Name Not Provided', ['size' => 14, 'bold' => true]);
-            $section->addTextBreak(2);
-
-            // Overall rating
-            $section->addText('Overall rating (Weighted Average):', 'boldFont');
+            $section->addText($assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Facility Name Not Provided', ['size' => 16, 'bold' => true]);
             $section->addTextBreak(1);
 
+            // Overall rating
+            $section->addText('Overall rating (Weighted Average):', ['size' => 12, 'bold' => true]);
             $ratingTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
             $ratingRow = $ratingTable->addRow();
-            $ratingRow->addCell(2000, ['bgColor' => '4CAF50'])->addText('Green (A)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center']);
-            $ratingRow->addCell(2000, ['bgColor' => 'FFC107'])->addText('Yellow (B)', ['bold' => true], ['alignment' => 'center']);
-            $ratingRow->addCell(2000, ['bgColor' => 'FF9800'])->addText('Orange (C)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center']);
-            $ratingRow->addCell(2000, ['bgColor' => 'F44336'])->addText('Red (D)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center']);
-            $ratingRow->addCell(2000)->addText(round($overall_percentage, 1) . '%', ['bold' => true], ['alignment' => 'center']);
+            $ratingRow->addCell(2000, ['bgColor' => '4CAF50', 'valign' => 'center'])->addText('Green (A)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $ratingRow->addCell(2000, ['bgColor' => 'FFC107', 'valign' => 'center'])->addText('Yellow (B)', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $ratingRow->addCell(2000, ['bgColor' => 'FF9800', 'valign' => 'center'])->addText('Orange (C)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $ratingRow->addCell(2000, ['bgColor' => 'F44336', 'valign' => 'center'])->addText('Red (D)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $ratingRow->addCell(2000, ['valign' => 'center'])->addText(round($overall_percentage, 1) . '%', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
             $section->addTextBreak(2);
 
             // Section Rating
-            $section->addText('Section Rating:', 'boldFont');
-            $section->addTextBreak(1);
+            $section->addText('Section Rating:', ['size' => 12, 'bold' => true]);
 
             $sectionTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER,
+                'unit' => 'pct'
             ]);
             
             // Header row
             $headerRow = $sectionTable->addRow();
-            $headerRow->addCell(4000, ['bgColor' => 'C0C0C0'])->addText('Performance Area', ['bold' => true]);
-            $headerRow->addCell(2000, ['bgColor' => 'C0C0C0'])->addText('Rating', ['bold' => true], ['alignment' => 'center']);
-            $headerRow->addCell(2000, ['bgColor' => 'C0C0C0'])->addText('Score', ['bold' => true], ['alignment' => 'center']);
+            $headerRow->addCell(4000, ['bgColor' => 'C0C0C0', 'valign' => 'center'])->addText('Performance Area', ['bold' => true], ['alignment' => 'left', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $headerRow->addCell(2000, ['bgColor' => 'C0C0C0', 'valign' => 'center'])->addText('Rating', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $headerRow->addCell(2000, ['bgColor' => 'C0C0C0', 'valign' => 'center'])->addText('Score', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
             // Category rows
             foreach ($category_percentages as $category => $percentage) {
                 $row = $sectionTable->addRow();
-                $row->addCell(4000)->addText($category, 'normalFont');
+                $row->addCell(4000, ['valign' => 'center'])->addText($category, 'normalFont', ['alignment' => 'left', 'spaceBefore' => 0, 'spaceAfter' => 0]);
                 
                 $bgColor = 'F44336'; // Red
                 if ($percentage >= 90) $bgColor = '4CAF50'; // Green
                 elseif ($percentage >= 71) $bgColor = 'FFC107'; // Yellow
                 elseif ($percentage >= 41) $bgColor = 'FF9800'; // Orange
                 
-                $row->addCell(2000, ['bgColor' => $bgColor])->addText('', 'normalFont');
-                $row->addCell(2000)->addText($percentage . '%', 'normalFont', ['alignment' => 'center']);
+                $row->addCell(2000, ['bgColor' => $bgColor, 'valign' => 'center'])->addText('', 'normalFont', ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                $row->addCell(2000, ['valign' => 'center'])->addText($percentage . '%', 'normalFont', ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             }
 
-            $section->addTextBreak(2);
-
-            // Facility Information
-            $section->addText('Facility Information', 'sectionHeadingFont');
             $section->addTextBreak(1);
 
+            // Facility Information
             $facilityTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'unit' => 'pct'
             ]);
             
             // Header row for facility
             $facilityHeaderRow = $facilityTable->addRow();
-            $facilityHeaderRow->addCell(8000, ['bgColor' => 'F44336'])->addText('Facility Information', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center']);
+            $facilityHeaderRow->addCell(null, ['bgColor' => 'F44336', 'gridSpan' => 2])->addText('Facility Information', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             
-            $this->addInfoRow($facilityTable, 'Facility Name', $assessmentInfo->facility_name ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Facility Address', $assessmentInfo->facility_address ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Business License', $assessmentInfo->business_license ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Country', $assessmentInfo->country ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Year of establishment', $assessmentInfo->year_establishment ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Building description', $assessmentInfo->building_description ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Multiple Tenants', $assessmentInfo->multiple_tenants ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Site owned or rented', $assessmentInfo->site_owned ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Monthly Production Capacity', $assessmentInfo->monthly_production ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Primary Contact Name', $assessmentInfo->primary_contact_name ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Position', $assessmentInfo->position ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'E-mail', $assessmentInfo->email ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Contact Number', $assessmentInfo->contact_number ?? 'Not Provided');
-            $this->addInfoRow($facilityTable, 'Social Compliance Contact', $assessmentInfo->social_compliance_contact ?? 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Facility Name', $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Facility Address', $assessmentInfo && $assessmentInfo->facility_address ? $assessmentInfo->facility_address : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Business License', $assessmentInfo && $assessmentInfo->business_license ? $assessmentInfo->business_license : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Country', $assessmentInfo && $assessmentInfo->country ? $assessmentInfo->country : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Year of establishment', $assessmentInfo && $assessmentInfo->year_establishment ? $assessmentInfo->year_establishment : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Building description', $assessmentInfo && $assessmentInfo->building_description ? $assessmentInfo->building_description : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Multiple Tenants', $assessmentInfo && $assessmentInfo->multiple_tenants ? $assessmentInfo->multiple_tenants : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Site owned or rented', $assessmentInfo && $assessmentInfo->site_owned ? $assessmentInfo->site_owned : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Monthly Production Capacity', $assessmentInfo && $assessmentInfo->monthly_production ? $assessmentInfo->monthly_production : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Primary Contact Name', $assessmentInfo && $assessmentInfo->primary_contact_name ? $assessmentInfo->primary_contact_name : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Position', $assessmentInfo && $assessmentInfo->position ? $assessmentInfo->position : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'E-mail', $assessmentInfo && $assessmentInfo->email ? $assessmentInfo->email : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Contact Number', $assessmentInfo && $assessmentInfo->contact_number ? $assessmentInfo->contact_number : 'Not Provided');
+            $this->addInfoRow($facilityTable, 'Social Compliance Contact', $assessmentInfo && $assessmentInfo->social_compliance_contact ? $assessmentInfo->social_compliance_contact : 'Not Provided');
 
             $section->addTextBreak(2);
 
@@ -495,23 +582,24 @@ class AssessmentController extends Controller
             $employeeTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'unit' => 'pct'
             ]);
             
             // Header row for employee
             $employeeHeaderRow = $employeeTable->addRow();
-            $employeeHeaderRow->addCell(8000, ['bgColor' => 'F44336'])->addText('Employee Information', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center']);
+            $employeeHeaderRow->addCell(null, ['bgColor' => 'F44336', 'gridSpan' => 2])->addText('Employee Information', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             
-            $this->addInfoRow($employeeTable, 'Number of employees', $assessmentInfo->number_of_employees ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Number of workers', $assessmentInfo->number_of_workers ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Male employees', $assessmentInfo->male_employees ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Female Employees', $assessmentInfo->female_employees ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Local workers', $assessmentInfo->local_workers ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Foreign Migrant Workers', $assessmentInfo->foreign_workers ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Worker Turnover Rate', $assessmentInfo->worker_turnover_rate ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Labor Agent Used', $assessmentInfo->labor_agent_used ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Management Spoken Language', $assessmentInfo->management_language ?? 'Not Provided');
-            $this->addInfoRow($employeeTable, 'Workers Spoken Language', $assessmentInfo->workers_language ?? 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Number of employees', $assessmentInfo && $assessmentInfo->number_of_employees ? $assessmentInfo->number_of_employees : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Number of workers', $assessmentInfo && $assessmentInfo->number_of_workers ? $assessmentInfo->number_of_workers : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Male employees', $assessmentInfo && $assessmentInfo->male_employees ? $assessmentInfo->male_employees : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Female Employees', $assessmentInfo && $assessmentInfo->female_employees ? $assessmentInfo->female_employees : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Local workers', $assessmentInfo && $assessmentInfo->local_workers ? $assessmentInfo->local_workers : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Foreign Migrant Workers', $assessmentInfo && $assessmentInfo->foreign_workers ? $assessmentInfo->foreign_workers : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Worker Turnover Rate', $assessmentInfo && $assessmentInfo->worker_turnover_rate ? $assessmentInfo->worker_turnover_rate : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Labor Agent Used', $assessmentInfo && $assessmentInfo->labor_agent_used ? $assessmentInfo->labor_agent_used : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Management Spoken Language', $assessmentInfo && $assessmentInfo->management_language ? $assessmentInfo->management_language : 'Not Provided');
+            $this->addInfoRow($employeeTable, 'Workers Spoken Language', $assessmentInfo && $assessmentInfo->workers_language ? $assessmentInfo->workers_language : 'Not Provided');
 
             $section->addTextBreak(2);
 
@@ -519,12 +607,13 @@ class AssessmentController extends Controller
             $overviewTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'unit' => 'pct'
             ]);
             $overviewHeaderRow = $overviewTable->addRow();
-            $overviewHeaderRow->addCell(8000, ['bgColor' => 'FFD966'])->addText('General Assessment Overview', ['bold' => true]);
+            $overviewHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('General Assessment Overview', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             $overviewContentRow = $overviewTable->addRow();
-            $overviewContentRow->addCell(8000)->addText($assessmentInfo->general_assessment_overview ?? 'No general assessment overview provided.', 'normalFont');
+            $overviewContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center'])->addText($assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.', 'normalFont', ['spaceBefore' => 0, 'spaceAfter' => 0]);
 
             $section->addTextBreak(2);
 
@@ -532,46 +621,60 @@ class AssessmentController extends Controller
             $practicesTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'unit' => 'pct'
             ]);
             $practicesHeaderRow = $practicesTable->addRow();
-            $practicesHeaderRow->addCell(8000, ['bgColor' => 'FFD966'])->addText('Facility Good Practices', ['bold' => true]);
+            $practicesHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('Facility Good Practices', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             $practicesContentRow = $practicesTable->addRow();
-            $practicesContentRow->addCell(8000)->addText($assessmentInfo->facility_good_practices ?? 'No facility good practices information provided.', 'normalFont');
-
-            $section->addPageBreak();
+            $practicesContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center'])->addText($assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.', 'normalFont', ['spaceBefore' => 0, 'spaceAfter' => 0]);
+            $section->addTextBreak(2);
 
             // AUDIT FINDINGS
             $section->addText('Audit Findings', 'sectionHeadingFont');
-            $section->addTextBreak(2);
+            $section->addTextBreak(1);
 
             if (!empty($audit_findings)) {
                 foreach ($audit_findings as $category => $categoryData) {
-                    // Category header
-                    $section->addText($category, ['size' => 14, 'bold' => true]);
-                    $section->addText('Category Score: ' . number_format($categoryData['percentage'], 1) . '%', ['bold' => true]);
-                    $section->addText('Findings Count - Green: ' . $categoryData['color_counts']['green'] . 
-                                    ', Yellow: ' . $categoryData['color_counts']['yellow'] . 
-                                    ', Orange: ' . $categoryData['color_counts']['orange'] . 
-                                    ', Red: ' . $categoryData['color_counts']['red'], 'normalFont');
-                    $section->addTextBreak(1);
+                    // Category table with header and score
+                    $categoryTable = $section->addTable([
+                        'borderSize' => 6,
+                        'borderColor' => '000000',
+                        'width' => 100 * 50,
+                        'unit' => 'pct'
+                    ]);
+                    
+                    // Category header row
+                    $categoryHeaderRow = $categoryTable->addRow(500); // Set explicit row height
+                    $categoryHeaderRow->addCell(6000, ['bgColor' => 'E8E8E8', 'valign' => 'center'])->addText($category, ['size' => 12, 'bold' => true], ['alignment' => 'left', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                    
+                    // Color counts cells
+                    $categoryHeaderRow->addCell(500, ['bgColor' => '4CAF50', 'valign' => 'center'])->addText($categoryData['color_counts']['green'], ['color' => 'FFFFFF', 'bold' => true, 'size' => 10], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                    $categoryHeaderRow->addCell(500, ['bgColor' => 'FFC107', 'valign' => 'center'])->addText($categoryData['color_counts']['yellow'], ['bold' => true, 'size' => 10], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                    $categoryHeaderRow->addCell(500, ['bgColor' => 'FF9800', 'valign' => 'center'])->addText($categoryData['color_counts']['orange'], ['color' => 'FFFFFF', 'bold' => true, 'size' => 10], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                    $categoryHeaderRow->addCell(500, ['bgColor' => 'F44336', 'valign' => 'center'])->addText($categoryData['color_counts']['red'], ['color' => 'FFFFFF', 'bold' => true, 'size' => 10], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                    $categoryHeaderRow->addCell(1000, ['bgColor' => 'F0F0F0', 'valign' => 'center'])->addText('Audit Score ' . number_format($categoryData['percentage'], 1), ['bold' => true, 'size' => 8], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
                     // Individual findings
                     if (count($categoryData['findings']) > 0) {
+                        $section->addTextBreak(1);
+                        
                         foreach ($categoryData['findings'] as $index => $finding) {
                             // Generate finding ID
                             $categoryPrefix = strtoupper(substr($category, 0, 2));
                             $findingId = $categoryPrefix . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT);
                             
-                            $findingTable = $section->addTable([
+                            // Create separate table for each finding
+                            $findingsTable = $section->addTable([
                                 'borderSize' => 6,
                                 'borderColor' => '000000',
-                                'width' => 100 * 50
+                                'width' => 100 * 50,
+                                'unit' => 'pct'
                             ]);
                             
-                            // Finding header row
-                            $headerRow = $findingTable->addRow();
-                            $headerRow->addCell(2000)->addText($findingId, ['bold' => true]);
+                            // Finding header row with ID and risk rating
+                            $findingHeaderRow = $findingsTable->addRow();
+                            $findingHeaderRow->addCell(1500, ['valign' => 'center'])->addText($findingId, ['bold' => true, 'size' => 11], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
                             
                             $riskColor = 'F44336'; // Red default
                             $textColor = 'FFFFFF';
@@ -584,39 +687,66 @@ class AssessmentController extends Controller
                                 $riskColor = 'FF9800';
                             }
                             
-                            $headerRow->addCell(6000, ['bgColor' => $riskColor])->addText($finding['risk_rating'], ['color' => $textColor, 'bold' => true], ['alignment' => 'center']);
+                            $findingHeaderRow->addCell(7500, ['bgColor' => $riskColor, 'valign' => 'center'])->addText($finding['risk_rating'], ['color' => $textColor, 'bold' => true, 'size' => 11], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
                             
-                            // Finding details
-                            $this->addFindingDetailRow($findingTable, 'Findings', $finding['findings']);
-                            $this->addFindingDetailRow($findingTable, 'Legal Reference', $finding['legal_ref']);
-                            $this->addFindingDetailRow($findingTable, 'Recommendation', $finding['recommendation']);
+                            // Findings row
+                            $findingsRow = $findingsTable->addRow();
+                            $findingsRow->addCell(1500, ['valign' => 'center'])->addText('Findings', ['bold' => true, 'size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            $findingsRow->addCell(7500, ['valign' => 'center'])->addText($finding['findings'], ['size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
                             
+                            // Legal Reference row
+                            $legalRow = $findingsTable->addRow();
+                            $legalRow->addCell(1500, ['valign' => 'center'])->addText('Legal Reference', ['bold' => true, 'size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            $legalRow->addCell(7500, ['valign' => 'center'])->addText($finding['legal_ref'], ['size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            
+                            // Recommendation row
+                            $recommendationRow = $findingsTable->addRow();
+                            $recommendationRow->addCell(1500, ['valign' => 'center'])->addText('Recommendation', ['bold' => true, 'size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            $recommendationRow->addCell(7500, ['valign' => 'center'])->addText($finding['recommendation'], ['size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            
+                            // Add spacing between individual finding tables
                             $section->addTextBreak(1);
                         }
-                    } else {
-                        $section->addText('No findings noted under this section on the assessment day.', 'normalFont');
+                        
                         $section->addTextBreak(1);
+                    } else {
+                        // Add no findings row to the same category table
+                        $noFindingsRow = $categoryTable->addRow();
+                        $noFindingsRow->addCell(null, ['gridSpan' => 8, 'valign' => 'center'])->addText('No findings noted under this section on the assessment day.', 'normalFont', ['alignment' => 'left', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+                        $section->addTextBreak(2);
                     }
-                    
-                    $section->addTextBreak(1);
                 }
             } else {
                 $section->addText('No audit findings available. All assessment questions were answered as "Yes" or no findings were recorded.', 'normalFont');
             }
 
-            $section->addPageBreak();
-
             // DISCLAIMER
             $disclaimerTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
-                'width' => 100 * 50
+                'width' => 100 * 50,
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER,
+                'unit' => 'pct'
             ]);
             $disclaimerHeaderRow = $disclaimerTable->addRow();
-            $disclaimerHeaderRow->addCell(8000, ['bgColor' => 'C0C0C0'])->addText('Disclaimer:', ['bold' => true]);
+            $disclaimerHeaderRow->addCell(null, ['bgColor' => 'C0C0C0', 'gridSpan' => 1, 'valign' => 'center'])->addText('Disclaimer:', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             $disclaimerContentRow = $disclaimerTable->addRow();
-            $disclaimerText = $assessmentInfo->disclaimer ?? 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility.';
-            $disclaimerContentRow->addCell(8000)->addText($disclaimerText, 'normalFont');
+            $disclaimerText = $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility.';
+            $disclaimerContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center'])->addText($disclaimerText, 'normalFont', ['spaceBefore' => 0, 'spaceAfter' => 0]);
+
+            // Save document
+            $fileName = 'assessment_report_' . $id . '.docx';
+            $filePath = storage_path('app/temp/' . $fileName);
+            
+            // Create temp directory if it doesn't exist
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0777, true);
+            }
+
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($filePath);
+
+            return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
 
             // Save document
             $fileName = 'assessment_report_' . $id . '.docx';
@@ -634,13 +764,22 @@ class AssessmentController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Word document generation error: ' . $e->getMessage());
+            Log::error('Error file: ' . $e->getFile() . ' on line ' . $e->getLine());
             Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Assessment ID: ' . $id);
+            Log::error('Questions count: ' . count($request->input('qestions', [])));
+            Log::error('AssessmentInfo exists: ' . ($assessmentInfo ? 'Yes' : 'No'));
             
             return response()->json([
                 'error' => 'Failed to generate Word document',
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
-                'file' => $e->getFile()
+                'file' => basename($e->getFile()),
+                'debug' => [
+                    'assessment_id' => $id,
+                    'questions_count' => count($request->input('qestions', [])),
+                    'assessment_info_exists' => isset($assessmentInfo) ? true : false
+                ]
             ], 500);
         }
     }
@@ -651,8 +790,8 @@ class AssessmentController extends Controller
     private function addSimpleTableRow($table, $label, $value)
     {
         $row = $table->addRow();
-        $row->addCell(3000)->addText($label, ['bold' => true, 'size' => 11]);
-        $row->addCell(5000)->addText($value, ['size' => 11]);
+        $row->addCell(3000, ['valign' => 'center'])->addText($label, ['bold' => true, 'size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+        $row->addCell(5000, ['valign' => 'center'])->addText($value, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
     }
 
     /**
@@ -661,8 +800,8 @@ class AssessmentController extends Controller
     private function addInfoRow($table, $label, $value)
     {
         $row = $table->addRow();
-        $row->addCell(3000)->addText($label, ['size' => 11]);
-        $row->addCell(5000)->addText($value, ['size' => 11]);
+        $row->addCell(3000, ['valign' => 'center'])->addText($label, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+        $row->addCell(5000, ['valign' => 'center'])->addText($value, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
     }
 
     /**
@@ -671,7 +810,17 @@ class AssessmentController extends Controller
     private function addFindingDetailRow($table, $label, $value)
     {
         $row = $table->addRow();
-        $row->addCell(2000)->addText($label, ['bold' => true, 'size' => 11]);
-        $row->addCell(6000)->addText($value, ['size' => 11]);
+        $row->addCell(2000, ['valign' => 'center'])->addText($label, ['bold' => true, 'size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+        $row->addCell(6000, ['valign' => 'center'])->addText($value, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+    }
+
+    /**
+     * Add styled table row with alternating background colors
+     */
+    private function addStyledTableRow($table, $label, $value, $bgColor = 'FFFFFF')
+    {
+        $row = $table->addRow();
+        $row->addCell(3500, ['bgColor' => $bgColor, 'valign' => 'center'])->addText($label, ['bold' => true, 'size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+        $row->addCell(5500, ['bgColor' => $bgColor, 'valign' => 'center'])->addText($value, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
     }
 }

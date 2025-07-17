@@ -227,9 +227,14 @@ class AuditJobController extends Controller
 
         $auditJob = AuditJob::create($formData);
         
+        // Update the additional fields
         $auditJob->fieldStaff = $request->fieldStaff;
         $auditJob->serviceName = $request->serviceName;
         $auditJob->requestReceiveDate = $request->requestReceiveDate;
+        $auditJob->serviceType = $request->serviceType;
+        $auditJob->serviceScope = $request->serviceScope;
+        $auditJob->scheduleType = $request->scheduleType;
+        $auditJob->clientShadowing = $request->clientShadowing;
         $auditJob->save();
 
         $auditor = User::where('id', $formData['auditor'])->first();
@@ -266,7 +271,6 @@ class AuditJobController extends Controller
         $auditJob->reviewer()->associate($reviewer);
         $auditJob->assesmentts()->associate($assesment);
 
-
         $auditJob->save();
 
         return redirect()->route('jobs');
@@ -278,6 +282,17 @@ class AuditJobController extends Controller
         $formData['team'] = Auth::user()->team;
         $auditJob = AuditJob::findOrFail($formData['id']);
         $auditJob->update($formData);
+        
+        // Update the additional fields
+        $auditJob->fieldStaff = $request->fieldStaff;
+        $auditJob->serviceName = $request->serviceName;
+        $auditJob->requestReceiveDate = $request->requestReceiveDate;
+        $auditJob->serviceType = $request->serviceType;
+        $auditJob->serviceScope = $request->serviceScope;
+        $auditJob->scheduleType = $request->scheduleType;
+        $auditJob->clientShadowing = $request->clientShadowing;
+        $auditJob->save();
+        
         // redirect to jobs route
         return redirect()->route('jobs');
     }

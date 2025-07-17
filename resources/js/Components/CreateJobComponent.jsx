@@ -3,7 +3,6 @@ import { Inertia } from '@inertiajs/inertia';
 
 // Import all the individual segments
 import BasicInformationSection from './BasicInformationSection';
-import StaffRoleSection from './StaffRoleSection';
 import ContactsSection from './ContactsSection';
 import AdditionalInformationSection from './AdditionalInformationSection';
 import FilesForJob from './FilesForJob';
@@ -15,22 +14,28 @@ export default function CreateJobComponent() {
   
   const [formData, setFormData] = useState({
     // Basic Information
-    jobType: '',
     reportNo: '',
-    requestType: '',
-    jobStatus: '',
-    officeCountry: '',
-    staffDays: '',
-    isClientShadowAudit: false,
-    dateRequestReceived: '',
+    serviceName: '',
+    requestReceiveDate: '',
     auditDueDate: '',
     auditStartDate: '',
     auditEndDate: '',
+    jobType: '',
+    serviceType: '',
+    serviceScope: '',
+    scheduleType: '',
+    officeCountry: '',
+    clientShadowing: '',
     remarks: '',
     dateReportSentToQA: '',
     finalReportSentToClient: '',
-    serviceName: '',
-    requestReceiveDate: '',
+    
+    // Legacy fields (kept for compatibility)
+    requestType: '',
+    jobStatus: '',
+    staffDays: '',
+    isClientShadowAudit: false,
+    dateRequestReceived: '',
     fieldStaff: '',
 
     // Staff Role
@@ -76,9 +81,20 @@ export default function CreateJobComponent() {
     auditor: '',
     reviewer: '',
     
-    // Error states
-    jobTypeError: false,
+    // Error states for required fields
     reportNoError: false,
+    serviceNameError: false,
+    requestReceiveDateError: false,
+    auditDueDateError: false,
+    auditStartDateError: false,
+    auditEndDateError: false,
+    jobTypeError: false,
+    clientShadowingError: false,
+    remarksError: false,
+    dateReportSentToQAError: false,
+    finalReportSentToClientError: false,
+    
+    // Legacy error states (kept for compatibility)
     requestTypeError: false,
     auditorError: false,
     reviewerError: false
@@ -103,12 +119,41 @@ export default function CreateJobComponent() {
       };
       
       // Clear validation errors when fields are filled
-      if (name === 'jobType' && value) {
-        updatedData.jobTypeError = false;
-      }
       if (name === 'reportNo' && value) {
         updatedData.reportNoError = false;
       }
+      if (name === 'serviceName' && value) {
+        updatedData.serviceNameError = false;
+      }
+      if (name === 'requestReceiveDate' && value) {
+        updatedData.requestReceiveDateError = false;
+      }
+      if (name === 'auditDueDate' && value) {
+        updatedData.auditDueDateError = false;
+      }
+      if (name === 'auditStartDate' && value) {
+        updatedData.auditStartDateError = false;
+      }
+      if (name === 'auditEndDate' && value) {
+        updatedData.auditEndDateError = false;
+      }
+      if (name === 'jobType' && value) {
+        updatedData.jobTypeError = false;
+      }
+      if (name === 'clientShadowing' && value) {
+        updatedData.clientShadowingError = false;
+      }
+      if (name === 'remarks' && value) {
+        updatedData.remarksError = false;
+      }
+      if (name === 'dateReportSentToQA' && value) {
+        updatedData.dateReportSentToQAError = false;
+      }
+      if (name === 'finalReportSentToClient' && value) {
+        updatedData.finalReportSentToClientError = false;
+      }
+      
+      // Legacy field validations (kept for compatibility)
       if (name === 'requestType' && value) {
         updatedData.requestTypeError = false;
       }
@@ -118,6 +163,7 @@ export default function CreateJobComponent() {
       if (name === 'reviewer' && value) {
         updatedData.reviewerError = false;
       }
+      
       console.log('Updated form data:', updatedData);
       return updatedData;
     });
@@ -137,29 +183,38 @@ export default function CreateJobComponent() {
     const newFormData = {...formData};
     
     // Check if required fields are filled in Basic Information section
-    if (!formData.jobType || !formData.reportNo || !formData.requestType) {
+    const requiredBasicFields = [
+      { field: 'reportNo', error: 'reportNoError' },
+      { field: 'serviceName', error: 'serviceNameError' },
+      { field: 'requestReceiveDate', error: 'requestReceiveDateError' },
+      { field: 'auditDueDate', error: 'auditDueDateError' },
+      { field: 'auditStartDate', error: 'auditStartDateError' },
+      { field: 'auditEndDate', error: 'auditEndDateError' },
+      { field: 'jobType', error: 'jobTypeError' },
+      { field: 'clientShadowing', error: 'clientShadowingError' },
+      { field: 'remarks', error: 'remarksError' },
+      { field: 'dateReportSentToQA', error: 'dateReportSentToQAError' },
+      { field: 'finalReportSentToClient', error: 'finalReportSentToClientError' }
+    ];
+    
+    let basicFieldErrors = false;
+    requiredBasicFields.forEach(({ field, error }) => {
+      if (!formData[field] || formData[field] === '') {
+        newFormData[error] = true;
+        hasErrors = true;
+        basicFieldErrors = true;
+      }
+    });
+    
+    if (basicFieldErrors) {
       // Switch to basic tab if required fields are empty
       setActiveTab('basic');
-      
-      // Add validation feedback
-      if (!formData.jobType) {
-        newFormData.jobTypeError = true;
-        hasErrors = true;
-      }
-      if (!formData.reportNo) {
-        newFormData.reportNoError = true;
-        hasErrors = true;
-      }
-      if (!formData.requestType) {
-        newFormData.requestTypeError = true;
-        hasErrors = true;
-      }
     }
     
     // Check if required fields are filled in Auditor & Reviewer section
     if (!formData.auditor || !formData.reviewer) {
       // If basic info is valid but auditor/reviewer is not, switch to auditor tab
-      if (!hasErrors) {
+      if (!basicFieldErrors) {
         setActiveTab('auditor');
       }
       
@@ -232,10 +287,9 @@ export default function CreateJobComponent() {
 
   const tabs = [
     { id: 'basic', label: 'Basic Information', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { id: 'staff', label: 'Staff Role', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
     { id: 'contacts', label: 'Contacts', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-    { id: 'additional', label: 'Additional Info', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
     { id: 'auditor', label: 'Auditor & Reviewer', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+    { id: 'additional', label: 'Additional Info', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
   ];
 
   // Calculate progress based on active tab
@@ -281,7 +335,7 @@ export default function CreateJobComponent() {
 
           {/* Tab Navigation - Redesigned */}
           <div className="border-b border-gray-200 bg-gray-50">
-            <div className="flex overflow-x-auto gap-1 px-4">
+            <div className="flex justify-center overflow-x-auto gap-1 px-4">
               {tabs.map((tab, index) => (
                 <button
                   key={tab.id}
@@ -319,10 +373,6 @@ export default function CreateJobComponent() {
           <form onSubmit={handleSubmit} className="p-8" noValidate>
             <div className={activeTab === 'basic' ? 'block' : 'hidden'}>
               <BasicInformationSection formData={formData} handleChange={handleChange} />
-            </div>
-
-            <div className={activeTab === 'staff' ? 'block' : 'hidden'}>
-              <StaffRoleSection formData={formData} handleChange={handleChange} />
             </div>
 
             <div className={activeTab === 'contacts' ? 'block' : 'hidden'}>

@@ -203,22 +203,12 @@
             <div class="ratingTableDiv">
                 <div class="ratingTable">
                     <table >
+                        @foreach($overall_ratings_descending as $rating)
                         <tr>
-                            <td style="background-color: green">Green/A</td>
-                            <td>>90%</td>
+                            <td style="background-color: {{ $rating->color }}">{{ $rating->label }}</td>
+                            <td>{{'<= ' . $rating->percentage }}%</td>
                         </tr>
-                        <tr>
-                            <td style="background-color: yellow">Yellow/B</td>
-                            <td>71% - 90%</td>
-                        </tr>
-                        <tr>
-                            <td style="background-color: orange">Orange/C</td>
-                            <td>41% - 70%</td>
-                        </tr>
-                        <tr>
-                            <td style="background-color: red">Red/D</td>
-                            <td><=40%</td>
-                        </tr>
+                        @endforeach
                     </table>
                 </div>
             </div>
@@ -226,17 +216,19 @@
             <div>
                 <table>
                     <tr>
-                        <td style="background-color: green; text-align: center">Green (A)</td>
-                        <td style="background-color: yellow; text-align: center">Yellow (B)</td>
-                        <td style="background-color: orange; text-align: center">Orange (C)</td>
-                        <td style="background-color: red; text-align: center">Red (D)</td>
+                        @foreach($overall_ratings as $rating)
+                        <td style="background-color: {{ $rating->color }}; text-align: center">{{ $rating->label }}</td>
+                        @endforeach
                         <td style="text-align: center">{{ $scores['overall_percentage'] ?? 0 }}%</td>
                     </tr>
                     <tr style="border: 0px">
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 90)  <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 71 && ($scores['overall_percentage'] ?? 0) < 90)  <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) >= 41 && ($scores['overall_percentage'] ?? 0) < 71)  <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
-                        <td style="border: 0px">@if(($scores['overall_percentage'] ?? 0) < 41) <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> @endif</td>
+                        @foreach($overall_ratings as $rating)
+                        <td style="border: 0px">
+                            @if($scores['overall_rating_color'] === $rating->color) 
+                                <span style="font-size: 28px; font-weight: bold; color: black; position: relative; left: 50px; top: -3px; text-shadow: 1px 1px 0px rgba(0,0,0,0.3);">^</span> 
+                            @endif
+                        </td>
+                        @endforeach
                         <td style="border: 0px"></td>
                     </tr>
                 </table>
@@ -255,15 +247,17 @@
                             @foreach($scores['category_percentages'] as $category => $percentage)
                                 <tr>
                                     <td>{{ $category }}</td>
-                                    @if($percentage >= 90) 
-                                        <td style="background-color: green"></td>
-                                    @elseif($percentage >= 71) 
-                                        <td style="background-color: yellow"></td>
-                                    @elseif($percentage >= 41) 
-                                        <td style="background-color: orange"></td>
-                                    @else 
-                                        <td style="background-color: red"></td>
-                                    @endif
+                                    @php
+                                        $categoryColor = 'red'; // default
+                                        foreach($overall_ratings as $rating) {
+                                            if($percentage <= floatval($rating->percentage)) {
+                                                $categoryColor = $rating->color;
+                                            } else {
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+                                    <td style="background-color: {{ $categoryColor }}"></td>
                                     <td style="text-align: center;">{{ $percentage }}</td>
                                 </tr>
                             @endforeach
@@ -287,11 +281,21 @@
                                 </div>
                                 <div style="width: 100%; background-color: #e0e0e0; height: 20px; border-radius: 10px; position: relative;">
                                     @php
-                                        $barColor = '#9966ff'; // Default purple
-                                        if($percentage >= 90) $barColor = '#4CAF50'; // Green
-                                        elseif($percentage >= 71) $barColor = '#FFC107'; // Yellow  
-                                        elseif($percentage >= 41) $barColor = '#FF9800'; // Orange
-                                        else $barColor = '#F44336'; // Red
+                                        $barColor = '#F44336'; // Default red
+                                        foreach($overall_ratings as $rating) {
+                                            if($percentage <= floatval($rating->percentage)) {
+                                                // Convert color name to hex
+                                                switch(strtolower($rating->color)) {
+                                                    case 'green': $barColor = '#4CAF50'; break;
+                                                    case 'yellow': $barColor = '#FFC107'; break;
+                                                    case 'orange': $barColor = '#FF9800'; break;
+                                                    case 'red': $barColor = '#F44336'; break;
+                                                    default: $barColor = $rating->color; // Use color as is if hex
+                                                }
+                                            } else {
+                                                break;
+                                            }
+                                        }
                                     @endphp
                                     <div style="width: {{ $percentage }}%; background-color: {{ $barColor }}; height: 100%; border-radius: 10px; position: relative;">
                                         @if($percentage > 15)
@@ -470,10 +474,9 @@
                                             No. of Findings
                                         </tr>
                                         <tr>
-                                            <td style="background-color: green; text-align: center">{{ $categoryData['color_counts']['green'] ?? 0 }}</td>
-                                            <td style="background-color: yellow; text-align: center">{{ $categoryData['color_counts']['yellow'] ?? 0 }}</td>
-                                            <td style="background-color: orange; text-align: center">{{ $categoryData['color_counts']['orange'] ?? 0 }}</td>
-                                            <td style="background-color: red; text-align: center">{{ $categoryData['color_counts']['red'] ?? 0 }}</td>
+                                            @foreach($risk_ratings as $riskRating)
+                                                <td style="background-color: {{ $riskRating->color }}; text-align: center">{{ $categoryData['color_counts'][strtolower($riskRating->color)] ?? 0 }}</td>
+                                            @endforeach
                                         </tr>
                                     </table>
                                 </th>
@@ -495,9 +498,12 @@
                         @if(count($categoryData['findings']) > 0)
                             @foreach($categoryData['findings'] as $index => $finding)
                                 @php
-                                    $color = isset($finding['color']) ? strtolower(trim($finding['color'])) : 'unknown';
-                                    $colorName = ucfirst($color);
+                                    // Get color from the finding data (set by controller from risk_rating table)
+                                    $color = isset($finding['color']) ? strtolower(trim($finding['color'])) : 'red';
                                     $riskRating = isset($finding['risk_rating']) ? $finding['risk_rating'] : 'Not Specified';
+                                    
+                                    // Determine text color for readability
+                                    $textColor = in_array($color, ['yellow', 'orange']) ? 'black' : 'white';
                                     
                                     // Generate finding ID
                                     $categoryPrefix = strtoupper(substr($category, 0, 2));
@@ -507,7 +513,7 @@
                                 <table>
                                     <tr style="border: 0px solid black;">
                                         <td width="20%">{{ $findingId }}</td>
-                                        <td style="background-color: {{ $color }}; color: {{ $color == 'yellow' ? 'black' : 'white' }}" width="20%">{{ $riskRating }}</td>
+                                        <td style="background-color: {{ $color }}; color: {{ $textColor }}" width="20%">{{ $riskRating }}</td>
                                         <td style="border: 0px solid black"></td>
                                     </tr>
                                     <tr>
@@ -539,10 +545,9 @@
                                         No. of Findings
                                     </tr>
                                     <tr>
-                                        <td style="background-color: green; text-align: center">0</td>
-                                        <td style="background-color: yellow; text-align: center">0</td>
-                                        <td style="background-color: orange; text-align: center">0</td>
-                                        <td style="background-color: red; text-align: center">0</td>
+                                        @foreach($risk_ratings as $riskRating)
+                                            <td style="background-color: {{ $riskRating->color }}; text-align: center">0</td>
+                                        @endforeach
                                     </tr>
                                 </table>
                             </th>

@@ -5,7 +5,7 @@ import axios from "axios";
 import ConfirmationModal from './ConfirmationModal';
 
 export default function AssesmentComponent() {
-  const { question, user, assessment } = usePage().props;
+  const { question, user, assessment, riskRatings, overallRatings } = usePage().props;
   const [questions, setQuestions] = useState([]);
   const [groupedQuestions, setGroupedQuestions] = useState({});
   const [loading, setLoading] = useState(false);
@@ -15,6 +15,8 @@ export default function AssesmentComponent() {
   const [collapsedSubcategories, setCollapsedSubcategories] = useState({});
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [currentRiskRatings, setCurrentRiskRatings] = useState([]);
+  const [currentOverallRatings, setCurrentOverallRatings] = useState([]);
 
   // Toggle functions for collapsible sections
   const toggleCategory = (category) => {
@@ -111,9 +113,17 @@ export default function AssesmentComponent() {
     setGroupedQuestions(grouped);
     console.log('Grouped questions:', grouped);
 
+    // Set risk ratings and overall ratings for current assessment type
+    if (assessment && assessment.type) {
+      const filteredRiskRatings = (riskRatings || []).filter(rating => rating.type === assessment.type);
+      const filteredOverallRatings = (overallRatings || []).filter(rating => rating.type === assessment.type);
+      setCurrentRiskRatings(filteredRiskRatings);
+      setCurrentOverallRatings(filteredOverallRatings);
+    }
+
     // Load existing assessment info
     loadAssessmentInfo();
-  }, [question]);
+  }, [question, riskRatings, overallRatings, assessment]);
 
   const loadAssessmentInfo = async () => {
     try {
@@ -665,24 +675,22 @@ export default function AssesmentComponent() {
                                 )}
                               </td>
                               <td className="py-3 px-4">
-                                {questionItem.answer === 'No' ? (
-                                  <select
-                                    value={questionItem.risk_rating || ''}
-                                    onChange={(e) => handleChange(e, questionItem, 'risk_rating')}
-                                    className={`w-full py-2 px-3 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:outline-none transition-colors ${
-                                      questionItem.risk_rating === 'High' ? 'text-red-800 bg-red-50' :
-                                      questionItem.risk_rating === 'Medium' ? 'text-yellow-800 bg-yellow-50' :
-                                      'text-blue-800 bg-blue-50'
-                                    }`}
-                                  >
-                                    <option value="">Select Rating</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                  </select>
-                                ) : (
-                                  <span className="text-gray-400 italic">N/A</span>
-                                )}
+                                <select
+                                  value={questionItem.risk_rating || ''}
+                                  onChange={(e) => handleChange(e, questionItem, 'risk_rating')}
+                                  className={`w-full py-2 px-3 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:outline-none transition-colors ${
+                                    currentRiskRatings.find(r => r.label === questionItem.risk_rating)?.color ? 
+                                    `text-${currentRiskRatings.find(r => r.label === questionItem.risk_rating)?.color}-800 bg-${currentRiskRatings.find(r => r.label === questionItem.risk_rating)?.color}-50` :
+                                    'text-blue-800 bg-blue-50'
+                                  }`}
+                                >
+                                  <option value="">Select Rating</option>
+                                  {currentRiskRatings.map((rating) => (
+                                    <option key={rating.id} value={rating.label}>
+                                      {rating.label}
+                                    </option>
+                                  ))}
+                                </select>
                               </td>
                               <td className="py-3 px-4">
                                 {questionItem.answer === 'No' ? (

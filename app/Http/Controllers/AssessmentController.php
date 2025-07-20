@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Assessment;
 use App\Models\AuditJob;
 use App\Models\StaffInformation;
+use App\Models\RiskRating;
+use App\Models\OverallRating;
 use App\Http\Requests\StoreAssessmentRequest;
 use App\Http\Requests\UpdateAssessmentRequest;
 use Illuminate\Http\Request;
@@ -107,30 +109,49 @@ class AssessmentController extends Controller
 
         $questions = $request->input('qestions', []);
 
+        // Fetch the assessment to get its type
+        $assessment = \App\Models\Assessment::findOrFail($id);
+        
+        // Get risk ratings and overall ratings for this assessment type
+        $riskRatings = RiskRating::where('type', $assessment->type)->get();
+
+        $overallRatings = OverallRating::where('type', $assessment->type)->orderBy('percentage', 'desc')->get();
+
+        $overallRatingsDescending = OverallRating::where('type', $assessment->type)->orderBy('percentage', 'desc')->get();
+
+        // return $overallRatingsDescending;
+
         $category_data = [];
         $total_achieved_marks = 0;
         $total_possible_marks = 0;
 
         foreach ($questions as $question) {
-            if (!is_array($question) || !isset($question['mark'], $question['answer'], $question['category'])) {
+            if (!is_array($question) || !isset($question['answer'], $question['category'])) {
                 continue;
             }
 
-            $mark = is_numeric($question['mark']) ? (float) $question['mark'] : 0;
-            $answer = isset($question['answer']) ? strtolower(trim($question['answer'])) : '';
+            $answer = strtolower(trim($question['answer']));
             $category = $question['category'] ?? 'Uncategorized';
 
             if (!isset($category_data[$category])) {
                 $category_data[$category] = ['achieved' => 0, 'possible' => 0];
             }
 
-            $achieved_mark_for_question = ($answer === 'yes') ? $mark : 0;
+            // Get the mark from risk_rating table based on the selected risk_rating value
+            $riskRating = $riskRatings->where('label', $question['risk_rating'] ?? '')->first();
+            
+            $questionMark = $riskRating ? floatval($riskRating->mark) : 0;
 
-            $category_data[$category]['achieved'] += $achieved_mark_for_question;
-            $category_data[$category]['possible'] += $mark;
-
-            $total_achieved_marks += $achieved_mark_for_question;
-            $total_possible_marks += $mark;
+            if ($answer === 'yes') {
+                // For 'Yes' answers, add the full mark
+                $category_data[$category]['achieved'] += $questionMark;
+                $total_achieved_marks += $questionMark;
+            }
+            // For 'No' answers, achieved mark is 0 (no need to add anything)
+            
+            // For possible marks, use the mark of the selected risk rating for this specific question
+            $category_data[$category]['possible'] += $questionMark;
+            $total_possible_marks += $questionMark;
         }
 
         $category_percentages = [];
@@ -140,28 +161,26 @@ class AssessmentController extends Controller
                 : 0;
         }
 
-        // Fetch the assessment for metadata, then use the calculated scores for the PDF.
-        $assessment = \App\Models\Assessment::findOrFail($id);
-
         $overall_percentage = ($total_possible_marks > 0)
             ? round(($total_achieved_marks / $total_possible_marks) * 100, 2)
             : 0;
 
         $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
 
-
         $audit_findings = [];
+
+        // Get unique colors from risk_rating table for dynamic color counts
+        $riskRatingColors = $riskRatings->pluck('color')->unique()->toArray();
+        $colorCountsTemplate = [];
+        foreach ($riskRatingColors as $color) {
+            $colorCountsTemplate[strtolower($color)] = 0;
+        }
 
         // Initialize all categories from the category_percentages first
         foreach ($category_percentages as $category => $percentage) {
             $audit_findings[$category] = [
                 'findings' => [],
-                'color_counts' => [
-                    'green' => 0,
-                    'yellow' => 0,
-                    'orange' => 0,
-                    'red' => 0,
-                ],
+                'color_counts' => $colorCountsTemplate,
                 'percentage' => $percentage,
             ];
         }
@@ -174,40 +193,61 @@ class AssessmentController extends Controller
         // Group findings by category and count colors
         foreach ($no_answer_questions as $question) {
             $category = $question['category'] ?? 'Uncategorized';
-            $color = isset($question['color']) ? strtolower(trim($question['color'])) : 'unknown';
+            
+            // Get risk rating details from database
+            $riskRating = $riskRatings->where('label', $question['risk_rating'] ?? '')->first();
+            $color = $riskRating ? strtolower(trim($riskRating->color)) : 'red'; // Default to red if not found
 
             // Initialize the category in our findings array if it's not already there (for uncategorized or missing categories)
             if (!isset($audit_findings[$category])) {
                 $audit_findings[$category] = [
                     'findings' => [],
-                    'color_counts' => [
-                        'green' => 0,
-                        'yellow' => 0,
-                        'orange' => 0,
-                        'red' => 0,
-                    ],
+                    'color_counts' => $colorCountsTemplate,
                     'percentage' => $category_percentages[$category] ?? 0,
                 ];
             }
 
-            // Add the question to the list of findings for this category
-            $audit_findings[$category]['findings'][] = $question;
+            // Add the question to the list of findings for this category with color information
+            $findingData = $question;
+            $findingData['color'] = $color; // Add the color based on risk rating
+            $findingData['risk_rating_color'] = $riskRating ? $riskRating->color : 'red'; // Store original color for reference
+            
+            $audit_findings[$category]['findings'][] = $findingData;
 
             // Increment the count for the specific color
             if (array_key_exists($color, $audit_findings[$category]['color_counts'])) {
                 $audit_findings[$category]['color_counts'][$color]++;
             }
         }
+
+        // Determine overall rating based on percentage and overall_rating table
+        $overallRatingLabel = 'Not Determined';
+        $overallRatingColor = 'red';
+        
+        foreach ($overallRatings as $rating) {
+            if ($overall_percentage <= floatval($rating->percentage)) {
+                $overallRatingLabel = $rating->label;
+                $overallRatingColor = $rating->color;
+            } else {
+                break; // Stop at first condition that fails since they're ordered by percentage
+            }
+        }
+
         // Prepare data for the PDF view, including the calculated percentages.
         $data = [
             'audit_findings' => $audit_findings,
             'assessmentInfo' => $assessmentInfo,
             'questions' => $questions,
+            'overall_ratings' => $overallRatings,
+            'overall_ratings_descending' => $overallRatingsDescending,
+            'risk_ratings' => $riskRatings,
             'scores' => [
                 'total_achieved' => $total_achieved_marks,
                 'total_possible' => $total_possible_marks,
                 'overall_percentage' => $overall_percentage,
                 'category_percentages' => $category_percentages,
+                'overall_rating_label' => $overallRatingLabel,
+                'overall_rating_color' => $overallRatingColor,
             ],
         ];
 
@@ -338,9 +378,13 @@ class AssessmentController extends Controller
             $assessment = Assessment::findOrFail($id);
             $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
 
-            // Calculate scores and audit findings
+            // Get risk ratings and overall ratings for this assessment type
+            $riskRatings = RiskRating::where('type', $assessment->type)->get();
+            $overallRatings = OverallRating::where('type', $assessment->type)->orderBy('percentage', 'asc')->get();
+
+            // Calculate scores and audit findings using dynamic risk rating table
             $total_achieved_marks = 0;
-            $total_possible_marks = count($questions) * 5;
+            $total_possible_marks = 0;
             $category_percentages = [];
             $audit_findings = [];
 
@@ -357,25 +401,23 @@ class AssessmentController extends Controller
             // Calculate category scores and generate audit findings
             foreach ($grouped_questions as $category => $categoryQuestions) {
                 $category_achieved = 0;
-                $category_possible = count($categoryQuestions) * 5;
+                $category_possible = 0; // Will calculate based on actual risk ratings selected
                 $findings = [];
 
                 foreach ($categoryQuestions as $question) {
-                    $marks = 0;
+                    // Get the mark from risk_rating table based on the selected risk_rating value
+                    $riskRating = $riskRatings->where('label', $question['risk_rating'] ?? '')->first();
+                    $questionMark = $riskRating ? floatval($riskRating->mark) : 0;
+                    
+                    $achievedMarks = 0;
                     if (isset($question['answer'])) {
                         if (strtolower(trim($question['answer'])) === 'yes') {
-                            $marks = 5;
+                            // For 'Yes' answers, add the full mark
+                            $achievedMarks = $questionMark;
                         } elseif (strtolower(trim($question['answer'])) === 'no') {
-                            $marks = 0;
+                            $achievedMarks = 0;
                             // Add finding if answer is No
-                            $color = 'red';
-                            if (isset($question['risk_rating'])) {
-                                $riskRating = strtolower(trim($question['risk_rating']));
-                                if (in_array($riskRating, ['low', 'green'])) $color = 'green';
-                                elseif (in_array($riskRating, ['medium', 'yellow'])) $color = 'yellow';
-                                elseif (in_array($riskRating, ['high', 'orange'])) $color = 'orange';
-                                elseif (in_array($riskRating, ['critical', 'red'])) $color = 'red';
-                            }
+                            $color = $riskRating ? strtolower(trim($riskRating->color)) : 'red'; // Default to red
 
                             $findings[] = [
                                 'question_ref' => isset($question['ncref']) ? $question['ncref'] : 'N/A',
@@ -387,8 +429,13 @@ class AssessmentController extends Controller
                             ];
                         }
                     }
-                    $category_achieved += $marks;
-                    $total_achieved_marks += $marks;
+                    
+                    $category_achieved += $achievedMarks;
+                    $total_achieved_marks += $achievedMarks;
+                    
+                    // Add to possible marks based on the selected risk rating for this question
+                    $category_possible += $questionMark;
+                    $total_possible_marks += $questionMark;
                 }
 
                 $category_percentage = $category_possible > 0 ? ($category_achieved / $category_possible) * 100 : 0;
@@ -418,6 +465,19 @@ class AssessmentController extends Controller
             }
 
             $overall_percentage = $total_possible_marks > 0 ? ($total_achieved_marks / $total_possible_marks) * 100 : 0;
+
+            // Determine overall rating based on percentage and overall_rating table
+            $overallRatingLabel = 'Not Determined';
+            $overallRatingColor = 'red';
+            
+            foreach ($overallRatings as $rating) {
+                if ($overall_percentage >= floatval($rating->percentage)) {
+                    $overallRatingLabel = $rating->label;
+                    $overallRatingColor = $rating->color;
+                } else {
+                    break; // Stop at first condition that fails since they're ordered by percentage
+                }
+            }
 
             // Create Word document
             $phpWord = new PhpWord();
@@ -533,12 +593,47 @@ class AssessmentController extends Controller
                 'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
+            // Create dynamic rating table based on overall_ratings from database
             $ratingRow = $ratingTable->addRow();
-            $ratingRow->addCell(2000, ['bgColor' => '4CAF50', 'valign' => 'center'])->addText('Green (A)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
-            $ratingRow->addCell(2000, ['bgColor' => 'FFC107', 'valign' => 'center'])->addText('Yellow (B)', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
-            $ratingRow->addCell(2000, ['bgColor' => 'FF9800', 'valign' => 'center'])->addText('Orange (C)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
-            $ratingRow->addCell(2000, ['bgColor' => 'F44336', 'valign' => 'center'])->addText('Red (D)', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
-            $ratingRow->addCell(2000, ['valign' => 'center'])->addText(round($overall_percentage, 1) . '%', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            
+            // Map color names to hex codes for background
+            $colorMap = [
+                'green' => '4CAF50',
+                'yellow' => 'FFC107', 
+                'orange' => 'FF9800',
+                'red' => 'F44336'
+            ];
+            
+            // Map colors for text (white for dark backgrounds, black for light)
+            $textColorMap = [
+                'green' => 'FFFFFF',
+                'yellow' => '000000',
+                'orange' => 'FFFFFF', 
+                'red' => 'FFFFFF'
+            ];
+            
+            // Calculate cell width based on number of ratings
+            $cellWidth = $overallRatings->count() > 0 ? (8000 / $overallRatings->count()) : 2000;
+            
+            // Add cells for each rating from database
+            foreach ($overallRatings as $rating) {
+                $bgColor = $colorMap[strtolower($rating->color)] ?? 'CCCCCC';
+                $textColor = $textColorMap[strtolower($rating->color)] ?? '000000';
+                
+                $cellText = $rating->label . ' (≥' . $rating->percentage . '%)';
+                $ratingRow->addCell($cellWidth, ['bgColor' => $bgColor, 'valign' => 'center'])
+                          ->addText($cellText, ['color' => $textColor, 'bold' => true], 
+                                   ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            }
+            
+            // Add the overall percentage with the determined rating color
+            $overallBgColor = $colorMap[strtolower($overallRatingColor)] ?? 'CCCCCC';
+            $overallTextColor = $textColorMap[strtolower($overallRatingColor)] ?? '000000';
+            
+            $ratingRow->addCell(2000, ['bgColor' => $overallBgColor, 'valign' => 'center'])
+                      ->addText(round($overall_percentage, 1) . '% (' . $overallRatingLabel . ')', 
+                               ['color' => $overallTextColor, 'bold' => true], 
+                               ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
             $section->addTextBreak(2);
 
@@ -564,10 +659,24 @@ class AssessmentController extends Controller
                 $row = $sectionTable->addRow();
                 $row->addCell(4000, ['valign' => 'center'])->addText($category, 'normalFont', ['alignment' => 'left', 'spaceBefore' => 0, 'spaceAfter' => 0]);
                 
-                $bgColor = 'F44336'; // Red
-                if ($percentage >= 90) $bgColor = '4CAF50'; // Green
-                elseif ($percentage >= 71) $bgColor = 'FFC107'; // Yellow
-                elseif ($percentage >= 41) $bgColor = 'FF9800'; // Orange
+                // Determine color based on overall rating table
+                $colorForPercentage = 'red'; // Default to red
+                
+                // Find the highest rating this percentage qualifies for
+                foreach ($overallRatings as $rating) {
+                    if ($percentage >= floatval($rating->percentage)) {
+                        $colorForPercentage = $rating->color;
+                    }
+                }
+                
+                // Map color names to hex codes
+                $colorMap = [
+                    'green' => '4CAF50',
+                    'yellow' => 'FFC107',
+                    'orange' => 'FF9800',
+                    'red' => 'F44336'
+                ];
+                $bgColor = $colorMap[$colorForPercentage] ?? 'F44336';
                 
                 $row->addCell(2000, ['bgColor' => $bgColor, 'valign' => 'center'])->addText('', 'normalFont', ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
                 $row->addCell(2000, ['valign' => 'center'])->addText($percentage . '%', 'normalFont', ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);

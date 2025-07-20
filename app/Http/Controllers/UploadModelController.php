@@ -88,10 +88,21 @@ class UploadModelController extends Controller
         $questions = AssessmentDraft::where('assesment_id', $id)->get();
         $assessment = Assessment::where('id', $id)->first();
         $user = Auth::user();
+        
+        // Get risk ratings and overall ratings for this assessment type
+        $riskRatings = [];
+        $overallRatings = [];
+        if ($assessment && $assessment->type) {
+            $riskRatings = RiskRating::where('type', $assessment->type)->get();
+            $overallRatings = OverallRating::where('type', $assessment->type)->get();
+        }
+        
         return Inertia::render('PerformAudit', [
             'question' => $questions,
             'user' => $user,
-            'assessment' => $assessment
+            'assessment' => $assessment,
+            'riskRatings' => $riskRatings,
+            'overallRatings' => $overallRatings
         ]);
     }
 

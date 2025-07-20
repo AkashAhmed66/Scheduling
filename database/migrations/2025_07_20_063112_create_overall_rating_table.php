@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('overall_rating', function (Blueprint $table) {
             $table->id();
-            $table->string('percentage');
+            $table->float('percentage');
             $table->string('label');
             $table->string('color');
             $table->string('type');

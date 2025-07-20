@@ -57,8 +57,6 @@ export default function AssessmentsList() {
         formData.append('overallRatingData', JSON.stringify(overallRatingData));
 
         console.log('Uploading file:', formData);
-        console.log('Risk Rating Data:', riskRatingData);
-        console.log('Overall Rating Data:', overallRatingData);
 
         Inertia.post('/upload-excel', formData, {
             onStart: () => {
@@ -75,9 +73,7 @@ export default function AssessmentsList() {
                 console.error('Error uploading file:', error);
             }
         });
-    };
-
-    // Close modal and reset state
+    };    // Close modal and reset state
     const handleModalClose = () => {
         setIsModalOpen(false);
         setUploadedFile(null);

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('risk_rating', function (Blueprint $table) {
             $table->id();
             $table->string('label');
-            $table->string('mark');
+            $table->float('mark');
             $table->string('color');
             $table->string('type');
             $table->timestamps();

@@ -13,6 +13,7 @@ use App\Models\SupportingDocuments;
 use App\Models\UploadModel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 
@@ -108,29 +109,39 @@ class AuditJobController extends Controller
     {
         $job = AuditJob::find($id);
         if ($job) {
-            // Get the assessment before deleting the job
+            // Get the assessment before modifying the job
             $assessment = $job->assesmentts;
             $assessmentId = $assessment ? $assessment->id : null;
             
-            // Delete related staff information
-            StaffInformation::where('job_id', $id)->delete();
-            
-            // Delete supporting documents
-            SupportingDocuments::where('jobId', $id)->delete();
-            
-            // Delete assessment documents
-            AssesmentDocuments::where('jobId', $id)->delete();
-            
-            // Delete the job first (this removes the foreign key constraint)
-            $job->delete();
-            
-            // Now delete the assessment and its related data
-            if ($assessment && $assessmentId) {
-                // Delete assessment drafts
-                AssessmentDraft::where('assesment_id', $assessmentId)->delete();
-                // Delete assessment
-                $assessment->delete();
-            }
+            // Use database transaction for safe deletion
+            DB::transaction(function () use ($job, $assessment, $assessmentId, $id) {
+                // Delete related staff information
+                StaffInformation::where('job_id', $id)->delete();
+                
+                // Delete supporting documents
+                SupportingDocuments::where('jobId', $id)->delete();
+                
+                // Delete assessment documents
+                AssesmentDocuments::where('jobId', $id)->delete();
+                
+                // Remove the foreign key reference from job before deleting assessment
+                if ($assessment && $assessmentId) {
+                    // Update the job to remove the assessment reference
+                    DB::table('audit_jobs')->where('id', $id)->update(['assesment' => null]);
+                    
+                    // Delete assessment info (contains facility and employee information)
+                    \App\Models\AssessmentInfo::where('assessment_id', $assessmentId)->delete();
+                    
+                    // Delete assessment drafts
+                    AssessmentDraft::where('assesment_id', $assessmentId)->delete();
+                    
+                    // Delete the assessment
+                    $assessment->delete();
+                }
+                
+                // Delete the job last
+                $job->delete();
+            });
         }
         
         return redirect()->back();
@@ -466,6 +477,40 @@ class AuditJobController extends Controller
      */
     public function destroy(AuditJob $auditJob)
     {
-        //
+        // Get the assessment before modifying the job
+        $assessment = $auditJob->assesmentts;
+        $assessmentId = $assessment ? $assessment->id : null;
+        
+        // Use database transaction for safe deletion
+        DB::transaction(function () use ($auditJob, $assessment, $assessmentId) {
+            // Delete related staff information
+            StaffInformation::where('job_id', $auditJob->id)->delete();
+            
+            // Delete supporting documents
+            SupportingDocuments::where('jobId', $auditJob->id)->delete();
+            
+            // Delete assessment documents
+            AssesmentDocuments::where('jobId', $auditJob->id)->delete();
+            
+            // Remove the foreign key reference from job before deleting assessment
+            if ($assessment && $assessmentId) {
+                // Update the job to remove the assessment reference
+                DB::table('audit_jobs')->where('id', $auditJob->id)->update(['assesment' => null]);
+                
+                // Delete assessment info (contains facility and employee information)
+                \App\Models\AssessmentInfo::where('assessment_id', $assessmentId)->delete();
+                
+                // Delete assessment drafts
+                AssessmentDraft::where('assesment_id', $assessmentId)->delete();
+                
+                // Delete the assessment
+                $assessment->delete();
+            }
+            
+            // Delete the job last
+            $auditJob->delete();
+        });
+        
+        return response()->json(['message' => 'Audit job and related assessment deleted successfully']);
     }
 }

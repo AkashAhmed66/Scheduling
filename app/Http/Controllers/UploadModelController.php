@@ -13,6 +13,7 @@ use App\Models\SupportingDocuments;
 use App\Models\RiskRating;
 use App\Models\OverallRating;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -333,5 +334,179 @@ class UploadModelController extends Controller
     public function destroy(UploadModel $uploadModel)
     {
         //
+    }
+
+    /**
+     * Display a listing of upload models grouped by assessment type for the new upload workflow.
+     */
+    public function uploadModelsList()
+    {
+        try {
+            // Get all unique assessment types with their upload models
+            $uploadModelsByType = [];
+            
+            $types = UploadModel::select('type')->distinct()->whereNotNull('type')->get();
+            
+            foreach ($types as $typeObj) {
+                $type = $typeObj->type;
+                $uploadModels = UploadModel::where('type', $type)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                $uploadModelsByType[$type] = $uploadModels;
+            }
+
+            return Inertia::render('UploadModelsList', [
+                'uploadModelsByType' => $uploadModelsByType,
+                'totalTypes' => count($uploadModelsByType)
+            ]);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error fetching upload models: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for creating a new upload model.
+     */
+    public function uploadModelsCreate()
+    {
+        return Inertia::render('UploadModelCreate');
+    }
+
+    /**
+     * Display the specified upload model with its ratings.
+     */
+    public function uploadModelsShow($id)
+    {
+        try {
+            $uploadModel = UploadModel::findOrFail($id);
+
+            // Get risk ratings and overall ratings for this type
+            $riskRatings = RiskRating::where('type', $uploadModel->type)->get();
+            $overallRatings = OverallRating::where('type', $uploadModel->type)->get();
+            
+            // Get all upload model questions for this type
+            $uploadModelQuestions = UploadModel::where('type', $uploadModel->type)
+                ->orderBy('id', 'asc')
+                ->get();
+
+            return Inertia::render('UploadModelView', [
+                'uploadModel' => $uploadModel,
+                'riskRatings' => $riskRatings,
+                'overallRatings' => $overallRatings,
+                'uploadModelQuestions' => $uploadModelQuestions
+            ]);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error fetching upload model: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Store a newly created upload model from the new workflow.
+     */
+    public function uploadModelsStore(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
+            'riskRatingData' => 'required|json',
+            'overallRatingData' => 'required|json'
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $file = $request->file('file');
+            $riskRatingData = json_decode($request->input('riskRatingData'), true) ?? [];
+            $overallRatingData = json_decode($request->input('overallRatingData'), true) ?? [];
+
+            // Validate rating data
+            if (empty($riskRatingData) || empty($overallRatingData)) {
+                throw new \Exception('Risk rating and overall rating data are required.');
+            }
+
+            // Get assessment type from Excel file
+            $firstRow = Excel::toArray(function ($reader) {
+                $reader->limit(1); // Only read the first row
+            }, $file)[0][1]; // Access the first row of the first sheet
+
+            $assessmentType = $firstRow['10']; // Get the type from excel
+
+            // Check if this assessment type already exists
+            $existingUploadModels = UploadModel::where('type', $assessmentType)->count();
+            if ($existingUploadModels > 0) {
+                return back()->with('error', "Assessment tool of type '{$assessmentType}' already exists. Please delete the existing tool first or choose a different assessment type.");
+            }
+            
+            // Import the excel data
+            Excel::import(new QuestionImport, $file);
+            
+            // Delete any records with null type
+            UploadModel::where('type', null)->delete();
+            
+            // Save risk rating data
+            foreach ($riskRatingData as $riskRating) {
+                if (!empty($riskRating['label']) || !empty($riskRating['mark']) || !empty($riskRating['color'])) {
+                    RiskRating::create([
+                        'label' => $riskRating['label'] ?? '',
+                        'mark' => $riskRating['mark'] ?? '',
+                        'color' => $riskRating['color'] ?? '',
+                        'type' => $assessmentType,
+                    ]);
+                }
+            }
+            
+            // Save overall rating data
+            foreach ($overallRatingData as $overallRating) {
+                if (!empty($overallRating['percentage']) || !empty($overallRating['label']) || !empty($overallRating['color'])) {
+                    OverallRating::create([
+                        'percentage' => $overallRating['percentage'] ?? '',
+                        'label' => $overallRating['label'] ?? '',
+                        'color' => $overallRating['color'] ?? '',
+                        'type' => $assessmentType,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            
+            return redirect()->route('upload-models.list')->with('success', "Assessment tool '{$assessmentType}' uploaded successfully!");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Error uploading file: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete an upload model and its related data.
+     */
+    public function uploadModelsDestroy($id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $uploadModel = UploadModel::findOrFail($id);
+            $type = $uploadModel->type;
+
+            // Delete all upload models of this type (since they work as a group)
+            UploadModel::where('type', $type)->delete();
+            
+            // Delete related risk and overall ratings
+            RiskRating::where('type', $type)->delete();
+            OverallRating::where('type', $type)->delete();
+
+            // Delete any assessment drafts that might reference these upload models
+            AssessmentDraft::whereHas('assessment', function ($query) use ($type) {
+                $query->where('type', $type);
+            })->delete();
+
+            DB::commit();
+            
+            return back()->with('success', "Assessment tool '{$type}' and all related data deleted successfully!");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Error deleting upload model: ' . $e->getMessage());
+        }
     }
 }

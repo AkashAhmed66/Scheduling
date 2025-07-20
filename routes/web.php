@@ -73,6 +73,14 @@ Route::middleware('auth')->group(function () {
     
     Route::post('/upload-excel', [UploadModelController::class, 'upload'])->name('upload-excel');
     Route::get('/ratings-by-type/{type}', [UploadModelController::class, 'getRatingsByType'])->name('ratings-by-type');
+    
+    // New Upload Models Management Routes
+    Route::get('/upload-models', [UploadModelController::class, 'uploadModelsList'])->name('upload-models.list');
+    Route::get('/upload-models/create', [UploadModelController::class, 'uploadModelsCreate'])->name('upload-models.create');
+    Route::post('/upload-models', [UploadModelController::class, 'uploadModelsStore'])->name('upload-models.store');
+    Route::get('/upload-models/{id}', [UploadModelController::class, 'uploadModelsShow'])->name('upload-models.show');
+    Route::delete('/upload-models/{id}', [UploadModelController::class, 'uploadModelsDestroy'])->name('upload-models.destroy');
+    
     Route::post('/upload-assesment-document', [UploadModelController::class, 'UploadAssesment'])->name('upload-assesment-excel');
     Route::post('/upload-supporting-document', [UploadModelController::class, 'UploadSupportingDoc'])->name('upload-supporting-excel');
     Route::delete('/delete-assesment-document/{id}', [UploadModelController::class, 'DeleteAssesment'])->name('delete-assesment-document');

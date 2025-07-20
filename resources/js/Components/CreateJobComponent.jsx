@@ -97,6 +97,13 @@ export default function CreateJobComponent() {
     reviewerError: false
   });
 
+  const tabs = [
+    { id: 'basic', label: 'Basic Information', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { id: 'contacts', label: 'Contacts', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+    { id: 'auditor', label: 'Auditor & Reviewer', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+    { id: 'additional', label: 'Additional Info', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
+  ];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [formProgress, setFormProgress] = useState(0);
@@ -211,12 +218,16 @@ export default function CreateJobComponent() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Check if we're on the last tab before submitting
-    if (activeTab !== tabs[tabs.length - 1].id) {
-      // If not on the last tab, move to the tab with the Basic Information section
-      setActiveTab('basic');
+    console.log('handleSubmit called with activeTab:', activeTab);
+    
+    // Check if we're on the last tab before submitting - 'additional' should be the last tab
+    if (activeTab !== 'additional') {
+      console.log('Not on additional tab, preventing submission. Current tab:', activeTab);
+      // If not on the last tab, don't submit, let the Next button handle navigation
       return;
     }
+    
+    console.log('On additional tab, proceeding with submission');
     
     let hasErrors = false;
     const newFormData = {...formData};
@@ -327,13 +338,6 @@ export default function CreateJobComponent() {
     }
   };
 
-  const tabs = [
-    { id: 'basic', label: 'Basic Information', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { id: 'contacts', label: 'Contacts', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-    { id: 'auditor', label: 'Auditor & Reviewer', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-    { id: 'additional', label: 'Additional Info', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
-  ];
-
   // Calculate progress based on active tab
   useEffect(() => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
@@ -412,7 +416,18 @@ export default function CreateJobComponent() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8" noValidate>
+          <form 
+            onSubmit={handleSubmit} 
+            className="p-8" 
+            noValidate
+            onKeyDown={(e) => {
+              // Prevent Enter key from submitting the form when not on the last tab
+              if (e.key === 'Enter' && activeTab !== 'additional') {
+                e.preventDefault();
+                return false;
+              }
+            }}
+          >
             <div className={activeTab === 'basic' ? 'block' : 'hidden'}>
               <BasicInformationSection formData={formData} handleChange={handleChange} />
             </div>
@@ -456,19 +471,18 @@ export default function CreateJobComponent() {
               
               <div>
                 {activeTab !== tabs[tabs.length - 1].id ? (
-                  <button
-                    type="button"
+                  <div
                     onClick={() => {
                       const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
                       setActiveTab(tabs[currentIndex + 1].id);
                     }}
-                    className="inline-flex items-center px-5 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-5 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hover:cursor-pointer"
                   >
                     Next
                     <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
                     </svg>
-                  </button>
+                  </div>
                 ) : (
                   <button
                     type="submit"

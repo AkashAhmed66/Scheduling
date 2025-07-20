@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/delete-user', [ActivateUserController::class, 'DeleteUser'])->name('delete-user');
     
     Route::post('/upload-excel', [UploadModelController::class, 'upload'])->name('upload-excel');
+    Route::get('/ratings-by-type/{type}', [UploadModelController::class, 'getRatingsByType'])->name('ratings-by-type');
     Route::post('/upload-assesment-document', [UploadModelController::class, 'UploadAssesment'])->name('upload-assesment-excel');
     Route::post('/upload-supporting-document', [UploadModelController::class, 'UploadSupportingDoc'])->name('upload-supporting-excel');
     Route::delete('/delete-assesment-document/{id}', [UploadModelController::class, 'DeleteAssesment'])->name('delete-assesment-document');

@@ -10,6 +10,8 @@ export default function AssessmentsList() {
     const itemsPerPage = 5; // Adjust the number of items per page
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [uploadedFile, setUploadedFile] = useState(null);
+    const [riskRatingData, setRiskRatingData] = useState([]);
+    const [overallRatingData, setOverallRatingData] = useState([]);
 
     // Filter assessments based on search input
     const filteredAssessments = assesments.filter(assessment =>
@@ -51,8 +53,12 @@ export default function AssessmentsList() {
 
         const formData = new FormData();
         formData.append('file', uploadedFile);
+        formData.append('riskRatingData', JSON.stringify(riskRatingData));
+        formData.append('overallRatingData', JSON.stringify(overallRatingData));
 
         console.log('Uploading file:', formData);
+        console.log('Risk Rating Data:', riskRatingData);
+        console.log('Overall Rating Data:', overallRatingData);
 
         Inertia.post('/upload-excel', formData, {
             onStart: () => {
@@ -62,6 +68,8 @@ export default function AssessmentsList() {
                 console.log('File upload finished.');
                 setIsModalOpen(false);
                 setUploadedFile(null);
+                setRiskRatingData([]);
+                setOverallRatingData([]);
             },
             onError: (error) => {
                 console.error('Error uploading file:', error);
@@ -73,6 +81,40 @@ export default function AssessmentsList() {
     const handleModalClose = () => {
         setIsModalOpen(false);
         setUploadedFile(null);
+        setRiskRatingData([]);
+        setOverallRatingData([]);
+    };
+
+    // Handle risk rating data
+    const addRiskRating = () => {
+        setRiskRatingData([...riskRatingData, { label: '', mark: '', color: '' }]);
+    };
+
+    const updateRiskRating = (index, field, value) => {
+        const updated = [...riskRatingData];
+        updated[index][field] = value;
+        setRiskRatingData(updated);
+    };
+
+    const removeRiskRating = (index) => {
+        const updated = riskRatingData.filter((_, i) => i !== index);
+        setRiskRatingData(updated);
+    };
+
+    // Handle overall rating data
+    const addOverallRating = () => {
+        setOverallRatingData([...overallRatingData, { percentage: '', label: '', color: '' }]);
+    };
+
+    const updateOverallRating = (index, field, value) => {
+        const updated = [...overallRatingData];
+        updated[index][field] = value;
+        setOverallRatingData(updated);
+    };
+
+    const removeOverallRating = (index) => {
+        const updated = overallRatingData.filter((_, i) => i !== index);
+        setOverallRatingData(updated);
     };
 
     return (
@@ -193,9 +235,9 @@ export default function AssessmentsList() {
             {/* Upload Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full transform transition-all duration-300">
+                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-gray-800">Upload Excel File</h3>
+                            <h3 className="text-lg font-bold text-gray-800">Upload Excel File with Rating Data</h3>
                             <button 
                                 onClick={handleModalClose}
                                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -206,6 +248,7 @@ export default function AssessmentsList() {
                             </button>
                         </div>
                         
+                        {/* File Upload Section */}
                         <div className="mt-4 mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Select Excel File</label>
                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
@@ -233,6 +276,116 @@ export default function AssessmentsList() {
                                     Selected file: <span className="font-medium">{uploadedFile.name}</span>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Risk Rating Section */}
+                        <div className="mb-6">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-md font-semibold text-gray-800">Risk Rating Data</h4>
+                                <button
+                                    onClick={addRiskRating}
+                                    className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    Add Risk Rating
+                                </button>
+                            </div>
+                            {riskRatingData.map((item, index) => (
+                                <div key={index} className="grid grid-cols-4 gap-3 mb-3 p-3 border border-gray-200 rounded-md">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Label</label>
+                                        <input
+                                            type="text"
+                                            value={item.label}
+                                            onChange={(e) => updateRiskRating(index, 'label', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Enter label"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Mark</label>
+                                        <input
+                                            type="text"
+                                            value={item.mark}
+                                            onChange={(e) => updateRiskRating(index, 'mark', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Enter mark"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                                        <input
+                                            type="text"
+                                            value={item.color}
+                                            onChange={(e) => updateRiskRating(index, 'color', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Enter color"
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <button
+                                            onClick={() => removeRiskRating(index)}
+                                            className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Overall Rating Section */}
+                        <div className="mb-6">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-md font-semibold text-gray-800">Overall Rating Data</h4>
+                                <button
+                                    onClick={addOverallRating}
+                                    className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                >
+                                    Add Overall Rating
+                                </button>
+                            </div>
+                            {overallRatingData.map((item, index) => (
+                                <div key={index} className="grid grid-cols-4 gap-3 mb-3 p-3 border border-gray-200 rounded-md">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Percentage</label>
+                                        <input
+                                            type="text"
+                                            value={item.percentage}
+                                            onChange={(e) => updateOverallRating(index, 'percentage', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Enter percentage"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Label</label>
+                                        <input
+                                            type="text"
+                                            value={item.label}
+                                            onChange={(e) => updateOverallRating(index, 'label', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Enter label"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                                        <input
+                                            type="text"
+                                            value={item.color}
+                                            onChange={(e) => updateOverallRating(index, 'color', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            placeholder="Enter color"
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <button
+                                            onClick={() => removeOverallRating(index)}
+                                            className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                         
                         <div className="flex justify-end space-x-3">

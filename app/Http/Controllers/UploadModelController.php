@@ -10,6 +10,8 @@ use App\Models\AssesmentDocuments;
 use App\Models\Assessment;
 use App\Models\AssessmentDraft;
 use App\Models\SupportingDocuments;
+use App\Models\RiskRating;
+use App\Models\OverallRating;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -96,16 +98,54 @@ class UploadModelController extends Controller
     public function upload(Request $request)
     {
         $file = $request->file('file');
+        $riskRatingData = json_decode($request->input('riskRatingData'), true) ?? [];
+        $overallRatingData = json_decode($request->input('overallRatingData'), true) ?? [];
+        
         if ($file) {
             $firstRow = Excel::toArray(function ($reader) {
                 $reader->limit(1); // Only read the first row
             }, $file)[0][1]; // Access the first row of the first sheet
     
-            // dd($firstRow['6']); // Output the array containing the values from the first row
-            UploadModel::where('type', $firstRow['10'])->delete();
+            $assessmentType = $firstRow['10']; // Get the type from excel
+            
+            // Delete existing upload models of this type
+            UploadModel::where('type', $assessmentType)->delete();
+            
+            // Delete existing risk and overall ratings of this type
+            RiskRating::where('type', $assessmentType)->delete();
+            OverallRating::where('type', $assessmentType)->delete();
+            
+            // Import the excel data
+            Excel::import(new QuestionImport, $file);
+            
+            // Delete any records with null type
+            UploadModel::where('type', null)->delete();
+            
+            // Save risk rating data
+            foreach ($riskRatingData as $riskRating) {
+                if (!empty($riskRating['label']) || !empty($riskRating['mark']) || !empty($riskRating['color'])) {
+                    RiskRating::create([
+                        'label' => $riskRating['label'] ?? '',
+                        'mark' => $riskRating['mark'] ?? '',
+                        'color' => $riskRating['color'] ?? '',
+                        'type' => $assessmentType,
+                    ]);
+                }
+            }
+            
+            // Save overall rating data
+            foreach ($overallRatingData as $overallRating) {
+                if (!empty($overallRating['percentage']) || !empty($overallRating['label']) || !empty($overallRating['color'])) {
+                    OverallRating::create([
+                        'percentage' => $overallRating['percentage'] ?? '',
+                        'label' => $overallRating['label'] ?? '',
+                        'color' => $overallRating['color'] ?? '',
+                        'type' => $assessmentType,
+                    ]);
+                }
+            }
         }
-        Excel::import(new QuestionImport, $file);
-        UploadModel::where('type', null)->delete();
+        
         return redirect()->back()->with('message', 'File uploaded and data inserted successfully.');
     }
     public function DeleteAssesment($id)
@@ -208,10 +248,17 @@ class UploadModelController extends Controller
         if(Auth::user()->role == 0){
             $assessments = Assessment::get();
         }
+        
+        // Get all risk ratings and overall ratings
+        $riskRatings = RiskRating::all();
+        $overallRatings = OverallRating::all();
+        
         return Inertia::render('Assesment', [
             'question' => $questions,
             'user' => $user,
-            'assesments' => $assessments
+            'assesments' => $assessments,
+            'riskRatings' => $riskRatings,
+            'overallRatings' => $overallRatings
         ]);
     }
 
@@ -229,6 +276,20 @@ class UploadModelController extends Controller
     public function store(StoreUploadModelRequest $request)
     {
         //
+    }
+
+    /**
+     * Get risk rating and overall rating data by assessment type
+     */
+    public function getRatingsByType($type)
+    {
+        $riskRatings = RiskRating::where('type', $type)->get();
+        $overallRatings = OverallRating::where('type', $type)->get();
+        
+        return response()->json([
+            'riskRatings' => $riskRatings,
+            'overallRatings' => $overallRatings
+        ]);
     }
 
     /**

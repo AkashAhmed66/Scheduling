@@ -2,15 +2,17 @@ import { usePage, router } from "@inertiajs/react";
 import React, { useEffect, useState } from "react";
 
 export default function DateRangeCalendar() {
-  const { jobs } = usePage().props;
+  const { jobs = [] } = usePage().props; // Default to empty array if jobs is undefined
 
-  // Convert jobs array into tasks format - store full job objects grouped by endDate
+  // Convert jobs array into tasks format - store full job objects grouped by auditEndDate
   const tasks = jobs.reduce((acc, job) => {
-    const { endDate } = job;
-    if (!acc[endDate]) {
-      acc[endDate] = [];
+    const { auditEndDate } = job;
+    if (!auditEndDate) return acc; // Skip jobs without audit end date
+    
+    if (!acc[auditEndDate]) {
+      acc[auditEndDate] = [];
     }
-    acc[endDate].push(job);
+    acc[auditEndDate].push(job);
     return acc;
   }, {});
 
@@ -34,12 +36,13 @@ export default function DateRangeCalendar() {
 
   // Initialize calendar with the first 7 days from today
   useEffect(() => {
-    console.log('tasks', tasks)
+    console.log('jobs data:', jobs);
+    console.log('tasks grouped by auditEndDate:', tasks);
     const today = new Date();
     const formattedToday = today.toISOString().split("T")[0];
     setCurrentStartDate(formattedToday);
     setCalendarDays(generateDaysBetween(formattedToday, 7));
-  }, []);
+  }, [jobs]);
 
   // Generate calendar based on user-selected range
   const handleGenerateCalendar = () => {
@@ -229,21 +232,24 @@ export default function DateRangeCalendar() {
                                   {job.reportNo}
                                 </button>
                                 <div className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(job.jobStatus)}`}>
-                                  {job.jobStatus}
+                                  {job.jobStatus || 'No Status'}
                                 </div>
+                              </div>
+                              
+                              {/* Staff Days */}
+                              <div className="mb-1">
+                                <span className="text-xs font-medium text-gray-600">Staff days: {job.totalStaffDays || job.staffDays || 'N/A'}</span>
                               </div>
                               
                               {/* Factory Name */}
                               <div className="mb-1">
-                                <span className="text-xs font-medium text-gray-600">Factory:</span>
                                 <p className="text-sm text-gray-800 truncate" title={job.factoryName}>
                                   {job.factoryName || 'N/A'}
                                 </p>
                               </div>
                               
-                              {/* Factory Address */}
+                              {/* Location */}
                               <div className="mb-1">
-                                <span className="text-xs font-medium text-gray-600">Address:</span>
                                 <p className="text-sm text-gray-800 truncate" title={`${job.factoryAddress || ''}, ${job.factoryCity || ''}, ${job.factoryCountry || ''}`}>
                                   {job.factoryAddress || job.factoryCity || job.factoryCountry ? 
                                     `${job.factoryAddress || ''}, ${job.factoryCity || ''}, ${job.factoryCountry || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',') 
@@ -253,18 +259,9 @@ export default function DateRangeCalendar() {
                               </div>
                               
                               {/* Service Name */}
-                              <div className="mb-1">
-                                <span className="text-xs font-medium text-gray-600">Service:</span>
+                              <div>
                                 <p className="text-sm text-gray-800 truncate" title={job.serviceName}>
                                   {job.serviceName || job.jobType || 'N/A'}
-                                </p>
-                              </div>
-                              
-                              {/* Auditors */}
-                              <div>
-                                <span className="text-xs font-medium text-gray-600">Auditors:</span>
-                                <p className="text-sm text-gray-800 truncate" title={job.auditors}>
-                                  {job.auditors || 'N/A'}
                                 </p>
                               </div>
                             </div>

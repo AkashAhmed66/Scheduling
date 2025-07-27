@@ -676,11 +676,11 @@ export default function AssesmentComponent() {
                               </td>
                               <td className="py-3 px-4">
                                 <select
-                                  value={questionItem.risk_rating || ''}
+                                  value={questionItem.risk_rating || questionItem.original_risk_rating || ''}
                                   onChange={(e) => handleChange(e, questionItem, 'risk_rating')}
                                   className={`w-full py-2 px-3 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:outline-none transition-colors ${
-                                    currentRiskRatings.find(r => r.label === questionItem.risk_rating)?.color ? 
-                                    `text-${currentRiskRatings.find(r => r.label === questionItem.risk_rating)?.color}-800 bg-${currentRiskRatings.find(r => r.label === questionItem.risk_rating)?.color}-50` :
+                                    currentRiskRatings.find(r => r.label === (questionItem.risk_rating || questionItem.original_risk_rating))?.color ? 
+                                    `text-${currentRiskRatings.find(r => r.label === (questionItem.risk_rating || questionItem.original_risk_rating))?.color}-800 bg-${currentRiskRatings.find(r => r.label === (questionItem.risk_rating || questionItem.original_risk_rating))?.color}-50` :
                                     'text-blue-800 bg-blue-50'
                                   }`}
                                 >
@@ -691,6 +691,7 @@ export default function AssesmentComponent() {
                                     </option>
                                   ))}
                                 </select>
+                                {/* {questionItem.risk_rating} */}
                               </td>
                               <td className="py-3 px-4">
                                 {questionItem.answer === 'No' ? (

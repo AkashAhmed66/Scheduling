@@ -231,11 +231,32 @@ class AuditJobController extends Controller
             }
         }
         
-        // Add field staff names to each job
+        // Add field staff names to each job and ensure proper date format
         $jobs = $jobs->map(function ($job) {
             $fieldStaffNames = $job->staffInformation->pluck('user.name')->filter()->toArray();
             $job->fieldStaffNames = $fieldStaffNames;
             $job->totalStaffDays = $job->staffInformation->sum('stuff_day');
+            
+            // Ensure auditEndDate is in proper format (Y-m-d)
+            if ($job->auditEndDate) {
+                $job->auditEndDate = date('Y-m-d', strtotime($job->auditEndDate));
+            }
+            
+            // Get auditor and reviewer names
+            if ($job->auditors) {
+                $auditorUser = User::find($job->auditors);
+                $job->auditorName = $auditorUser ? $auditorUser->name : 'Unknown';
+            } else {
+                $job->auditorName = 'Not Assigned';
+            }
+            
+            if ($job->reviewers) {
+                $reviewerUser = User::find($job->reviewers);
+                $job->reviewerName = $reviewerUser ? $reviewerUser->name : 'Unknown';
+            } else {
+                $job->reviewerName = 'Not Assigned';
+            }
+            
             return $job;
         });
         

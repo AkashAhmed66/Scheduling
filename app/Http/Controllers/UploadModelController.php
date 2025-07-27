@@ -12,6 +12,7 @@ use App\Models\AssessmentDraft;
 use App\Models\SupportingDocuments;
 use App\Models\RiskRating;
 use App\Models\OverallRating;
+use App\Models\StaffInformation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -89,6 +90,21 @@ class UploadModelController extends Controller
         $questions = AssessmentDraft::where('assesment_id', $id)->get();
         $assessment = Assessment::where('id', $id)->first();
         $user = Auth::user();
+        
+        // Get original questions from upload_model to provide default risk ratings
+        $originalQuestions = [];
+        if ($assessment && $assessment->type) {
+            $originalQuestions = UploadModel::where('type', $assessment->type)->get()->keyBy('question');
+        }
+        
+        // Add original risk rating to each question
+        $questions = $questions->map(function ($question) use ($originalQuestions) {
+            $originalQuestion = $originalQuestions->get($question->question);
+            if ($originalQuestion) {
+                $question->original_risk_rating = $originalQuestion->risk_rating;
+            }
+            return $question;
+        });
         
         // Get risk ratings and overall ratings for this assessment type
         $riskRatings = [];
@@ -256,9 +272,19 @@ class UploadModelController extends Controller
     {
         $questions = UploadModel::get();
         $user = Auth::user();
-        $assessments = $user->assessmentss;
-        if(Auth::user()->role == 0){
+        
+        // Filter assessments based on user role and staff assignments
+        if(Auth::user()->role == 0) {
+            // Admin sees all assessments
             $assessments = Assessment::get();
+        } else {
+            // Regular users see only assessments they are assigned to via staff_information table
+            $assessmentIds = StaffInformation::where('user_id', $user->id)
+                                           ->whereNotNull('assessment_id')
+                                           ->pluck('assessment_id')
+                                           ->unique();
+            
+            $assessments = Assessment::whereIn('id', $assessmentIds)->get();
         }
         
         // Get all risk ratings and overall ratings

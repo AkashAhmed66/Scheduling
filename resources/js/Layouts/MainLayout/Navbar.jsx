@@ -102,41 +102,43 @@ export default function Navbar() {
                 Audit Docs
               </NavLink>
 
-              {/* Activate User Dropdown */}
-              <div className="relative">
-                <button
-                  className={`px-3 py-2 rounded-md text-sm font-medium focus:outline-none transition duration-150 ease-in-out ${
-                    isSubmenuOpen ? 'bg-indigo-700 text-white' : 'text-indigo-100 hover:text-white hover:bg-indigo-500'
-                  }`}
-                  onClick={toggleSubmenu}
-                >
-                  <span className="flex items-center">
-                    Activate User
-                    <svg className={`ml-1 h-5 w-5 transition-transform duration-200 ${isSubmenuOpen ? 'transform rotate-180' : ''}`} 
-                      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </button>
+              {/* Activate User Dropdown - Only visible to admin users (role == 0) */}
+              {user && user.role == 0 && (
+                <div className="relative">
+                  <button
+                    className={`px-3 py-2 rounded-md text-sm font-medium focus:outline-none transition duration-150 ease-in-out ${
+                      isSubmenuOpen ? 'bg-indigo-700 text-white' : 'text-indigo-100 hover:text-white hover:bg-indigo-500'
+                    }`}
+                    onClick={toggleSubmenu}
+                  >
+                    <span className="flex items-center">
+                      Activate User
+                      <svg className={`ml-1 h-5 w-5 transition-transform duration-200 ${isSubmenuOpen ? 'transform rotate-180' : ''}`} 
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </button>
 
-                {isSubmenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-[9999] ring-1 ring-black ring-opacity-5 py-1 transform origin-top-right transition-all duration-200"
-                       style={{ zIndex: 9999 }}>
-                    <Link
-                      href="/activate-user"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
-                    >
-                      Add User
-                    </Link>
-                    <Link
-                      href="/activate-user-list"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
-                    >
-                      User List
-                    </Link>
-                  </div>
-                )}
-              </div>
+                  {isSubmenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-[9999] ring-1 ring-black ring-opacity-5 py-1 transform origin-top-right transition-all duration-200"
+                         style={{ zIndex: 9999 }}>
+                      <Link
+                        href="/activate-user"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        Add User
+                      </Link>
+                      <Link
+                        href="/activate-user-list"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                      >
+                        User List
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -229,25 +231,27 @@ export default function Navbar() {
                 Audit Docs
               </MobileNavLink>
               
-              {/* Mobile Activate User Menu */}
-              <div className="space-y-1">
-                <button
-                  className="text-indigo-100 hover:bg-indigo-600 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
-                  onClick={toggleSubmenu}
-                >
-                  Activate User
-                </button>
-                {isSubmenuOpen && (
-                  <div className="pl-4 space-y-1">
-                    <MobileNavLink href="/activate-user">
-                      Add User
-                    </MobileNavLink>
-                    <MobileNavLink href="/activate-user-list">
-                      User List
-                    </MobileNavLink>
-                  </div>
-                )}
-              </div>
+              {/* Mobile Activate User Menu - Only visible to admin users (role == 0) */}
+              {user && user.role == 0 && (
+                <div className="space-y-1">
+                  <button
+                    className="text-indigo-100 hover:bg-indigo-600 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                    onClick={toggleSubmenu}
+                  >
+                    Activate User
+                  </button>
+                  {isSubmenuOpen && (
+                    <div className="pl-4 space-y-1">
+                      <MobileNavLink href="/activate-user">
+                        Add User
+                      </MobileNavLink>
+                      <MobileNavLink href="/activate-user-list">
+                        User List
+                      </MobileNavLink>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* Mobile Notifications Section */}

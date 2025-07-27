@@ -526,14 +526,28 @@ export default function AssesmentComponent() {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  Yes: {questions.filter(q => q.answer === 'Yes').length}
+                  Compliance: {questions.filter(q => q.answer === 'Compliance').length}
                 </div>
                 
                 <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg shadow-md">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                   </svg>
-                  No: {questions.filter(q => q.answer === 'No').length}
+                  Non-Compliance: {questions.filter(q => q.answer === 'Non-Compliance').length}
+                </div>
+                
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-medium rounded-lg shadow-md">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4"></path>
+                  </svg>
+                  Not Applicable: {questions.filter(q => q.answer === 'Not Applicable').length}
+                </div>
+
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium rounded-lg shadow-md">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Unanswered: {questions.filter(q => !q.answer || q.answer === '').length}
                 </div>
                 
                 <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md">
@@ -649,20 +663,26 @@ export default function AssesmentComponent() {
                               <td className="py-3 px-4 text-sm text-gray-800">{questionItem.question}</td>
                               <td className="py-3 px-4">
                                 <select
-                                  value={questionItem.answer}
+                                  value={questionItem.answer || ''}
                                   onChange={(e) => handleChange(e, questionItem, 'answer')}
                                   className={`w-full py-2 px-3 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:outline-none transition-colors ${
-                                    questionItem.answer === 'Yes' 
+                                    questionItem.answer === 'Compliance' 
                                       ? 'text-green-800 bg-green-50 border-green-200 focus:border-green-300 focus:ring-green-200' 
-                                      : 'text-red-800 bg-red-50 border-red-200 focus:border-red-300 focus:ring-red-200'
+                                      : questionItem.answer === 'Non-Compliance'
+                                      ? 'text-red-800 bg-red-50 border-red-200 focus:border-red-300 focus:ring-red-200'
+                                      : questionItem.answer === 'Not Applicable'
+                                      ? 'text-gray-800 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200'
+                                      : 'text-gray-600 bg-white border-gray-300 focus:border-indigo-300 focus:ring-indigo-200'
                                   }`}
                                 >
-                                  <option value="Yes">Yes</option>
-                                  <option value="No">No</option>
+                                  <option value="">Select Answer</option>
+                                  <option value="Compliance">Compliance</option>
+                                  <option value="Non-Compliance">Non-Compliance</option>
+                                  <option value="Not Applicable">Not Applicable</option>
                                 </select>
                               </td>
                               <td className="py-3 px-4">
-                                {questionItem.answer === 'No' ? (
+                                {questionItem.answer === 'Non-Compliance' ? (
                                   <input
                                     type="text"
                                     value={questionItem.findings || ''}
@@ -694,7 +714,7 @@ export default function AssesmentComponent() {
                                 {/* {questionItem.risk_rating} */}
                               </td>
                               <td className="py-3 px-4">
-                                {questionItem.answer === 'No' ? (
+                                {questionItem.answer === 'Non-Compliance' ? (
                                   <input
                                     type="text"
                                     value={questionItem.legal_ref || ''}
@@ -707,7 +727,7 @@ export default function AssesmentComponent() {
                                 )}
                               </td>
                               <td className="py-3 px-4">
-                                {questionItem.answer === 'No' ? (
+                                {questionItem.answer === 'Non-Compliance' ? (
                                   <input
                                     type="text"
                                     value={questionItem.recommendation || ''}

@@ -133,6 +133,11 @@ class AssessmentController extends Controller
             $answer = strtolower(trim($question['answer']));
             $category = $question['category'] ?? 'Uncategorized';
 
+            // Skip questions marked as "Not Applicable"
+            if ($answer === 'not applicable') {
+                continue;
+            }
+
             if (!isset($category_data[$category])) {
                 $category_data[$category] = ['achieved' => 0, 'possible' => 0];
             }
@@ -142,12 +147,12 @@ class AssessmentController extends Controller
             
             $questionMark = $riskRating ? floatval($riskRating->mark) : 0;
 
-            if ($answer === 'yes') {
-                // For 'Yes' answers, add the full mark
+            if ($answer === 'compliance') {
+                // For 'Compliance' answers, add the full mark
                 $category_data[$category]['achieved'] += $questionMark;
                 $total_achieved_marks += $questionMark;
             }
-            // For 'No' answers, achieved mark is 0 (no need to add anything)
+            // For 'Non-Compliance' answers, achieved mark is 0 (no need to add anything)
             
             // For possible marks, use the mark of the selected risk rating for this specific question
             $category_data[$category]['possible'] += $questionMark;
@@ -185,9 +190,9 @@ class AssessmentController extends Controller
             ];
         }
 
-        // Filter questions to get only those with 'no' as an answer
+        // Filter questions to get only those with 'non-compliance' as an answer
         $no_answer_questions = array_filter($questions, function ($q) {
-            return isset($q['answer']) && strtolower(trim($q['answer'])) === 'no';
+            return isset($q['answer']) && strtolower(trim($q['answer'])) === 'non-compliance';
         });
 
         // Group findings by category and count colors
@@ -299,9 +304,9 @@ class AssessmentController extends Controller
                 'position' => $assessmentInfo && $assessmentInfo->position ? $assessmentInfo->position : 'N/A',
             ];
 
-            // Filter questions to get only those with 'No' as an answer (non-compliances)
+            // Filter questions to get only those with 'Non-Compliance' as an answer (non-compliances)
             $nonComplianceQuestions = array_filter($questions, function ($q) {
-                return isset($q['answer']) && strtolower(trim($q['answer'])) === 'no';
+                return isset($q['answer']) && strtolower(trim($q['answer'])) === 'non-compliance';
             });
 
             // Format audit answer data for CAPA template
@@ -405,18 +410,23 @@ class AssessmentController extends Controller
                 $findings = [];
 
                 foreach ($categoryQuestions as $question) {
+                    // Skip questions marked as "Not Applicable"
+                    if (isset($question['answer']) && strtolower(trim($question['answer'])) === 'not applicable') {
+                        continue;
+                    }
+
                     // Get the mark from risk_rating table based on the selected risk_rating value
                     $riskRating = $riskRatings->where('label', $question['risk_rating'] ?? '')->first();
                     $questionMark = $riskRating ? floatval($riskRating->mark) : 0;
                     
                     $achievedMarks = 0;
                     if (isset($question['answer'])) {
-                        if (strtolower(trim($question['answer'])) === 'yes') {
-                            // For 'Yes' answers, add the full mark
+                        if (strtolower(trim($question['answer'])) === 'compliance') {
+                            // For 'Compliance' answers, add the full mark
                             $achievedMarks = $questionMark;
-                        } elseif (strtolower(trim($question['answer'])) === 'no') {
+                        } elseif (strtolower(trim($question['answer'])) === 'non-compliance') {
                             $achievedMarks = 0;
-                            // Add finding if answer is No
+                            // Add finding if answer is Non-Compliance
                             $color = $riskRating ? strtolower(trim($riskRating->color)) : 'red'; // Default to red
 
                             $findings[] = [

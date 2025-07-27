@@ -377,10 +377,18 @@ export default function UploadModelView() {
                         </button>
                         <button
                             onClick={() => {
-                                if (confirm('Are you sure you want to delete this upload model? This action cannot be undone.')) {
+                                if (confirm('Are you sure you want to delete this upload model? This action cannot be undone and will delete all related data including risk ratings, overall ratings, and assessment drafts.')) {
                                     Inertia.delete(`/upload-models/${uploadModel.id}`, {
-                                        onSuccess: () => {
+                                        onStart: () => {
+                                            // You can add a loading state here if needed
+                                        },
+                                        onSuccess: (page) => {
+                                            // Redirect to upload models list
                                             Inertia.get('/upload-models');
+                                        },
+                                        onError: (errors) => {
+                                            console.error('Error deleting upload model:', errors);
+                                            alert('Error deleting upload model. Please try again.');
                                         }
                                     });
                                 }

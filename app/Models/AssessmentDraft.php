@@ -13,6 +13,7 @@ class AssessmentDraft extends Model
     protected $fillable = [
         'id',              // Column 'ID'
         'question',        // Column 'Question'
+        'instruction',     // Column 'Instruction'
         'answer',          // Column 'Answer'
         'findings',        // Column 'Findings'
         'risk_rating',     // Column 'Risk Rating'

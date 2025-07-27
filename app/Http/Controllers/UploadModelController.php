@@ -15,6 +15,7 @@ use App\Models\OverallRating;
 use App\Models\StaffInformation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -29,7 +30,7 @@ class UploadModelController extends Controller
         $assessment = AssessmentDraft::findOrFail($id);
 
         $assessment->update($request->only([
-            'question', 'answer', 'findings', 'risk_rating', 'legal_ref', 'recommendation'
+            'question', 'instruction', 'answer', 'findings', 'risk_rating', 'legal_ref', 'recommendation'
         ]));
 
         return response()->json(['message' => 'Assessment updated successfully!']);
@@ -61,6 +62,7 @@ class UploadModelController extends Controller
                 $draft->mark = $question->mark;
                 $draft->color = $question->color;
                 $draft->question = $question->question;
+                $draft->instruction = $question->instruction;
                 $draft->answer = $question->answer;
                 $draft->findings = $question->findings;
                 $draft->risk_rating = $question->risk_rating;
@@ -514,6 +516,14 @@ class UploadModelController extends Controller
             $uploadModel = UploadModel::findOrFail($id);
             $type = $uploadModel->type;
 
+            // Get all assessments that use this type
+            $assessmentIds = Assessment::where('type', $type)->pluck('id');
+
+            // Delete assessment drafts for these assessments
+            if ($assessmentIds->isNotEmpty()) {
+                AssessmentDraft::whereIn('assesment_id', $assessmentIds)->delete();
+            }
+
             // Delete all upload models of this type (since they work as a group)
             UploadModel::where('type', $type)->delete();
             
@@ -521,17 +531,16 @@ class UploadModelController extends Controller
             RiskRating::where('type', $type)->delete();
             OverallRating::where('type', $type)->delete();
 
-            // Delete any assessment drafts that might reference these upload models
-            AssessmentDraft::whereHas('assessment', function ($query) use ($type) {
-                $query->where('type', $type);
-            })->delete();
+            // Optionally, you might also want to delete the assessments themselves
+            // Assessment::where('type', $type)->delete();
 
             DB::commit();
             
-            return back()->with('success', "Assessment tool '{$type}' and all related data deleted successfully!");
+            return redirect()->route('upload-models.list')->with('success', "Assessment tool '{$type}' and all related data deleted successfully!");
 
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('Error deleting upload model: ' . $e->getMessage());
             return back()->with('error', 'Error deleting upload model: ' . $e->getMessage());
         }
     }

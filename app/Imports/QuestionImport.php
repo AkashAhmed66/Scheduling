@@ -18,6 +18,7 @@ class QuestionImport implements ToModel, WithHeadingRow
     {
         return new UploadModel([
             'question'      => $row['question'],
+            'instruction'   => $row['instruction'] ?? null,
             'ncref'         => $row['ncref'],
             'category'      => $row['category'],
             'subcategory'   => $row['subcategory'],

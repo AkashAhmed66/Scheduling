@@ -596,6 +596,7 @@ export default function AssesmentComponent() {
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question Ref</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Instruction</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Answer</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Findings</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Risk Rating</th>
@@ -608,7 +609,7 @@ export default function AssesmentComponent() {
                     <React.Fragment key={category}>
                       {/* Category Header - Show only once per category */}
                       <tr id={`category-${category}`} className="bg-gradient-to-r from-indigo-500 to-purple-500 sticky z-40" style={{ top: '48px' }}>
-                        <td colSpan="7" className="py-4 px-6 text-left font-bold text-base text-white uppercase tracking-wide border-b-2 border-indigo-300 shadow-md">
+                        <td colSpan="8" className="py-4 px-6 text-left font-bold text-base text-white uppercase tracking-wide border-b-2 border-indigo-300 shadow-md">
                           <div 
                             className="flex items-center gap-2 cursor-pointer hover:bg-white hover:bg-opacity-10 rounded p-2 -m-2 transition-colors"
                             onClick={() => toggleCategory(category)}
@@ -637,7 +638,7 @@ export default function AssesmentComponent() {
                           <React.Fragment key={subcategoryKey}>
                             {/* Subcategory Header */}
                             <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky z-30" style={{ top: '112px' }}>
-                              <td colSpan="7" className="py-3 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
+                              <td colSpan="8" className="py-3 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
                                 <div 
                                   className="flex items-center gap-2 pl-4 cursor-pointer hover:bg-indigo-200 hover:bg-opacity-50 rounded p-2 -m-2 transition-colors"
                                   onClick={() => toggleSubcategory(subcategoryKey)}
@@ -661,6 +662,15 @@ export default function AssesmentComponent() {
                             <tr key={questionItem.ncref} className="hover:bg-gray-50 transition-colors duration-150">
                               <td className="py-3 px-4 text-sm font-medium text-gray-900">{questionItem.id}</td>
                               <td className="py-3 px-4 text-sm text-gray-800">{questionItem.question}</td>
+                              <td className="py-3 px-4">
+                                <input
+                                  type="text"
+                                  value={questionItem.instruction || ''}
+                                  onChange={(e) => handleChange(e, questionItem, 'instruction')}
+                                  className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none text-sm"
+                                  placeholder="Enter instruction..."
+                                />
+                              </td>
                               <td className="py-3 px-4">
                                 <select
                                   value={questionItem.answer || ''}
@@ -1159,7 +1169,7 @@ export default function AssesmentComponent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Disclaimer</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Disclaimer & Methods</label>
                     <textarea
                       rows="3"
                       value={assessmentInfo.disclaimer}

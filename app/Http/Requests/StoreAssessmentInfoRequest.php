@@ -65,6 +65,8 @@ class StoreAssessmentInfoRequest extends FormRequest
             // Assessment Overviews
             'general_assessment_overview' => 'nullable|string',
             'facility_good_practices' => 'nullable|string',
+            'worker_interview' => 'nullable|string',
+            'additional_info' => 'nullable|string',
             'disclaimer' => 'nullable|string',
             
             // Facility Image

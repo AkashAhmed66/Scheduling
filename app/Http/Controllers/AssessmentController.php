@@ -758,7 +758,8 @@ class AssessmentController extends Controller
             $overviewHeaderRow = $overviewTable->addRow();
             $overviewHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('General Assessment Overview', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             $overviewContentRow = $overviewTable->addRow();
-            $overviewContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center'])->addText($assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.', 'normalFont', ['spaceBefore' => 0, 'spaceAfter' => 0]);
+            $overviewCell = $overviewContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center']);
+            $this->addHtmlContentToCell($overviewCell, $assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : null, 'No general assessment overview provided.');
 
             $section->addTextBreak(2);
 
@@ -772,7 +773,23 @@ class AssessmentController extends Controller
             $practicesHeaderRow = $practicesTable->addRow();
             $practicesHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('Facility Good Practices', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
             $practicesContentRow = $practicesTable->addRow();
-            $practicesContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center'])->addText($assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.', 'normalFont', ['spaceBefore' => 0, 'spaceAfter' => 0]);
+            $practicesCell = $practicesContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center']);
+            $this->addHtmlContentToCell($practicesCell, $assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : null, 'No facility good practices information provided.');
+
+            $section->addTextBreak(2);
+
+            // Worker Interview
+            $workerInterviewTable = $section->addTable([
+                'borderSize' => 6,
+                'borderColor' => '000000',
+                'width' => 100 * 50,
+                'unit' => 'pct'
+            ]);
+            $workerInterviewHeaderRow = $workerInterviewTable->addRow();
+            $workerInterviewHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('Details of Workers Interview', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            $workerInterviewContentRow = $workerInterviewTable->addRow();
+            $workerInterviewCell = $workerInterviewContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center']);
+            $this->addHtmlContentToCell($workerInterviewCell, $assessmentInfo && $assessmentInfo->worker_interview ? $assessmentInfo->worker_interview : null, 'No worker interview information provided.');
             $section->addTextBreak(2);
 
             // AUDIT FINDINGS
@@ -865,19 +882,36 @@ class AssessmentController extends Controller
                 $section->addText('No audit findings available. All assessment questions were answered as "Yes" or no findings were recorded.', 'normalFont');
             }
 
-            // DISCLAIMER
-            $disclaimerTable = $section->addTable([
+            $section->addTextBreak(2);
+
+            // Additional Information
+            $additionalInfoTable = $section->addTable([
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER,
                 'unit' => 'pct'
             ]);
-            $disclaimerHeaderRow = $disclaimerTable->addRow();
-            $disclaimerHeaderRow->addCell(null, ['bgColor' => 'C0C0C0', 'gridSpan' => 1, 'valign' => 'center'])->addText('Disclaimer:', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
-            $disclaimerContentRow = $disclaimerTable->addRow();
-            $disclaimerText = $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility.';
-            $disclaimerContentRow->addCell(null, ['gridSpan' => 1, 'valign' => 'center'])->addText($disclaimerText, 'normalFont', ['spaceBefore' => 0, 'spaceAfter' => 0]);
+            
+            // Header row for additional information
+            $additionalInfoHeaderRow = $additionalInfoTable->addRow();
+            $additionalInfoHeaderRow->addCell(null, ['bgColor' => 'F44336', 'gridSpan' => 2])->addText('Additional Information', ['color' => 'FFFFFF', 'bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
+            
+            // Content row for additional information
+            $additionalInfoContentRow = $additionalInfoTable->addRow();
+            $additionalInfoCell = $additionalInfoContentRow->addCell(null, ['gridSpan' => 2, 'valign' => 'center']);
+            $this->addHtmlContentToCell($additionalInfoCell, $assessmentInfo && $assessmentInfo->additional_info ? $assessmentInfo->additional_info : null, 'No additional information provided.');
+
+            $section->addTextBreak(2);
+
+            // DISCLAIMER (as plain text without table)
+            $section->addText('Disclaimer:', ['size' => 14, 'bold' => true]);
+            $section->addTextBreak(1);
+            
+            // Create a simple paragraph for disclaimer with HTML content
+            $disclaimerContent = $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility.';
+            
+            // For disclaimer, we'll handle it specially to maintain formatting
+            $this->addHtmlContentToSection($section, $disclaimerContent);
 
             // Save document
             $fileName = 'assessment_report_' . $id . '.docx';
@@ -967,5 +1001,113 @@ class AssessmentController extends Controller
         $row = $table->addRow();
         $row->addCell(3500, ['bgColor' => $bgColor, 'valign' => 'center'])->addText($label, ['bold' => true, 'size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
         $row->addCell(5500, ['bgColor' => $bgColor, 'valign' => 'center'])->addText($value, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+    }
+
+    /**
+     * Convert HTML content to Word document format
+     */
+    private function addHtmlContentToCell($cell, $htmlContent, $defaultText = 'No content provided.')
+    {
+        $content = $htmlContent ?: $defaultText;
+        
+        // Simple HTML to Word conversion
+        // Remove HTML tags but preserve some formatting
+        $content = str_replace(['<br>', '<br/>', '<br />'], "\n", $content);
+        $content = str_replace(['<p>', '</p>'], ["\n", "\n"], $content);
+        $content = str_replace(['<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>'], ["\n", "\n", "\n", "\n", "\n", "\n"], $content);
+        
+        // Handle lists
+        $content = str_replace(['<ul>', '</ul>', '<ol>', '</ol>'], ['', '', '', ''], $content);
+        $content = str_replace(['<li>', '</li>'], ['• ', "\n"], $content);
+        
+        // Remove remaining HTML tags
+        $content = strip_tags($content);
+        
+        // Clean up extra newlines
+        $content = preg_replace('/\n{3,}/', "\n\n", $content);
+        $content = trim($content);
+        
+        // Split content by lines and add to cell
+        $lines = explode("\n", $content);
+        $isFirstLine = true;
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+            
+            if (!$isFirstLine) {
+                $cell->addTextBreak();
+            }
+            
+            // Check if line starts with bullet point
+            if (strpos($line, '•') === 0) {
+                $cell->addText($line, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+            } else {
+                // Check if it looks like a heading (all caps or contains colon)
+                if (strpos($line, ':') !== false || strlen($line) < 50) {
+                    $cell->addText($line, ['size' => 11, 'bold' => true], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                } else {
+                    $cell->addText($line, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                }
+            }
+            
+            $isFirstLine = false;
+        }
+    }
+
+    /**
+     * Add HTML content to Word document section
+     */
+    private function addHtmlContentToSection($section, $htmlContent, $defaultText = 'No content provided.')
+    {
+        $content = $htmlContent ?: $defaultText;
+        
+        // Simple HTML to Word conversion
+        // Remove HTML tags but preserve some formatting
+        $content = str_replace(['<br>', '<br/>', '<br />'], "\n", $content);
+        $content = str_replace(['<p>', '</p>'], ["\n", "\n"], $content);
+        $content = str_replace(['<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>'], ["\n", "\n", "\n", "\n", "\n", "\n"], $content);
+        
+        // Handle lists
+        $content = str_replace(['<ul>', '</ul>', '<ol>', '</ol>'], ['', '', '', ''], $content);
+        $content = str_replace(['<li>', '</li>'], ['• ', "\n"], $content);
+        
+        // Remove remaining HTML tags
+        $content = strip_tags($content);
+        
+        // Clean up extra newlines
+        $content = preg_replace('/\n{3,}/', "\n\n", $content);
+        $content = trim($content);
+        
+        // Split content by lines and add to section
+        $lines = explode("\n", $content);
+        $isFirstLine = true;
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+            
+            if (!$isFirstLine) {
+                $section->addTextBreak();
+            }
+            
+            // Check if line starts with bullet point
+            if (strpos($line, '•') === 0) {
+                $section->addText($line, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+            } else {
+                // Check if it looks like a heading (all caps or contains colon)
+                if (strpos($line, ':') !== false || strlen($line) < 50) {
+                    $section->addText($line, ['size' => 11, 'bold' => true], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                } else {
+                    $section->addText($line, ['size' => 11], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                }
+            }
+            
+            $isFirstLine = false;
+        }
     }
 }

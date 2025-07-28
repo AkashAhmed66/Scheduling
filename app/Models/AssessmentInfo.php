@@ -50,6 +50,8 @@ class AssessmentInfo extends Model
         // Assessment Overviews
         'general_assessment_overview',
         'facility_good_practices',
+        'worker_interview',
+        'additional_info',
         'disclaimer',
         
         // Facility Image

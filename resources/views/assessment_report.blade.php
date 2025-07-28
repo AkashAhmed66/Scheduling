@@ -45,10 +45,96 @@
             font-size: 40px;
         }
 
-        .items {
+                .items {
             width: 100%;
             padding-top: 20px;
-            border: 1px solid black;
+        }
+
+        /* Styles for HTML content */
+        h1, h2, h3, h4, h5, h6 {
+            color: #0070C0;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        h1 { font-size: 18px; }
+        h2 { font-size: 16px; }
+        h3 { font-size: 14px; }
+
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 5px 0;
+        }
+
+        p {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+
+        /* Override line-height for specific content areas to prevent overlap */
+        .assessment-overview p,
+        .good-practices p,
+        .worker-interview p,
+        .additional-info p,
+        .disclaimer p {
+            line-height: 1.6 !important;
+            margin: 10px 0 !important;
+        }
+
+        /* Better spacing for lists in content areas */
+        .assessment-overview ul,
+        .assessment-overview ol,
+        .good-practices ul,
+        .good-practices ol,
+        .worker-interview ul,
+        .worker-interview ol,
+        .additional-info ul,
+        .additional-info ol,
+        .disclaimer ul,
+        .disclaimer ol {
+            margin: 12px 0 !important;
+            padding-left: 25px !important;
+        }
+
+        .assessment-overview li,
+        .good-practices li,
+        .worker-interview li,
+        .additional-info li,
+        .disclaimer li {
+            margin: 6px 0 !important;
+            line-height: 1.5 !important;
+        }
+
+        /* Better spacing for headings in content areas */
+        .assessment-overview h1,
+        .assessment-overview h2,
+        .assessment-overview h3,
+        .good-practices h1,
+        .good-practices h2,
+        .good-practices h3,
+        .worker-interview h1,
+        .worker-interview h2,
+        .worker-interview h3,
+        .additional-info h1,
+        .additional-info h2,
+        .additional-info h3,
+        .disclaimer h1,
+        .disclaimer h2,
+        .disclaimer h3 {
+            margin: 15px 0 10px 0 !important;
+            line-height: 1.3 !important;
+        }
+
+        strong, b {
+            font-weight: bold;
+        }
+
+        em, i {
+            font-style: italic;
         }
 
         .items td {
@@ -428,7 +514,7 @@
                 </table>
             </div>
             <br>
-            <div>
+            <div class="assessment-overview">
                 <table>
                     <tr style="background-color: #FFD966">
                         <th>
@@ -437,13 +523,13 @@
                     </tr>
                     <tr>
                         <td>
-                            {{ $assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.' }}
+                            {!! $assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.' !!}
                         </td>
                     </tr>
                 </table>
             </div>
             <br>
-            <div>
+            <div class="good-practices">
                 <table>
                     <tr style="background-color: #FFD966">
                         <th>
@@ -452,7 +538,22 @@
                     </tr>
                     <tr>
                         <td>
-                            {{ $assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.' }}
+                            {!! $assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.' !!}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <br>
+            <div class="worker-interview">
+                <table>
+                    <tr style="background-color: #FFD966">
+                        <th>
+                            Details of Workers Interview
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>
+                            {!! $assessmentInfo && $assessmentInfo->worker_interview ? $assessmentInfo->worker_interview : 'No worker interview information provided.' !!}
                         </td>
                     </tr>
                 </table>
@@ -567,17 +668,27 @@
 
             </div>
         </div>
-        <div class="disclaimer">
+        
+        <div class="additional-info">
+            <br>
             <table>
                 <tr>
-                    <th style="text-align: left; background-color: #c0c0c0">Disclaimer:</th>
+                    <th style="text-align: center; background-color: #F44336; color: white;">Additional Information</th>
                 </tr>
                 <tr>
-                    <td style="text-align: justify; padding: 3px;">
-                        {{ $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility. The audit was conducted in accordance with local law and different international standards and guidelines along with specific COC. However, it is important to note that the findings and recommendations presented in this report are subject to the following disclaimers and limitations that the intended user is the ultimate owner of the report. ECOTEC is not representing any buyers by this assessment. It is intended to assist the facility to comply the requirement of law and buyers COC and enhance the understanding the standards and requirements. The report shall be read as a whole, and sections should not be read or relied upon out of context. All recommendations, where given, are for the purpose of providing directional advice only. Recommendations are not exhaustive and relate solely to identifying key and obvious improvements related to findings in this report, and do not represent a comprehensive solution to any issue. This report is based only on the date herein and ECOTEC has no responsibility to update this report. ECOTEC takes no responsibility for any loss that any party may suffer in connection with any actions, or lack of action, taken to address the findings in the report.' }}
+                    <td style="text-align: justify; padding: 10px;">
+                        {!! $assessmentInfo && $assessmentInfo->additional_info ? $assessmentInfo->additional_info : 'No additional information provided.' !!}
                     </td>
                 </tr>
             </table>
+        </div>
+        
+        <div class="disclaimer">
+            <br>
+            {{-- <h3 style="color: #000; margin-bottom: 10px;">Disclaimer:</h3> --}}
+            <div style="text-align: justify;">
+                {!! $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility. The audit was conducted in accordance with local law and different international standards and guidelines along with specific COC. However, it is important to note that the findings and recommendations presented in this report are subject to the following disclaimers and limitations that the intended user is the ultimate owner of the report. ECOTEC is not representing any buyers by this assessment. It is intended to assist the facility to comply the requirement of law and buyers COC and enhance the understanding the standards and requirements. The report shall be read as a whole, and sections should not be read or relied upon out of context. All recommendations, where given, are for the purpose of providing directional advice only. Recommendations are not exhaustive and relate solely to identifying key and obvious improvements related to findings in this report, and do not represent a comprehensive solution to any issue. This report is based only on the date herein and ECOTEC has no responsibility to update this report. ECOTEC takes no responsibility for any loss that any party may suffer in connection with any actions, or lack of action, taken to address the findings in the report.' !!}
+            </div>
         </div>
     </div>
 

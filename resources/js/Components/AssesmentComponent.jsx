@@ -3,6 +3,27 @@ import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/react';
 import axios from "axios";
 import ConfirmationModal from './ConfirmationModal';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import '../../css/quill-custom.css';
+
+// Quill editor configuration
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    [{ 'align': [] }],
+    ['link'],
+    [{ 'color': [] }, { 'background': [] }],
+    ['clean']
+  ],
+};
+
+const quillFormats = [
+  'header', 'bold', 'italic', 'underline', 'strike',
+  'list', 'bullet', 'align', 'link', 'color', 'background'
+];
 
 export default function AssesmentComponent() {
   const { question, user, assessment, riskRatings, overallRatings } = usePage().props;
@@ -85,7 +106,9 @@ export default function AssesmentComponent() {
     // Assessment Overviews
     generalAssessmentOverview: '',
     facilityGoodPractices: '',
-    disclaimer: 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility. The audit was conducted in accordance with local law and different international standards and guidelines along with specific COC. However, it is important to note that the findings and recommendations presented in this report are subject to the following disclaimers and limitations that the intended user is the ultimate owner of the report. ECOTEC is not representing any buyers by this assessment. It is intended to assist the facility to comply the requirement of law and buyers COC and enhance the understanding the standards and requirements. The report shall be read as a whole, and sections should not be read or relied upon out of context. All recommendations, where given, are for the purpose of providing directional advice only. Recommendations are not exhaustive and relate solely to identifying key and obvious improvements related to findings in this report, and do not represent a comprehensive solution to any issue. This report is based only on the date herein and ECOTEC has no responsibility to update this report. ECOTEC takes no responsibility for any loss that any party may suffer in connection with any actions, or lack of action, taken to address the findings in the report.',
+    workerInterview: '',
+    additionalInfo: '',
+    disclaimer: '',
     
     // Image
     facilityImage: null
@@ -128,7 +151,11 @@ export default function AssesmentComponent() {
   const loadAssessmentInfo = async () => {
     try {
       const assessmentId = assessment?.id;
-      if (!assessmentId) return;
+      if (!assessmentId) {
+        // Load default values from JSON files even if no assessment ID
+        await loadDefaultValues();
+        return;
+      }
 
       const response = await axios.get(`/assessment-info/${assessmentId}`);
       
@@ -171,15 +198,57 @@ export default function AssesmentComponent() {
           workersLanguage: data.workers_language || '',
           generalAssessmentOverview: data.general_assessment_overview || '',
           facilityGoodPractices: data.facility_good_practices || '',
+          workerInterview: data.worker_interview || '',
+          additionalInfo: data.additional_info || '',
           disclaimer: data.disclaimer || '',
           facilityImage: null // We don't load the file, just show path if exists
         };
         
         setAssessmentInfo(convertedData);
+        
+        // If any of the rich text fields are empty, load defaults for those fields
+        if (!data.general_assessment_overview || !data.facility_good_practices || 
+            !data.worker_interview || !data.additional_info || !data.disclaimer) {
+          await loadDefaultValues(convertedData);
+        }
+      } else {
+        // If no existing data, load default values from JSON files
+        await loadDefaultValues();
       }
     } catch (error) {
-      // Silently handle if no assessment info exists yet
-      console.log('No existing assessment info found or error loading:', error);
+      // Load default values from JSON files if no assessment info exists yet
+      console.log('No existing assessment info found, loading defaults:', error);
+      await loadDefaultValues();
+    }
+  };
+
+  const loadDefaultValues = async (existingData = null) => {
+    try {
+      // Load default values from JSON files
+      const [overviewResponse, goodPracticeResponse, workerInterviewResponse, additionalInfoResponse, disclaimerResponse] = await Promise.all([
+        fetch('/json/assessmentOverview.json'),
+        fetch('/json/goodPractice.json'),
+        fetch('/json/workerInterview.json'),
+        fetch('/json/additionalInformation.json'),
+        fetch('/json/disclaimerAndMethod.json')
+      ]);
+
+      const overviewData = await overviewResponse.json();
+      const goodPracticeData = await goodPracticeResponse.json();
+      const workerInterviewData = await workerInterviewResponse.json();
+      const additionalInfoData = await additionalInfoResponse.json();
+      const disclaimerData = await disclaimerResponse.json();
+
+      setAssessmentInfo(prev => ({
+        ...prev,
+        generalAssessmentOverview: (existingData?.generalAssessmentOverview || prev.generalAssessmentOverview) || overviewData.assessmentOverview || '',
+        facilityGoodPractices: (existingData?.facilityGoodPractices || prev.facilityGoodPractices) || goodPracticeData.goodPractices || '',
+        workerInterview: (existingData?.workerInterview || prev.workerInterview) || workerInterviewData.detailsOfWorkersInterview || '',
+        additionalInfo: (existingData?.additionalInfo || prev.additionalInfo) || additionalInfoData.additionalInformation || '',
+        disclaimer: (existingData?.disclaimer || prev.disclaimer) || disclaimerData.disclaimer || ''
+      }));
+    } catch (error) {
+      console.log('Error loading default values from JSON files:', error);
     }
   };
 
@@ -1148,34 +1217,61 @@ export default function AssesmentComponent() {
                 <div className="mb-8 space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">General Assessment Overview</label>
-                    <textarea
-                      rows="4"
+                    <ReactQuill
+                      theme="snow"
                       value={assessmentInfo.generalAssessmentOverview}
-                      onChange={(e) => handleInfoChange('generalAssessmentOverview', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Enter general assessment overview..."
+                      onChange={(value) => handleInfoChange('generalAssessmentOverview', value)}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      style={{ height: '200px', marginBottom: '50px' }}
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Facility Good Practices</label>
-                    <textarea
-                      rows="4"
+                    <ReactQuill
+                      theme="snow"
                       value={assessmentInfo.facilityGoodPractices}
-                      onChange={(e) => handleInfoChange('facilityGoodPractices', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Enter facility good practices..."
+                      onChange={(value) => handleInfoChange('facilityGoodPractices', value)}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      style={{ height: '200px', marginBottom: '50px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Worker Interview</label>
+                    <ReactQuill
+                      theme="snow"
+                      value={assessmentInfo.workerInterview}
+                      onChange={(value) => handleInfoChange('workerInterview', value)}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      style={{ height: '200px', marginBottom: '50px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Additional Information</label>
+                    <ReactQuill
+                      theme="snow"
+                      value={assessmentInfo.additionalInfo}
+                      onChange={(value) => handleInfoChange('additionalInfo', value)}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      style={{ height: '200px', marginBottom: '50px' }}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Disclaimer & Methods</label>
-                    <textarea
-                      rows="3"
+                    <ReactQuill
+                      theme="snow"
                       value={assessmentInfo.disclaimer}
-                      onChange={(e) => handleInfoChange('disclaimer', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Enter disclaimer..."
+                      onChange={(value) => handleInfoChange('disclaimer', value)}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      style={{ height: '150px', marginBottom: '50px' }}
                     />
                   </div>
                 </div>

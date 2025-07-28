@@ -542,11 +542,49 @@
                             General Assessment Overview
                         </th>
                     </tr>
-                    <tr>
-                        <td>
-                            {!! $assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.' !!}
-                        </td>
-                    </tr>
+                    @php
+                        $content = $assessmentInfo && $assessmentInfo->general_assessment_overview ? $assessmentInfo->general_assessment_overview : 'No general assessment overview provided.';
+                        
+                        // Parse HTML content and extract paragraphs and list items
+                        $dom = new DOMDocument();
+                        libxml_use_internal_errors(true);
+                        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $content);
+                        libxml_clear_errors();
+                        
+                        $items = [];
+                        $xpath = new DOMXPath($dom);
+                        
+                        // Get all p tags and li tags
+                        $paragraphs = $xpath->query('//p');
+                        $listItems = $xpath->query('//li');
+                        
+                        // Collect paragraphs
+                        foreach ($paragraphs as $p) {
+                            $text = trim($p->textContent);
+                            if (!empty($text)) {
+                                $items[] = $text;
+                            }
+                        }
+                        
+                        // Collect list items
+                        foreach ($listItems as $li) {
+                            $text = trim($li->textContent);
+                            if (!empty($text)) {
+                                $items[] = '• ' . $text;
+                            }
+                        }
+                        
+                        // If no items found, use the original content
+                        if (empty($items)) {
+                            $items[] = strip_tags($content);
+                        }
+                    @endphp
+                    
+                    @foreach($items as $item)
+                        <tr>
+                            <td>{{ $item }}</td>
+                        </tr>
+                    @endforeach
                 </table>
             </div>
             <br>
@@ -557,11 +595,49 @@
                             Facility Good Practices
                         </th>
                     </tr>
-                    <tr>
-                        <td>
-                            {!! $assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.' !!}
-                        </td>
-                    </tr>
+                    @php
+                        $content = $assessmentInfo && $assessmentInfo->facility_good_practices ? $assessmentInfo->facility_good_practices : 'No facility good practices information provided.';
+                        
+                        // Parse HTML content and extract paragraphs and list items
+                        $dom = new DOMDocument();
+                        libxml_use_internal_errors(true);
+                        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $content);
+                        libxml_clear_errors();
+                        
+                        $items = [];
+                        $xpath = new DOMXPath($dom);
+                        
+                        // Get all p tags and li tags
+                        $paragraphs = $xpath->query('//p');
+                        $listItems = $xpath->query('//li');
+                        
+                        // Collect paragraphs
+                        foreach ($paragraphs as $p) {
+                            $text = trim($p->textContent);
+                            if (!empty($text)) {
+                                $items[] = $text;
+                            }
+                        }
+                        
+                        // Collect list items
+                        foreach ($listItems as $li) {
+                            $text = trim($li->textContent);
+                            if (!empty($text)) {
+                                $items[] = '• ' . $text;
+                            }
+                        }
+                        
+                        // If no items found, use the original content
+                        if (empty($items)) {
+                            $items[] = strip_tags($content);
+                        }
+                    @endphp
+                    
+                    @foreach($items as $item)
+                        <tr>
+                            <td>{{ $item }}</td>
+                        </tr>
+                    @endforeach
                 </table>
             </div>
             <br>
@@ -572,11 +648,49 @@
                             Details of Workers Interview
                         </th>
                     </tr>
-                    <tr>
-                        <td>
-                            {!! $assessmentInfo && $assessmentInfo->worker_interview ? $assessmentInfo->worker_interview : 'No worker interview information provided.' !!}
-                        </td>
-                    </tr>
+                    @php
+                        $content = $assessmentInfo && $assessmentInfo->worker_interview ? $assessmentInfo->worker_interview : 'No worker interview information provided.';
+                        
+                        // Parse HTML content and extract paragraphs and list items
+                        $dom = new DOMDocument();
+                        libxml_use_internal_errors(true);
+                        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $content);
+                        libxml_clear_errors();
+                        
+                        $items = [];
+                        $xpath = new DOMXPath($dom);
+                        
+                        // Get all p tags and li tags
+                        $paragraphs = $xpath->query('//p');
+                        $listItems = $xpath->query('//li');
+                        
+                        // Collect paragraphs
+                        foreach ($paragraphs as $p) {
+                            $text = trim($p->textContent);
+                            if (!empty($text)) {
+                                $items[] = $text;
+                            }
+                        }
+                        
+                        // Collect list items
+                        foreach ($listItems as $li) {
+                            $text = trim($li->textContent);
+                            if (!empty($text)) {
+                                $items[] = '• ' . $text;
+                            }
+                        }
+                        
+                        // If no items found, use the original content
+                        if (empty($items)) {
+                            $items[] = strip_tags($content);
+                        }
+                    @endphp
+                    
+                    @foreach($items as $item)
+                        <tr>
+                            <td>{{ $item }}</td>
+                        </tr>
+                    @endforeach
                 </table>
             </div>
 
@@ -696,11 +810,49 @@
                 <tr>
                     <th style="text-align: center; background-color: #F44336; color: white;">Additional Information</th>
                 </tr>
-                <tr>
-                    <td style="text-align: justify; padding: 10px;">
-                        {!! $assessmentInfo && $assessmentInfo->additional_info ? $assessmentInfo->additional_info : 'No additional information provided.' !!}
-                    </td>
-                </tr>
+                @php
+                    $content = $assessmentInfo && $assessmentInfo->additional_info ? $assessmentInfo->additional_info : 'No additional information provided.';
+                    
+                    // Parse HTML content and extract paragraphs and list items
+                    $dom = new DOMDocument();
+                    libxml_use_internal_errors(true);
+                    $dom->loadHTML('<?xml encoding="utf-8" ?>' . $content);
+                    libxml_clear_errors();
+                    
+                    $items = [];
+                    $xpath = new DOMXPath($dom);
+                    
+                    // Get all p tags and li tags
+                    $paragraphs = $xpath->query('//p');
+                    $listItems = $xpath->query('//li');
+                    
+                    // Collect paragraphs
+                    foreach ($paragraphs as $p) {
+                        $text = trim($p->textContent);
+                        if (!empty($text)) {
+                            $items[] = $text;
+                        }
+                    }
+                    
+                    // Collect list items
+                    foreach ($listItems as $li) {
+                        $text = trim($li->textContent);
+                        if (!empty($text)) {
+                            $items[] = '• ' . $text;
+                        }
+                    }
+                    
+                    // If no items found, use the original content
+                    if (empty($items)) {
+                        $items[] = strip_tags($content);
+                    }
+                @endphp
+                
+                @foreach($items as $item)
+                    <tr>
+                        <td style="text-align: justify; padding: 10px;">{{ $item }}</td>
+                    </tr>
+                @endforeach
             </table>
         </div>
         

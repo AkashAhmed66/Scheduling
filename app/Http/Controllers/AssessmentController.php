@@ -854,17 +854,20 @@ class AssessmentController extends Controller
                             // Findings row
                             $findingsRow = $findingsTable->addRow();
                             $findingsRow->addCell(1500, ['valign' => 'center'])->addText('Findings', ['bold' => true, 'size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
-                            $findingsRow->addCell(7500, ['valign' => 'center'])->addText($finding['findings'], ['size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            $findingsCell = $findingsRow->addCell(7500, ['valign' => 'center']);
+                            $this->addHtmlContentToCell($findingsCell, $finding['findings'], 'No findings description provided.');
                             
                             // Legal Reference row
                             $legalRow = $findingsTable->addRow();
                             $legalRow->addCell(1500, ['valign' => 'center'])->addText('Legal Reference', ['bold' => true, 'size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
-                            $legalRow->addCell(7500, ['valign' => 'center'])->addText($finding['legal_ref'], ['size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            $legalCell = $legalRow->addCell(7500, ['valign' => 'center']);
+                            $this->addHtmlContentToCell($legalCell, $finding['legal_ref'], 'No legal reference provided.');
                             
                             // Recommendation row
                             $recommendationRow = $findingsTable->addRow();
                             $recommendationRow->addCell(1500, ['valign' => 'center'])->addText('Recommendation', ['bold' => true, 'size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
-                            $recommendationRow->addCell(7500, ['valign' => 'center'])->addText($finding['recommendation'], ['size' => 10], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+                            $recommendationCell = $recommendationRow->addCell(7500, ['valign' => 'center']);
+                            $this->addHtmlContentToCell($recommendationCell, $finding['recommendation'], 'No recommendation provided.');
                             
                             // Add spacing between individual finding tables
                             $section->addTextBreak(1);

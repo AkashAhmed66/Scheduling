@@ -80,7 +80,10 @@
         .good-practices p,
         .worker-interview p,
         .additional-info p,
-        .disclaimer p {
+        .disclaimer p,
+        .findings-content p,
+        .legal-ref-content p,
+        .recommendation-content p {
             line-height: 1.6 !important;
             margin: 10px 0 !important;
         }
@@ -95,7 +98,13 @@
         .additional-info ul,
         .additional-info ol,
         .disclaimer ul,
-        .disclaimer ol {
+        .disclaimer ol,
+        .findings-content ul,
+        .findings-content ol,
+        .legal-ref-content ul,
+        .legal-ref-content ol,
+        .recommendation-content ul,
+        .recommendation-content ol {
             margin: 12px 0 !important;
             padding-left: 25px !important;
         }
@@ -104,7 +113,10 @@
         .good-practices li,
         .worker-interview li,
         .additional-info li,
-        .disclaimer li {
+        .disclaimer li,
+        .findings-content li,
+        .legal-ref-content li,
+        .recommendation-content li {
             margin: 6px 0 !important;
             line-height: 1.5 !important;
         }
@@ -124,7 +136,16 @@
         .additional-info h3,
         .disclaimer h1,
         .disclaimer h2,
-        .disclaimer h3 {
+        .disclaimer h3,
+        .findings-content h1,
+        .findings-content h2,
+        .findings-content h3,
+        .legal-ref-content h1,
+        .legal-ref-content h2,
+        .legal-ref-content h3,
+        .recommendation-content h1,
+        .recommendation-content h2,
+        .recommendation-content h3 {
             margin: 15px 0 10px 0 !important;
             line-height: 1.3 !important;
         }
@@ -619,15 +640,15 @@
                                     </tr>
                                     <tr>
                                         <td>Findings</td>
-                                        <td colspan="2">{{ $finding['findings'] ?? 'No findings description provided.' }}</td>
+                                        <td colspan="2"><div class="findings-content">{!! $finding['findings'] ?? 'No findings description provided.' !!}</div></td>
                                     </tr>
                                     <tr>
                                         <td scope="col">Legal Reference</td>
-                                        <td colspan="2">{{ $finding['legal_ref'] ?? 'No legal reference provided.' }}</td>
+                                        <td colspan="2"><div class="legal-ref-content">{!! $finding['legal_ref'] ?? 'No legal reference provided.' !!}</div></td>
                                     </tr>
                                     <tr>
                                         <td>Recommendation</td>
-                                        <td colspan="2">{{ $finding['recommendation'] ?? 'No recommendation provided.' }}</td>
+                                        <td colspan="2"><div class="recommendation-content">{!! $finding['recommendation'] ?? 'No recommendation provided.' !!}</div></td>
                                     </tr>
                                 </table>
                                 <br>

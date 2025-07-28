@@ -87,3 +87,89 @@
 .ql-editor u {
   text-decoration: underline;
 }
+
+/* Styling for content displayed in table cells to match PDF */
+.table-cell-content {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.table-cell-content p {
+  margin-bottom: 0.5em;
+  line-height: 1.4;
+}
+
+.table-cell-content p:last-child {
+  margin-bottom: 0;
+}
+
+.table-cell-content ul, .table-cell-content ol {
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+}
+
+.table-cell-content ul:last-child, .table-cell-content ol:last-child {
+  margin-bottom: 0;
+}
+
+.table-cell-content h1, .table-cell-content h2, .table-cell-content h3 {
+  margin-bottom: 0.25em;
+  margin-top: 0.5em;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.table-cell-content h1:first-child, 
+.table-cell-content h2:first-child, 
+.table-cell-content h3:first-child {
+  margin-top: 0;
+}
+
+.table-cell-content h1 {
+  font-size: 1.2em;
+}
+
+.table-cell-content h2 {
+  font-size: 1.1em;
+}
+
+.table-cell-content h3 {
+  font-size: 1.05em;
+}
+
+.table-cell-content strong {
+  font-weight: bold;
+}
+
+.table-cell-content em {
+  font-style: italic;
+}
+
+.table-cell-content u {
+  text-decoration: underline;
+}
+
+/* Additional styles for table cell truncation */
+.table-cell-content.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.table-cell-content.truncate p {
+  display: inline;
+  margin: 0;
+}
+
+.table-cell-content.truncate ul,
+.table-cell-content.truncate ol {
+  display: inline;
+  margin: 0;
+  padding-left: 1em;
+}
+
+.table-cell-content.truncate li {
+  display: inline;
+  margin-right: 0.5em;
+}

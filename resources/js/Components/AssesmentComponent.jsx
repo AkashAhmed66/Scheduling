@@ -38,6 +38,10 @@ export default function AssesmentComponent() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [currentRiskRatings, setCurrentRiskRatings] = useState([]);
   const [currentOverallRatings, setCurrentOverallRatings] = useState([]);
+  const [showTextEditorModal, setShowTextEditorModal] = useState(false);
+  const [currentEditingField, setCurrentEditingField] = useState(null);
+  const [currentEditingQuestion, setCurrentEditingQuestion] = useState(null);
+  const [editorContent, setEditorContent] = useState('');
 
   // Toggle functions for collapsible sections
   const toggleCategory = (category) => {
@@ -294,6 +298,66 @@ export default function AssesmentComponent() {
     }));
   };
 
+  const openTextEditor = (questionItem, field) => {
+    setCurrentEditingQuestion(questionItem);
+    setCurrentEditingField(field);
+    // If the field contains plain text without HTML tags, keep it as is
+    // If it contains HTML tags, use it directly
+    const currentValue = questionItem[field] || '';
+    setEditorContent(currentValue);
+    setShowTextEditorModal(true);
+  };
+
+  const saveTextEditorContent = async () => {
+    if (!currentEditingQuestion || !currentEditingField) return;
+
+    // Update local state
+    const updatedQuestions = questions.map(q => 
+      q.id === currentEditingQuestion.id ? { ...q, [currentEditingField]: editorContent } : q
+    );
+    setQuestions(updatedQuestions);
+
+    // Update grouped questions as well
+    const grouped = updatedQuestions.reduce((acc, q) => {
+      const category = q.category || 'Uncategorized';
+      const subcategory = q.subcategory || 'General';
+      
+      if (!acc[category]) {
+        acc[category] = {};
+      }
+      if (!acc[category][subcategory]) {
+        acc[category][subcategory] = [];
+      }
+      
+      acc[category][subcategory].push(q);
+      return acc;
+    }, {});
+    
+    setGroupedQuestions(grouped);
+
+    try {
+      await axios.put(`/update-assessment/${currentEditingQuestion.id}`, {
+        [currentEditingField]: editorContent,
+      });
+      console.log("Update successful");
+    } catch (error) {
+      console.error("Update failed", error);
+    }
+
+    // Close modal
+    setShowTextEditorModal(false);
+    setCurrentEditingQuestion(null);
+    setCurrentEditingField(null);
+    setEditorContent('');
+  };
+
+  const closeTextEditor = () => {
+    setShowTextEditorModal(false);
+    setCurrentEditingQuestion(null);
+    setCurrentEditingField(null);
+    setEditorContent('');
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -532,65 +596,10 @@ export default function AssesmentComponent() {
           </div>
           
           <div className="p-6">
+            {/* Top Row - Action Buttons */}
             <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={generatePDF}
-                  disabled={loading}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  {loading ? 'Generating Report...' : 'Report'}
-                </button>
-                
-                <button
-                  onClick={generateDoc}
-                  disabled={loading}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  {loading ? 'Generating Doc...' : 'Doc'}
-                </button>
-                
-                <button
-                  onClick={generateCAPAPDF}
-                  disabled={loading}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  {loading ? 'Generating CAPA...' : 'CAPA'}
-                </button>
-                
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  Info
-                </button>
-
-                <button
-                  onClick={handleResetClick}
-                  disabled={resetLoading}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-red-600 hover:to-pink-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                  </svg>
-                  {resetLoading ? 'Resetting...' : 'Reset'}
-                </button>
-              </div>
-
-              {/* Statistics Buttons */}
-              <div className="flex gap-3 items-center">
+              {/* Left Side - Statistics Counters */}
+              <div className="flex flex-wrap gap-3 items-center">
                 <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg shadow-md">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -611,13 +620,6 @@ export default function AssesmentComponent() {
                   </svg>
                   Not Applicable: {questions.filter(q => q.answer === 'Not Applicable').length}
                 </div>
-
-                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium rounded-lg shadow-md">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  Unanswered: {questions.filter(q => !q.answer || q.answer === '').length}
-                </div>
                 
                 <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -625,52 +627,110 @@ export default function AssesmentComponent() {
                   </svg>
                   Total: {questions.length}
                 </div>
+              </div>
 
-                {/* Category Navigation Dropdown */}
-                <div className="relative">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        scrollToCategory(e.target.value);
-                        setSelectedCategory(''); // Reset to show placeholder
-                      }
-                    }}
-                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50 transition-all duration-200 cursor-pointer border-none appearance-none pr-10 min-w-[160px]"
-                    style={{
-                      color: selectedCategory === '' ? '#acafb5ff' : 'white'
-                    }}
-                  >
-                    <option value="" disabled style={{color: '#6b7280', backgroundColor: '#f9fafb'}}>
-                      {Object.keys(groupedQuestions).length > 0 ? 'Jump to Category' : 'Loading Categories...'}
+              {/* Right Side - Category Navigation Dropdown */}
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      scrollToCategory(e.target.value);
+                      setSelectedCategory(''); // Reset to show placeholder
+                    }
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50 transition-all duration-200 cursor-pointer border-none appearance-none pr-10 min-w-[160px]"
+                  style={{
+                    color: selectedCategory === '' ? '#acafb5ff' : 'white'
+                  }}
+                >
+                  <option value="" disabled style={{color: '#6b7280', backgroundColor: '#f9fafb'}}>
+                    {Object.keys(groupedQuestions).length > 0 ? 'Jump to Category' : 'Loading Categories...'}
+                  </option>
+                  {Object.keys(groupedQuestions).map((category) => (
+                    <option key={category} value={category} style={{color: '#374151'}}>
+                      {category}
                     </option>
-                    {Object.keys(groupedQuestions).map((category) => (
-                      <option key={category} value={category} style={{color: '#374151'}}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none ">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </div>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none ">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
                 </div>
               </div>
             </div>
+
+            {/* Bottom Row - Statistics Counters (left) and Dropdown (right) */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              <button
+                onClick={generatePDF}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-indigo-700 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                {loading ? 'Generating Report...' : 'Report'}
+              </button>
+              
+              <button
+                onClick={generateDoc}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                {loading ? 'Generating Doc...' : 'Doc'}
+              </button>
+              
+              <button
+                onClick={generateCAPAPDF}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-orange-700 hover:to-red-700 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                {loading ? 'Generating CAPA...' : 'CAPA'}
+              </button>
+              
+              <button
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Info
+              </button>
+
+              <button
+                onClick={handleResetClick}
+                disabled={resetLoading}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-red-600 hover:to-pink-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                {resetLoading ? 'Resetting...' : 'Reset'}
+              </button>
+            </div>
+            
 
             <div className="overflow-x-auto shadow-md rounded-lg">
               <table className="w-full bg-white rounded-lg overflow-hidden">
                 <thead className="sticky z-50" style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question Ref</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-24">Question Ref</th>
                     <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Instruction</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Answer</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Findings</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Risk Rating</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Legal Ref</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Recommendation</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-48">Instruction</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-32">Answer</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-56">Findings</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-36">Risk Rating</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-52">Legal Ref</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-56">Recommendation</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -729,18 +789,27 @@ export default function AssesmentComponent() {
                             {/* All questions under this subcategory */}
                             {!collapsedSubcategories[subcategoryKey] && groupedQuestions[category][subcategory].map((questionItem) => (
                             <tr key={questionItem.ncref} className="hover:bg-gray-50 transition-colors duration-150">
-                              <td className="py-3 px-4 text-sm font-medium text-gray-900">{questionItem.id}</td>
+                              <td className="py-3 px-4 text-sm font-medium text-gray-900 w-24">{questionItem.id}</td>
                               <td className="py-3 px-4 text-sm text-gray-800">{questionItem.question}</td>
-                              <td className="py-3 px-4">
-                                <input
-                                  type="text"
-                                  value={questionItem.instruction || ''}
-                                  onChange={(e) => handleChange(e, questionItem, 'instruction')}
-                                  className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none text-sm"
-                                  placeholder="Enter instruction..."
-                                />
+                              <td className="py-3 px-4 w-48">
+                                <div
+                                  onClick={() => openTextEditor(questionItem, 'instruction')}
+                                  className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-48 overflow-hidden text-ellipsis"
+                                  title="Click to edit instruction"
+                                  style={{ maxWidth: '12rem', minWidth: '12rem' }}
+                                >
+                                  {questionItem.instruction ? (
+                                    questionItem.instruction.includes('<') || questionItem.instruction.includes('>') ? (
+                                      <div className="table-cell-content truncate" dangerouslySetInnerHTML={{ __html: questionItem.instruction }} />
+                                    ) : (
+                                      <div className="table-cell-content truncate">{questionItem.instruction}</div>
+                                    )
+                                  ) : (
+                                    <span className="text-gray-400 italic">Click to enter instruction...</span>
+                                  )}
+                                </div>
                               </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 w-32">
                                 <select
                                   value={questionItem.answer || ''}
                                   onChange={(e) => handleChange(e, questionItem, 'answer')}
@@ -760,20 +829,29 @@ export default function AssesmentComponent() {
                                   <option value="Not Applicable">Not Applicable</option>
                                 </select>
                               </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 w-56">
                                 {questionItem.answer === 'Non-Compliance' ? (
-                                  <input
-                                    type="text"
-                                    value={questionItem.findings || ''}
-                                    onChange={(e) => handleChange(e, questionItem, 'findings')}
-                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none"
-                                    placeholder="Enter findings..."
-                                  />
+                                  <div
+                                    onClick={() => openTextEditor(questionItem, 'findings')}
+                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-56 overflow-hidden"
+                                    title="Click to edit findings"
+                                    style={{ maxWidth: '14rem', minWidth: '14rem' }}
+                                  >
+                                    {questionItem.findings ? (
+                                      questionItem.findings.includes('<') || questionItem.findings.includes('>') ? (
+                                        <div className="table-cell-content truncate" dangerouslySetInnerHTML={{ __html: questionItem.findings }} />
+                                      ) : (
+                                        <div className="table-cell-content truncate">{questionItem.findings}</div>
+                                      )
+                                    ) : (
+                                      <span className="text-gray-400 italic">Click to enter findings...</span>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400 italic">N/A</span>
                                 )}
                               </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 w-36">
                                 <select
                                   value={questionItem.risk_rating || questionItem.original_risk_rating || ''}
                                   onChange={(e) => handleChange(e, questionItem, 'risk_rating')}
@@ -792,28 +870,46 @@ export default function AssesmentComponent() {
                                 </select>
                                 {/* {questionItem.risk_rating} */}
                               </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 w-52">
                                 {questionItem.answer === 'Non-Compliance' ? (
-                                  <input
-                                    type="text"
-                                    value={questionItem.legal_ref || ''}
-                                    onChange={(e) => handleChange(e, questionItem, 'legal_ref')}
-                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none"
-                                    placeholder="Enter legal reference..."
-                                  />
+                                  <div
+                                    onClick={() => openTextEditor(questionItem, 'legal_ref')}
+                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-52 overflow-hidden"
+                                    title="Click to edit legal reference"
+                                    style={{ maxWidth: '13rem', minWidth: '13rem' }}
+                                  >
+                                    {questionItem.legal_ref ? (
+                                      questionItem.legal_ref.includes('<') || questionItem.legal_ref.includes('>') ? (
+                                        <div className="table-cell-content truncate" dangerouslySetInnerHTML={{ __html: questionItem.legal_ref }} />
+                                      ) : (
+                                        <div className="table-cell-content truncate">{questionItem.legal_ref}</div>
+                                      )
+                                    ) : (
+                                      <span className="text-gray-400 italic">Click to enter legal reference...</span>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400 italic">N/A</span>
                                 )}
                               </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 w-56">
                                 {questionItem.answer === 'Non-Compliance' ? (
-                                  <input
-                                    type="text"
-                                    value={questionItem.recommendation || ''}
-                                    onChange={(e) => handleChange(e, questionItem, 'recommendation')}
-                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none"
-                                    placeholder="Enter recommendation..."
-                                  />
+                                  <div
+                                    onClick={() => openTextEditor(questionItem, 'recommendation')}
+                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-56 overflow-hidden"
+                                    title="Click to edit recommendation"
+                                    style={{ maxWidth: '14rem', minWidth: '14rem' }}
+                                  >
+                                    {questionItem.recommendation ? (
+                                      questionItem.recommendation.includes('<') || questionItem.recommendation.includes('>') ? (
+                                        <div className="table-cell-content truncate" dangerouslySetInnerHTML={{ __html: questionItem.recommendation }} />
+                                      ) : (
+                                        <div className="table-cell-content truncate">{questionItem.recommendation}</div>
+                                      )
+                                    ) : (
+                                      <span className="text-gray-400 italic">Click to enter recommendation...</span>
+                                    )}
+                                  </div>
                                 ) : (
                                   <span className="text-gray-400 italic">N/A</span>
                                 )}
@@ -1292,6 +1388,60 @@ export default function AssesmentComponent() {
                   Save Information
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Text Editor Modal */}
+      {showTextEditorModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center">
+          <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={closeTextEditor}></div>
+          
+          {/* Modal content */}
+          <div className="relative w-full max-w-4xl mx-4 p-6 bg-white shadow-xl rounded-2xl z-10">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">
+                Edit {currentEditingField === 'findings' ? 'Findings' : 
+                     currentEditingField === 'legal_ref' ? 'Legal Reference' : 
+                     currentEditingField === 'instruction' ? 'Instruction' :
+                     'Recommendation'}
+              </h3>
+              <button
+                onClick={closeTextEditor}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <ReactQuill
+                theme="snow"
+                value={editorContent}
+                onChange={setEditorContent}
+                modules={quillModules}
+                formats={quillFormats}
+                style={{ height: '300px', marginBottom: '50px' }}
+              />
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end space-x-3 pt-6 border-t">
+              <button
+                onClick={closeTextEditor}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveTextEditorContent}
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 border border-transparent rounded-md hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-md hover:shadow-lg"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>

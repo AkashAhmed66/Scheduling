@@ -15,7 +15,7 @@ export default function Navbar() {
   useEffect(() => {
     // Fetch data on component mount
     fetchData();
-  }, []);
+  }, [user]);
 
   const fetchData = async () => {
     try {
@@ -156,7 +156,6 @@ export default function Navbar() {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
               >
                 <img
-                  src={user && user.image_url ? user.image_url : '/images/default-avatar.png'}
                   alt="Profile"
                   className="h-8 w-8 rounded-full object-cover"
                   onError={(e) => {e.target.src = '/images/default-avatar.png'}}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarContext from "./SideBarContext";
+import SidebarContext from "../Context/SidebarContext.jsx";
 import axios from "axios";
 
 export default function SidebarContextState (props) {

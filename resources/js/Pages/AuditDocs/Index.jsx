@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import BasicLayout from '@/Layouts/BasicLayout/BasicLayout';
 import axios from 'axios';
-import SidebarContext from '@/Context/SideBarContext';
+import SidebarContext from '../../Context/SidebarContext';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 
 export default function Index({ rootFolders, canManage }) {

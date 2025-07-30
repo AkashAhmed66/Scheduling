@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import SidebarContext from '@/Context/SideBarContext';
+import SidebarContext from '../Context/SidebarContext.jsx';
 import { useContext } from 'react';
 
 export default function Folder({ item, level = 0 }) {

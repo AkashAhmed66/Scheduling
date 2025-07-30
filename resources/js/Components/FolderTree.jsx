@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import Folder from './Folder';
-import SidebarContext from '@/Context/SideBarContext';
+import SidebarContext from '../Context/SidebarContext.jsx';
 
 const FolderTree = ({ data }) => {
     const { folderHierarchy, refreshFolders } = useContext(SidebarContext) || { folderHierarchy: [] };

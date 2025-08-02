@@ -173,7 +173,7 @@ export default function Navbar() {
                       href="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
                     >
-                      Your Profile
+                      Your Profile akash
                       {/* {user.image_url} */}
                     </Link>
                     <Link

@@ -24,9 +24,11 @@ jobs:
             cd ${{ secrets.VPS_PATH }}
             git pull origin main
             composer install --no-interaction --prefer-dist --optimize-autoloader
-            ls
-            /root/.nvm/versions/node/v22.17.1/bin/pnpm install
-            /root/.nvm/versions/node/v22.17.1/bin/pnpm build
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+            nvm use 22
+            pnpm install
+            pnpm build
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache

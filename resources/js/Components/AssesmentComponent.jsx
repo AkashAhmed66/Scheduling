@@ -3,27 +3,21 @@ import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/react';
 import axios from "axios";
 import ConfirmationModal from './ConfirmationModal';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { Editor } from '@tinymce/tinymce-react';
 import '../../css/quill-custom.css';
 
-// Quill editor configuration
-const quillModules = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'align': [] }],
-    ['link'],
-    [{ 'color': [] }, { 'background': [] }],
-    ['clean']
+// TinyMCE editor configuration
+const editorConfig = {
+  height: 200,
+  menubar: false,
+  plugins: [
+    'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
   ],
+  toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+  content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
 };
-
-const quillFormats = [
-  'header', 'bold', 'italic', 'underline', 'strike',
-  'list', 'bullet', 'align', 'link', 'color', 'background'
-];
 
 export default function AssesmentComponent() {
   const { question, user, assessment, riskRatings, overallRatings } = usePage().props;
@@ -1369,62 +1363,72 @@ export default function AssesmentComponent() {
                 <div className="mb-8 space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">General Assessment Overview</label>
-                    <ReactQuill
-                      theme="snow"
+                    <Editor
+                      apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                       value={assessmentInfo.generalAssessmentOverview}
-                      onChange={(value) => handleInfoChange('generalAssessmentOverview', value)}
-                      modules={quillModules}
-                      formats={quillFormats}
-                      style={{ height: '200px', marginBottom: '50px' }}
+                      onEditorChange={(content) => handleInfoChange('generalAssessmentOverview', content)}
+                      init={{
+                        ...editorConfig,
+                        height: 200
+                      }}
                     />
+                    <div className="mb-12"></div>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Facility Good Practices</label>
-                    <ReactQuill
-                      theme="snow"
+                    <Editor
+                      apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                       value={assessmentInfo.facilityGoodPractices}
-                      onChange={(value) => handleInfoChange('facilityGoodPractices', value)}
-                      modules={quillModules}
-                      formats={quillFormats}
-                      style={{ height: '200px', marginBottom: '50px' }}
+                      onEditorChange={(content) => handleInfoChange('facilityGoodPractices', content)}
+                      init={{
+                        ...editorConfig,
+                        height: 200
+                      }}
                     />
+                    <div className="mb-12"></div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Worker Interview</label>
-                    <ReactQuill
-                      theme="snow"
+                    <Editor
+                      apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                       value={assessmentInfo.workerInterview}
-                      onChange={(value) => handleInfoChange('workerInterview', value)}
-                      modules={quillModules}
-                      formats={quillFormats}
-                      style={{ height: '200px', marginBottom: '50px' }}
+                      onEditorChange={(content) => handleInfoChange('workerInterview', content)}
+                      init={{
+                        ...editorConfig,
+                        height: 200
+                      }}
                     />
+                    <div className="mb-12"></div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Additional Information</label>
-                    <ReactQuill
-                      theme="snow"
+                    <Editor
+                      apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                       value={assessmentInfo.additionalInfo}
-                      onChange={(value) => handleInfoChange('additionalInfo', value)}
-                      modules={quillModules}
-                      formats={quillFormats}
-                      style={{ height: '200px', marginBottom: '50px' }}
+                      onEditorChange={(content) => handleInfoChange('additionalInfo', content)}
+                      init={{
+                        ...editorConfig,
+                        height: 200
+                      }}
                     />
+                    <div className="mb-12"></div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Disclaimer & Methods</label>
-                    <ReactQuill
-                      theme="snow"
+                    <Editor
+                      apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                       value={assessmentInfo.disclaimer}
-                      onChange={(value) => handleInfoChange('disclaimer', value)}
-                      modules={quillModules}
-                      formats={quillFormats}
-                      style={{ height: '150px', marginBottom: '50px' }}
+                      onEditorChange={(content) => handleInfoChange('disclaimer', content)}
+                      init={{
+                        ...editorConfig,
+                        height: 150
+                      }}
                     />
+                    <div className="mb-12"></div>
                   </div>
                 </div>
               </div>
@@ -1474,14 +1478,16 @@ export default function AssesmentComponent() {
             </div>
 
             <div className="mb-6">
-              <ReactQuill
-                theme="snow"
+              <Editor
+                apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                 value={editorContent}
-                onChange={setEditorContent}
-                modules={quillModules}
-                formats={quillFormats}
-                style={{ height: '300px', marginBottom: '50px' }}
+                onEditorChange={setEditorContent}
+                init={{
+                  ...editorConfig,
+                  height: 300
+                }}
               />
+              <div className="mb-12"></div>
             </div>
 
             {/* Modal Actions */}

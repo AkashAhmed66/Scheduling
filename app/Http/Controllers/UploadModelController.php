@@ -447,6 +447,9 @@ class UploadModelController extends Controller
             $riskRatingData = json_decode($request->input('riskRatingData'), true) ?? [];
             $overallRatingData = json_decode($request->input('overallRatingData'), true) ?? [];
 
+            Log::info('Risk rating data received: ', $riskRatingData);
+            Log::info('Overall rating data received: ', $overallRatingData);
+
             // Validate rating data
             if (empty($riskRatingData) || empty($overallRatingData)) {
                 throw new \Exception('Risk rating and overall rating data are required.');
@@ -457,7 +460,9 @@ class UploadModelController extends Controller
                 $reader->limit(1); // Only read the first row
             }, $file)[0][1]; // Access the first row of the first sheet
 
-            $assessmentType = $firstRow['10']; // Get the type from excel
+            
+            $assessmentType = $firstRow['11']; // Get the type from excel
+            Log::info('Assessment type from Excel: ' . $assessmentType);
 
             // Check if this assessment type already exists
             $existingUploadModels = UploadModel::where('type', $assessmentType)->count();
@@ -465,42 +470,66 @@ class UploadModelController extends Controller
                 return back()->with('error', "Assessment tool of type '{$assessmentType}' already exists. Please delete the existing tool first or choose a different assessment type.");
             }
             
-            // Import the excel data
+            // Import the excel data first
             Excel::import(new QuestionImport, $file);
+            Log::info('Excel import completed');
             
             // Delete any records with null type
             UploadModel::where('type', null)->delete();
             
             // Save risk rating data
+            $riskRatingSaved = 0;
             foreach ($riskRatingData as $riskRating) {
-                if (!empty($riskRating['label']) || !empty($riskRating['mark']) || !empty($riskRating['color'])) {
-                    RiskRating::create([
-                        'label' => $riskRating['label'] ?? '',
-                        'mark' => $riskRating['mark'] ?? '',
-                        'color' => $riskRating['color'] ?? '',
+                // Save if at least one field is not empty
+                if (!empty(trim($riskRating['label'] ?? '')) || 
+                    !empty(trim($riskRating['mark'] ?? '')) || 
+                    !empty(trim($riskRating['color'] ?? ''))) {
+                    
+                    $created = RiskRating::create([
+                        'label' => trim($riskRating['label'] ?? ''),
+                        'mark' => trim($riskRating['mark'] ?? ''),
+                        'color' => trim($riskRating['color'] ?? ''),
                         'type' => $assessmentType,
                     ]);
+                    $riskRatingSaved++;
+                    Log::info('Risk rating saved: ', $created->toArray());
                 }
             }
+            Log::info("Total risk ratings saved: {$riskRatingSaved}");
             
             // Save overall rating data
+            $overallRatingSaved = 0;
             foreach ($overallRatingData as $overallRating) {
-                if (!empty($overallRating['percentage']) || !empty($overallRating['label']) || !empty($overallRating['color'])) {
-                    OverallRating::create([
-                        'percentage' => $overallRating['percentage'] ?? '',
-                        'label' => $overallRating['label'] ?? '',
-                        'color' => $overallRating['color'] ?? '',
+                // Save if at least one field is not empty
+                if (!empty(trim($overallRating['percentage'] ?? '')) || 
+                    !empty(trim($overallRating['label'] ?? '')) || 
+                    !empty(trim($overallRating['color'] ?? ''))) {
+                    
+                    $created = OverallRating::create([
+                        'percentage' => trim($overallRating['percentage'] ?? ''),
+                        'label' => trim($overallRating['label'] ?? ''),
+                        'color' => trim($overallRating['color'] ?? ''),
                         'type' => $assessmentType,
                     ]);
+                    $overallRatingSaved++;
+                    Log::info('Overall rating saved: ', $created->toArray());
                 }
+            }
+            Log::info("Total overall ratings saved: {$overallRatingSaved}");
+
+            // Check if we actually saved some ratings
+            if ($riskRatingSaved === 0 || $overallRatingSaved === 0) {
+                throw new \Exception("Failed to save rating data. Risk ratings saved: {$riskRatingSaved}, Overall ratings saved: {$overallRatingSaved}");
             }
 
             DB::commit();
             
-            return redirect()->route('upload-models.list')->with('success', "Assessment tool '{$assessmentType}' uploaded successfully!");
+            return redirect()->route('upload-models.list')->with('success', "Assessment tool '{$assessmentType}' uploaded successfully! Saved {$riskRatingSaved} risk ratings and {$overallRatingSaved} overall ratings.");
 
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('Error uploading file: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return back()->with('error', 'Error uploading file: ' . $e->getMessage());
         }
     }

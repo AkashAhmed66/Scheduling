@@ -25,6 +25,9 @@ export default function Navbar() {
       }
       const result = await response.json();
       setUser(result);
+
+
+      console.log('User data fetched:', result);
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -67,12 +70,6 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/home" className="flex items-center group">
-              {/* <img
-                src="/images/logo.png"
-                alt="logo"
-                className="w-8 h-8 transition-transform duration-300 hover:scale-110"
-                onError={(e) => {e.target.style.display = 'none'}}
-              /> */}
               <div className="ml-3 hidden sm:block">
                 <span className="text-2xl font-bold text-white tracking-wide transition-all duration-300 group-hover:text-indigo-100">
                   <span className="bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent font-serif">
@@ -158,6 +155,7 @@ export default function Navbar() {
               >
                 <img
                   alt="Profile"
+                  src={user && user.image_url}
                   className="h-8 w-8 rounded-full object-cover"
                   onError={(e) => {e.target.src = '/images/default-avatar.png'}}
                 />
@@ -176,6 +174,7 @@ export default function Navbar() {
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
                     >
                       Your Profile
+                      {/* {user.image_url} */}
                     </Link>
                     <Link
                       href="/logout"
@@ -265,7 +264,7 @@ export default function Navbar() {
                 <div className="flex-shrink-0">
                   <img
                     className="h-10 w-10 rounded-full"
-                    src={user && user.image_url ? user.image_url : '/images/default-avatar.png'}
+                    src={user && user.image_url}
                     alt="Profile"
                     onError={(e) => {e.target.src = '/images/default-avatar.png'}}
                   />

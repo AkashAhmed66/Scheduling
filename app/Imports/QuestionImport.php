@@ -26,7 +26,7 @@ class QuestionImport implements ToModel, WithHeadingRow
             'color'         => $row['color'],
             'answer'        => $row['answer'],
             'findings'      => $row['findings'],
-            'risk_rating'        => $row['risk_rating'],
+            'risk_rating'   => $row['risk_rating'],
             'legal_ref'     => $row['legal_ref'],
             'recommendation'=> $row['recommendation'],
             'type'          => $row['type'],

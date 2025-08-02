@@ -35,10 +35,33 @@ export default function UploadModelCreate() {
             return;
         }
 
+        // Validate that each risk rating has at least one field filled
+        const validRiskRatings = riskRatingData.filter(item => 
+            item.label.trim() || item.mark.trim() || item.color.trim()
+        );
+
+        // Validate that each overall rating has at least one field filled
+        const validOverallRatings = overallRatingData.filter(item => 
+            item.percentage.trim() || item.label.trim() || item.color.trim()
+        );
+
+        if (validRiskRatings.length === 0) {
+            alert('Please fill at least one field in each risk rating entry.');
+            return;
+        }
+
+        if (validOverallRatings.length === 0) {
+            alert('Please fill at least one field in each overall rating entry.');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('file', uploadedFile);
-        formData.append('riskRatingData', JSON.stringify(riskRatingData));
-        formData.append('overallRatingData', JSON.stringify(overallRatingData));
+        formData.append('riskRatingData', JSON.stringify(validRiskRatings));
+        formData.append('overallRatingData', JSON.stringify(validOverallRatings));
+
+        console.log('Sending risk rating data:', validRiskRatings);
+        console.log('Sending overall rating data:', validOverallRatings);
 
         setIsUploading(true);
         setErrorMessage(''); // Clear any previous errors
@@ -244,7 +267,7 @@ export default function UploadModelCreate() {
                                         value={item.label}
                                         onChange={(e) => updateRiskRating(index, 'label', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter label"
+                                        placeholder="e.g., High Risk"
                                     />
                                 </div>
                                 <div>
@@ -254,7 +277,7 @@ export default function UploadModelCreate() {
                                         value={item.mark}
                                         onChange={(e) => updateRiskRating(index, 'mark', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter mark"
+                                        placeholder="e.g., 3"
                                     />
                                 </div>
                                 <div>
@@ -264,7 +287,7 @@ export default function UploadModelCreate() {
                                         value={item.color}
                                         onChange={(e) => updateRiskRating(index, 'color', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter color"
+                                        placeholder="e.g., red or #ff0000"
                                     />
                                 </div>
                                 <div className="flex items-end">
@@ -304,7 +327,7 @@ export default function UploadModelCreate() {
                                         value={item.percentage}
                                         onChange={(e) => updateOverallRating(index, 'percentage', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter percentage"
+                                        placeholder="e.g., 75-100"
                                     />
                                 </div>
                                 <div>
@@ -314,7 +337,7 @@ export default function UploadModelCreate() {
                                         value={item.label}
                                         onChange={(e) => updateOverallRating(index, 'label', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter label"
+                                        placeholder="e.g., Excellent"
                                     />
                                 </div>
                                 <div>
@@ -324,7 +347,7 @@ export default function UploadModelCreate() {
                                         value={item.color}
                                         onChange={(e) => updateOverallRating(index, 'color', e.target.value)}
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Enter color"
+                                        placeholder="e.g., green or #00ff00"
                                     />
                                 </div>
                                 <div className="flex items-end">

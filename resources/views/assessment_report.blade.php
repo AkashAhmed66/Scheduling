@@ -213,11 +213,30 @@
         }
         .footer {
             position: fixed;
-            bottom: 20px;
+            bottom: 0px;
+            left: 0px;
             right: 0px;
-            width: auto;
-            text-align: right;
+            width: 100%;
             font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+        .footer .left-content {
+            text-align: left;
+            flex: 1;
+            padding: 0;
+            margin: 0;
+            position: fixed;
+            top: 0px;
+        }
+        .footer .right-content {
+            text-align: right;
+            flex: 1;
+            padding: 0;
+            margin: 0;
         }
         .pagenum:before {
             content: counter(page);
@@ -234,6 +253,34 @@
             left: 90px;
             top: 40px;
             border: 1px solid black;
+        }
+
+        /* Remove internal borders for content tables */
+        .assessment-overview table td,
+        .good-practices table td,
+        .worker-interview table td,
+        .additional-info table td {
+            border: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            border-right: none !important;
+        }
+
+        .assessment-overview table,
+        .good-practices table,
+        .worker-interview table,
+        .additional-info table {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+
+        /* Keep only the outer border and header styling */
+        .assessment-overview table th,
+        .good-practices table th,
+        .worker-interview table th,
+        .additional-info table th {
+            border: 1px solid black !important;
         }
     </style>
 </head>
@@ -304,9 +351,14 @@
 
             </div>
         </div>
+        <br>
         <div class="summary">
+            
             <h2 style="color: #0070C0">Report Summary of</h2>
-            <h2 style="color: #000000; margin-top: 5px; margin-bottom: 20px; font-weight: bold;">{{ $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Facility Name Not Provided' }}</h2>
+            <h2 style="color: black; font-weight: bold;">
+                {{ $assessmentInfo && $assessmentInfo->report_heading ? $assessmentInfo->report_heading : 'Assessment Report' }}
+            </h2>
+            <h2 style="color: #000000; margin-top: 5px; margin-bottom: 20px; font-weight: bold;">For {{ $assessmentInfo && $assessmentInfo->facility_name ? $assessmentInfo->facility_name : 'Facility Name Not Provided' }}</h2>
             <div class="ratingTableDiv">
                 <div class="ratingTable">
                     <table >
@@ -319,7 +371,7 @@
                     </table>
                 </div>
             </div>
-            <p style="font-weight: bold">Overall rating (Weighted Average):</p>
+            <p style="font-weight: bold">Overall Rating:</p>
             <div>
                 <table>
                     <tr>
@@ -423,6 +475,7 @@
                 @endif
             </div>
             <br>
+            <div style="page-break-after: always;"></div>
             <div class="facility">
                 <table>
                     <tr style="background-color: red;">
@@ -536,9 +589,9 @@
             </div>
             <br>
             <div class="assessment-overview">
-                <table>
+                <table style="border: 1px solid black; border-collapse: separate; border-spacing: 0;">
                     <tr style="background-color: #FFD966">
-                        <th>
+                        <th style="border: 1px solid black;">
                             General Assessment Overview
                         </th>
                     </tr>
@@ -582,16 +635,16 @@
                     
                     @foreach($items as $item)
                         <tr>
-                            <td>{{ $item }}</td>
+                            <td style="border: none; padding: 8px;">{{ $item }}</td>
                         </tr>
                     @endforeach
                 </table>
             </div>
             <br>
             <div class="good-practices">
-                <table>
+                <table style="border: 1px solid black; border-collapse: separate; border-spacing: 0;">
                     <tr style="background-color: #FFD966">
-                        <th>
+                        <th style="border: 1px solid black;">
                             Facility Good Practices
                         </th>
                     </tr>
@@ -635,16 +688,16 @@
                     
                     @foreach($items as $item)
                         <tr>
-                            <td>{{ $item }}</td>
+                            <td style="border: none; padding: 8px;">{{ $item }}</td>
                         </tr>
                     @endforeach
                 </table>
             </div>
             <br>
             <div class="worker-interview">
-                <table>
+                <table style="border: 1px solid black; border-collapse: separate; border-spacing: 0;">
                     <tr style="background-color: #FFD966">
-                        <th>
+                        <th style="border: 1px solid black;">
                             Details of Workers Interview
                         </th>
                     </tr>
@@ -688,15 +741,16 @@
                     
                     @foreach($items as $item)
                         <tr>
-                            <td>{{ $item }}</td>
+                            <td style="border: none; padding: 8px;">{{ $item }}</td>
                         </tr>
                     @endforeach
                 </table>
             </div>
+            <div style="page-break-after: always;"></div>
 
             <div class="findings">
-                <h2 style="color: #0070C0">Audit Findings</h2>
-                
+                <h2 style="color: #0070C0; font-size: 18px;">Audit Findings</h2>
+
                 @if(isset($audit_findings) && count($audit_findings) > 0)
                     @foreach($audit_findings as $category => $categoryData)
                         <table>
@@ -803,12 +857,12 @@
 
             </div>
         </div>
-        
+        <div style="page-break-after: always;"></div>
         <div class="additional-info">
             <br>
-            <table>
+            <table style="border: 1px solid black; border-collapse: separate; border-spacing: 0;">
                 <tr>
-                    <th style="text-align: center; background-color: #F44336; color: white;">Additional Information</th>
+                    <th style="text-align: center; background-color: #F44336; color: white; border: 1px solid black;">Additional Information</th>
                 </tr>
                 @php
                     $content = $assessmentInfo && $assessmentInfo->additional_info ? $assessmentInfo->additional_info : 'No additional information provided.';
@@ -850,23 +904,30 @@
                 
                 @foreach($items as $item)
                     <tr>
-                        <td style="text-align: justify; padding: 10px;">{{ $item }}</td>
+                        <td style="text-align: justify; padding: 10px; border: none;">{{ $item }}</td>
                     </tr>
                 @endforeach
             </table>
         </div>
+
+        <div style="page-break-after: always;"></div>
         
         <div class="disclaimer">
             <br>
             {{-- <h3 style="color: #000; margin-bottom: 10px;">Disclaimer:</h3> --}}
-            <div style="text-align: justify;">
+            <div style="text-align: justify; font-size: 10px; line-height: 1.5; color: #333">
                 {!! $assessmentInfo && $assessmentInfo->disclaimer ? $assessmentInfo->disclaimer : 'This Assessment Report has been prepared by ECOTEC Global Limited for the sole purpose of providing an overview of the current social compliance status at the facility. The audit was conducted in accordance with local law and different international standards and guidelines along with specific COC. However, it is important to note that the findings and recommendations presented in this report are subject to the following disclaimers and limitations that the intended user is the ultimate owner of the report. ECOTEC is not representing any buyers by this assessment. It is intended to assist the facility to comply the requirement of law and buyers COC and enhance the understanding the standards and requirements. The report shall be read as a whole, and sections should not be read or relied upon out of context. All recommendations, where given, are for the purpose of providing directional advice only. Recommendations are not exhaustive and relate solely to identifying key and obvious improvements related to findings in this report, and do not represent a comprehensive solution to any issue. This report is based only on the date herein and ECOTEC has no responsibility to update this report. ECOTEC takes no responsibility for any loss that any party may suffer in connection with any actions, or lack of action, taken to address the findings in the report.' !!}
             </div>
         </div>
     </div>
 
     <div class="footer">
-        Page <span class="pagenum"></span>
+        <div class="left-content">
+            {{ $assessmentInfo && $assessmentInfo->report_heading ? $assessmentInfo->report_heading : 'Assessment Report' }}
+        </div>
+        <div class="right-content">
+            Page <span class="pagenum"></span>
+        </div>
     </div>
 </body>
 </html>

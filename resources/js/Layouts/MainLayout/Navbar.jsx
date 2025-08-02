@@ -15,7 +15,7 @@ export default function Navbar() {
   useEffect(() => {
     // Fetch data on component mount
     fetchData();
-  }, [user]);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -25,6 +25,7 @@ export default function Navbar() {
       }
       const result = await response.json();
       setUser(result);
+      
     } catch (error) {
       console.error('Error fetching data:', error);
     }

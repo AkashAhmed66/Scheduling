@@ -42,6 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/download-assessment-doc/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generateDocx'])->name('download-assessment-doc');
     
     Route::post('/download-capa-pdf/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generateCapaPdf'])->name('download-capa-pdf');
+    
+    Route::post('/download-certificate-pdf/{assessmentId?}', [App\Http\Controllers\AssessmentController::class, 'generateCertificatePdf'])->name('download-certificate-pdf');
     Route::get('/upload', [UploadModelController::class, 'index']);
     Route::get('/perform-audit/{id}', [UploadModelController::class, 'PerformAudit'])->name('perform-audit');
 

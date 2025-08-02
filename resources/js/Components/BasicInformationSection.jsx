@@ -447,19 +447,14 @@ export default function BasicInformationSection({ formData, handleChange }) {
                             Office Country
                         </label>
                         <div className="relative">
-                            <select
+                            <input
+                                type="text"
                                 name="officeCountry"
                                 value={formData.officeCountry}
                                 onChange={handleChange}
-                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
-                            >
-                                <option value="">Select Country</option>
-                                <option value="USA">United States</option>
-                                <option value="Canada">Canada</option>
-                                <option value="UK">United Kingdom</option>
-                                <option value="India">India</option>
-                                <option value="Australia">Australia</option>
-                            </select>
+                                className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                placeholder="Enter office country"
+                            />
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg
                                     className="h-5 w-5 text-gray-400"
@@ -472,21 +467,6 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         strokeLinejoin="round"
                                         strokeWidth="2"
                                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <svg
-                                    className="h-5 w-5 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M19 9l-7 7-7-7"
                                     ></path>
                                 </svg>
                             </div>
@@ -546,28 +526,17 @@ export default function BasicInformationSection({ formData, handleChange }) {
 
                 {/* Remarks */}
                 <div className="mt-6 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
+                    <label className="block text-sm font-medium text-gray-700">
                         <span>Remarks</span>
-                        <span className="ml-1 text-red-500">*</span>
                     </label>
                     <textarea
                         name="remarks"
                         value={formData.remarks}
                         onChange={handleChange}
                         rows="3"
-                        className={`w-full p-3 border ${
-                            formData.remarksError
-                                ? "border-red-500 ring-1 ring-red-500"
-                                : "border-gray-300"
-                        } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                        className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                         placeholder="Add any relevant notes here..."
-                        required
                     ></textarea>
-                    {formData.remarksError && (
-                        <div className="text-red-500 text-xs mt-1">
-                            Remarks is required
-                        </div>
-                    )}
                 </div>
 
                 {/* Review Section */}
@@ -596,7 +565,6 @@ export default function BasicInformationSection({ formData, handleChange }) {
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700 flex items-center">
                                 <span>Date Report Sent to QA</span>
-                                <span className="ml-1 text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -609,7 +577,6 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                             ? "border-red-500 ring-1 ring-red-500"
                                             : "border-gray-300"
                                     } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
-                                    required
                                 />
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg
@@ -628,18 +595,12 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         />
                                     </svg>
                                 </div>
-                                {formData.dateReportSentToQAError && (
-                                    <div className="text-red-500 text-xs mt-1">
-                                        Date Report Sent to QA is required
-                                    </div>
-                                )}
                             </div>
                         </div>
 
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700 flex items-center">
                                 <span>Date Report Sent to Client</span>
-                                <span className="ml-1 text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -652,7 +613,6 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                             ? "border-red-500 ring-1 ring-red-500"
                                             : "border-gray-300"
                                     } rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
-                                    required
                                 />
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg
@@ -671,11 +631,6 @@ export default function BasicInformationSection({ formData, handleChange }) {
                                         />
                                     </svg>
                                 </div>
-                                {formData.finalReportSentToClientError && (
-                                    <div className="text-red-500 text-xs mt-1">
-                                        Date Report Sent to Client is required
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>

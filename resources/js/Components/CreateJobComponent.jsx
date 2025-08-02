@@ -75,6 +75,11 @@ export default function CreateJobComponent() {
     coordination: '',
     auditors: '',
     reportReview: '',
+    
+    // Additional Info fields (database columns)
+    add_info_coordination: '',
+    add_info_auditors: '',
+    add_info_report_review: '',
 
     // Auditor and Reviewer selections
     reviewer: '',
@@ -88,9 +93,6 @@ export default function CreateJobComponent() {
     auditEndDateError: false,
     jobTypeError: false,
     clientShadowingError: false,
-    remarksError: false,
-    dateReportSentToQAError: false,
-    finalReportSentToClientError: false,
     
     // Legacy error states (kept for compatibility)
     requestTypeError: false,
@@ -153,15 +155,6 @@ export default function CreateJobComponent() {
       }
       if (name === 'clientShadowing' && value) {
         updatedData.clientShadowingError = false;
-      }
-      if (name === 'remarks' && value) {
-        updatedData.remarksError = false;
-      }
-      if (name === 'dateReportSentToQA' && value) {
-        updatedData.dateReportSentToQAError = false;
-      }
-      if (name === 'finalReportSentToClient' && value) {
-        updatedData.finalReportSentToClientError = false;
       }
       
       // Legacy field validations (kept for compatibility)
@@ -241,10 +234,7 @@ export default function CreateJobComponent() {
       { field: 'auditStartDate', error: 'auditStartDateError' },
       { field: 'auditEndDate', error: 'auditEndDateError' },
       { field: 'jobType', error: 'jobTypeError' },
-      { field: 'clientShadowing', error: 'clientShadowingError' },
-      { field: 'remarks', error: 'remarksError' },
-      { field: 'dateReportSentToQA', error: 'dateReportSentToQAError' },
-      { field: 'finalReportSentToClient', error: 'finalReportSentToClientError' }
+      { field: 'clientShadowing', error: 'clientShadowingError' }
     ];
     
     let basicFieldErrors = false;

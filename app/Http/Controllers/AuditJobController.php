@@ -153,7 +153,10 @@ class AuditJobController extends Controller
         $reviewers = User::where('role', '3')->get();
         $job = AuditJob::where('id', $id)->first();
         $staffInformation = StaffInformation::where('job_id', $id)->get();
-        $assessmentTypes = UploadModel::distinct('type')->pluck('type');
+        $assessmentTypes = UploadModel::distinct('type')->pluck('type')->toArray();
+        
+        // Add "Others" option to assessment types
+        $assessmentTypes[] = 'Others';
         
         // Add staff information to job object for easy access in frontend
         $job->staffList = $staffInformation->map(function ($staff) use ($auditors) {
@@ -194,7 +197,11 @@ class AuditJobController extends Controller
     {
         $auditors = User::where('role', '2')->get();
         $reviewers = User::where('role', '3')->get();
-        $assessmentTypes = UploadModel::distinct('type')->pluck('type');
+        $assessmentTypes = UploadModel::distinct('type')->pluck('type')->toArray();
+        
+        // Add "Others" option to assessment types
+        $assessmentTypes[] = 'Others';
+        
         return Inertia::render('CreateJob', [
             'create' => 1,
             'auditors' => $auditors,
@@ -273,6 +280,44 @@ class AuditJobController extends Controller
         $assesmentDocuments = AssesmentDocuments::where('jobId', $id)->get();
         $supportingDocuments = SupportingDocuments::where('jobId', $id)->get();
         
+        // Get all auditors and reviewers for reference
+        $auditors = User::where('role', '2')->get();
+        $reviewers = User::where('role', '3')->get();
+        
+        // Get staff information with user details
+        $staffInformation = StaffInformation::where('job_id', $id)->get();
+        
+        // Add staff information to job object with user names
+        $job->staffList = $staffInformation->map(function ($staff) use ($auditors, $reviewers) {
+            // Try to find user in auditors first, then reviewers
+            $user = $auditors->firstWhere('id', $staff->user_id) ?? $reviewers->firstWhere('id', $staff->user_id);
+            
+            return [
+                'id' => $staff->id,
+                'user' => $staff->user_id,
+                'userName' => $user ? $user->name : 'Unknown User',
+                'userEmail' => $user ? $user->email : 'N/A',
+                'userRole' => $user ? ($user->role == 2 ? 'Auditor' : ($user->role == 3 ? 'Reviewer' : 'Other')) : 'Unknown',
+                'staffDay' => $staff->stuff_day,
+                'startDate' => $staff->start_date ? $staff->start_date->format('Y-m-d') : null,
+                'endDate' => $staff->end_date ? $staff->end_date->format('Y-m-d') : null,
+                'note' => $staff->note,
+                'assessment_id' => $staff->assessment_id,
+                'reportWriter' => $staff->report_write
+            ];
+        });
+        
+        // Get the reviewer information if set
+        if ($job->reviewers) {
+            $reviewer = $reviewers->firstWhere('id', $job->reviewers);
+            $job->reviewerInfo = $reviewer ? [
+                'id' => $reviewer->id,
+                'name' => $reviewer->name,
+                'email' => $reviewer->email,
+                'role' => 'Reviewer'
+            ] : null;
+        }
+        
         // Get factory history: similar factory jobs with completed status
         $factoryHistory = [];
         if ($job && $job->factoryName) {
@@ -286,6 +331,8 @@ class AuditJobController extends Controller
             'assesmentDocuments' => $assesmentDocuments,
             'factoryHistory' => $factoryHistory, // Renamed from 'history' to 'factoryHistory'
             'supportingDocuments' => $supportingDocuments,
+            'auditors' => $auditors,
+            'reviewers' => $reviewers,
             'dontDelete' => null
         ]);
     }
@@ -368,34 +415,42 @@ class AuditJobController extends Controller
 
         $reviewer = User::where('id', $formData['reviewer'])->first();
         
-        $assesment = new Assessment();
-        $assesment->type = $auditJob->assessmentType;
-        $assesment->searchId = 'NBM' . now()->format('YmdHis');
-        $assesment->save();
+        // Only create assessment if assessment type is not "Others"
+        $assesment = null;
+        if ($auditJob->assessmentType !== 'Others') {
+            $assesment = new Assessment();
+            $assesment->type = $auditJob->assessmentType;
+            $assesment->searchId = 'NBM' . now()->format('YmdHis');
+            $assesment->save();
 
-        $questions = UploadModel::where('type', $assesment->type)->get();
-        foreach ($questions as $question) {
-            $draft = new AssessmentDraft();
+            $questions = UploadModel::where('type', $assesment->type)->get();
+            foreach ($questions as $question) {
+                $draft = new AssessmentDraft();
 
-            $draft->ncref = $question->ncref;
-            $draft->category = $question->category;
-            $draft->subcategory = $question->subcategory;
-            $draft->mark = $question->mark;
-            $draft->color = $question->color;
-            $draft->question = $question->question;
-            $draft->answer = $question->answer;
-            $draft->findings = $question->findings;
-            $draft->risk_rating = $question->risk_rating;
-            $draft->legal_ref = $question->legal_ref;
-            $draft->recommendation = $question->recommendation;
-            $draft->created_at = $question->created_at;
-            $draft->updated_at = $question->updated_at;
-            $draft->assesment_id = $assesment->id;
+                $draft->ncref = $question->ncref;
+                $draft->category = $question->category;
+                $draft->subcategory = $question->subcategory;
+                $draft->mark = $question->mark;
+                $draft->color = $question->color;
+                $draft->question = $question->question;
+                $draft->answer = $question->answer;
+                $draft->findings = $question->findings;
+                $draft->risk_rating = $question->risk_rating;
+                $draft->legal_ref = $question->legal_ref;
+                $draft->instruction = $question->instruction;
+                $draft->recommendation = $question->recommendation;
+                $draft->created_at = $question->created_at;
+                $draft->updated_at = $question->updated_at;
+                $draft->assesment_id = $assesment->id;
 
-            $draft->save();
+                $draft->save();
+            }
         }
+        
         $auditJob->reviewer()->associate($reviewer);
-        $auditJob->assesmentts()->associate($assesment);
+        if ($assesment) {
+            $auditJob->assesmentts()->associate($assesment);
+        }
 
         $auditJob->save();
 
@@ -409,7 +464,7 @@ class AuditJobController extends Controller
                     'end_date' => $staff['endDate'],
                     'note' => $staff['note'] ?? null,
                     'job_id' => $auditJob->id,
-                    'assessment_id' => $staff['reportWriter'] ? $assesment->id : null,
+                    'assessment_id' => $staff['reportWriter'] && $assesment ? $assesment->id : null,
                     'report_write' => $staff['reportWriter'] ?? false
                 ]);
             }

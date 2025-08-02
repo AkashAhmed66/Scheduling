@@ -429,11 +429,12 @@ export default function AssesmentComponent() {
         responseType: 'blob',
         // Include updated questions data in the request body
         data: {
-          qestions: questions, // Send current state with all updates
+          questions: questions, // Send current state with all updates
         },
       });
 
       console.log("PDF generation successful", response);
+      console.log("Questions sent to backend:", questions.slice(0, 3)); // Log first 3 questions for debugging
 
       // Create a blob URL from the response data
       const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -473,7 +474,7 @@ export default function AssesmentComponent() {
         responseType: 'blob',
         // Include updated questions data in the request body
         data: {
-          qestions: questions, // Send current state with all updates
+          questions: questions, // Send current state with all updates
         },
       });
 
@@ -517,7 +518,7 @@ export default function AssesmentComponent() {
         responseType: 'blob',
         // Include updated questions data in the request body
         data: {
-          qestions: questions, // Send current state with all updates
+          questions: questions, // Send current state with all updates
         },
       });
 
@@ -544,6 +545,50 @@ export default function AssesmentComponent() {
       setLoading(false);
       // Handle error - perhaps show a notification to the user
       alert("Failed to generate Word document. Please try again.");
+    }
+  };
+
+  const generateCertificatePDF = async () => {
+    try {
+      setLoading(true);
+      
+      // Get assessment ID if available
+      const assessmentId = assessment?.id || '';
+      
+      // Send the current questions state (with updated answers) instead of the original question prop
+      const response = await axios({
+        url: `/download-certificate-pdf/${assessmentId}`, //  Endpoint for Certificate PDF
+        method: 'POST', // Change to POST
+        responseType: 'blob',
+        // Include updated questions data in the request body
+        data: {
+          questions: questions, // Send current state with all updates
+        },
+      });
+
+      console.log("Certificate PDF generation successful", response);
+
+      // Create a blob URL from the response data
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Certificate_${assessmentId}_${new Date().getTime()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setLoading(false);
+      
+    } catch (error) {
+      console.error("Failed to generate Certificate PDF", error);
+      setLoading(false);
+      // Handle error - perhaps show a notification to the user
+      alert("Failed to generate Certificate PDF. Please try again.");
     }
   };
 
@@ -697,6 +742,17 @@ export default function AssesmentComponent() {
               </button>
               
               <button
+                onClick={generateCertificatePDF}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-green-700 hover:to-emerald-700 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                </svg>
+                {loading ? 'Generating Certificate...' : 'Certificate'}
+              </button>
+              
+              <button
                 onClick={() => setShowModal(true)}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-lg transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
               >
@@ -723,14 +779,14 @@ export default function AssesmentComponent() {
               <table className="w-full bg-white rounded-lg overflow-hidden">
                 <thead className="sticky z-50" style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-24">Question Ref</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider">Question</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-48">Instruction</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-32">Answer</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-56">Findings</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-36">Risk Rating</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-52">Legal Ref</th>
-                    <th className="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider w-56">Recommendation</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Ques Ref</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-1/3">Question</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-16">Instruction</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Answer</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Findings</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Risk Rating</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-52">Legal Reference / Standard</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Recommendation</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -789,7 +845,7 @@ export default function AssesmentComponent() {
                             {/* All questions under this subcategory */}
                             {!collapsedSubcategories[subcategoryKey] && groupedQuestions[category][subcategory].map((questionItem) => (
                             <tr key={questionItem.ncref} className="hover:bg-gray-50 transition-colors duration-150">
-                              <td className="py-3 px-4 text-sm font-medium text-gray-900 w-24">{questionItem.id}</td>
+                              <td className="py-3 px-4 text-sm font-medium text-gray-900 w-32">{questionItem.ncref}</td>
                               <td className="py-3 px-4 text-sm text-gray-800">{questionItem.question}</td>
                               <td className="py-3 px-4 w-48">
                                 <div
@@ -805,7 +861,7 @@ export default function AssesmentComponent() {
                                       <div className="table-cell-content truncate">{questionItem.instruction}</div>
                                     )
                                   ) : (
-                                    <span className="text-gray-400 italic">Click to enter instruction...</span>
+                                    <span className="text-gray-400 italic">Instruction</span>
                                   )}
                                 </div>
                               </td>
@@ -851,7 +907,7 @@ export default function AssesmentComponent() {
                                   <span className="text-gray-400 italic">N/A</span>
                                 )}
                               </td>
-                              <td className="py-3 px-4 w-36">
+                              <td className="py-3 px-4 w-56">
                                 <select
                                   value={questionItem.risk_rating || questionItem.original_risk_rating || ''}
                                   onChange={(e) => handleChange(e, questionItem, 'risk_rating')}

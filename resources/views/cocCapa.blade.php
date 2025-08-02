@@ -8,17 +8,11 @@
             margin: 50px 50px 25px 25px;
         }
         body{
-            margin-bottom: 20px;
+            margin-bottom: 50px;
             margin-top: 70px;
+            font-family: Arial, sans-serif;
         }
-        footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            background-color: transparent;
-            height: 20px;
-        }
+
 
         p:last-child {
             page-break-after: never;
@@ -75,9 +69,50 @@
             height:10px !important
             border:1px solid red !important
         }
-        footer:after {
-            content: "Page " counter(page);
+        .logo{
+            height: 70px;
+            width: 100px;
+            position: relative;
+            bottom: 15px;
+            right: 7px;
+        }
+        .infoh{
             float: right;
+        }
+        .header {
+            width: 100%;
+            position: fixed;
+            top: 0px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            width: 100%;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+        .footer .left-content {
+            text-align: left;
+            flex: 1;
+            padding: 0;
+            margin: 0;
+            position: fixed;
+            top: 0px;
+        }
+        .footer .right-content {
+            text-align: right;
+            flex: 1;
+            padding: 0;
+            margin: 0;
+        }
+        .pagenum:before {
+            content: counter(page);
         }
         header {
             position: fixed;
@@ -92,10 +127,25 @@
 </head>
 
 <body>
-    <header>
-        <h2> {{ $info->capaTitile }}</h2>
-    </header>
-    <footer></footer>
+    <div class="header">
+        <div class="headcontainer">
+            <img class="logo" src="../public/images/logo.png" alt="logo">
+                <div class="infoh">
+                    <p>www.nbm-intl.com</p>
+                    <p>info@nbm-intl.com</p>
+                </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div class="left-content">
+            {{ $info->capaTitile }}
+        </div>
+        <div class="right-content">
+            Page <span class="pagenum"></span>
+        </div>
+    </div>
+    
     <main>
         <table class="table table-bordered;">
             <tr>
@@ -201,201 +251,5 @@
 </table>
     </main>
 </body>
-
-<!--CHART TEST-->
-<!-- <script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/highcharts-3d.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/export-data.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script> -->
-
-
-
-<script>
-    // Highcharts.chart('container', {
-
-    //     credits: {
-    //         enabled: false
-    //     },
-
-    //     chart: {
-    //         type: 'column',
-    //         options3d: {
-    //             enabled: true,
-    //             alpha: 15,
-    //             beta: 15,
-    //             viewDistance: 25,
-    //             depth: 40
-    //         }
-    //     },
-
-    //     title: {
-    //         text: 'Compliance scoring (Section wise)'
-    //     },
-
-    //     xAxis: {
-    //         categories: ['A', 'B', 'C', 'D', 'E'],
-    //         labels: {
-    //             skew3d: true,
-    //             style: {
-    //                 fontSize: '16px'
-    //             }
-    //         }
-    //     },
-
-    //     yAxis: {
-    //         allowDecimals: false,
-    //         min: 0,
-    //         title: {
-    //             text: 'Number of score',
-    //             skew3d: true
-    //         }
-    //     },
-
-    //     tooltip: {
-    //         headerFormat: '<b>{point.key}</b><br>',
-    //         pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: {point.y} / {point.stackTotal}'
-    //     },
-
-    //     plotOptions: {
-    //         column: {
-    //             stacking: 'normal',
-    //             depth: 40
-    //         }
-    //     },
-
-    //     series: [{
-    //         name: 'Achievable Score',
-    //         data: [7, 7, 7, 7, 7],
-    //         stack: 'male'
-    //     }, {
-    //         name: 'Achieved Score',
-    //         data: [2, 2, 2, 2, 2],
-    //         stack: 'female'
-    //     },]
-    // });
-
-
-    // var colors = ['#3B97B2', '#67BC42', '#FF56DE', '#E6D605', '#BC36FE', '#000'];
-
-    // Highcharts.chart('achievable_container', {
-    //     credits: {
-    //         enabled: false
-    //     },
-
-    //     colors: ['green', 'yellow', 'orange', 'red'],
-
-    //     chart: {
-    //         type: 'column',
-    //         options3d: {
-    //             enabled: true,
-    //             alpha: 15,
-    //             beta: 15,
-    //             viewDistance: 25,
-    //             depth: 40
-    //         }
-    //     },
-
-    //     title: {
-    //         text: 'SEVERTY LEVEL (Color Coded Rating)'
-    //     },
-
-    //     xAxis: {
-    //         categories: ['Green- Approaching Compliance', 'Yellow - Substantial Improvement Required', 'Orange - Immediate Remediation Required', 'Red - Zero Tolerance'],
-    //         labels: {
-    //             skew3d: true,
-    //             style: {
-    //                 fontSize: '16px'
-    //             }
-    //         }
-    //     },
-
-    //     yAxis: {
-    //         allowDecimals: false,
-    //         min: 0,
-    //         title: {
-    //             text: 'Number of score',
-    //             skew3d: true
-    //         }
-    //     },
-
-    //     tooltip: {
-    //         headerFormat: '<b>{point.key}</b><br>',
-    //         pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: {point.y} / {point.stackTotal}'
-    //     },
-
-    //     plotOptions: {
-    //         column: {
-    //             stacking: 'normal',
-    //             depth: 40
-    //         }
-    //     },
-
-    //     series: [{
-    //         name: 'Achievable Score',
-    //         data: [7, 7, 7, 7],
-    //         stack: 'male'
-    //     }, {
-    //         name: 'Achieved Score',
-    //         data: [2, 2, 2, 2],
-    //         stack: 'female'
-    //     },]
-    // });
-
-
-    // /*PI CHART*/
-    // Highcharts.chart('piechart_container', {
-    //     credits: {
-    //         enabled: false
-    //     },
-    //     chart: {
-    //         type: 'pie',
-    //         options3d: {
-    //             enabled: true,
-    //             alpha: 45,
-    //             beta: 0
-    //         }
-    //     },
-    //     title: {
-    //         text: 'SEVERTY LEVEL (Color Coded Rating)'
-    //     },
-    //     accessibility: {
-    //         point: {
-    //             valueSuffix: '%'
-    //         }
-    //     },
-    //     tooltip: {
-    //         pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-    //     },
-    //     plotOptions: {
-    //         pie: {
-    //             allowPointSelect: true,
-    //             cursor: 'pointer',
-    //             depth: 35,
-    //             dataLabels: {
-    //                 enabled: true,
-    //                 format: '{point.name}'
-    //             }
-    //         }
-    //     },
-    //     series: [{
-    //         type: 'pie',
-    //         name: 'Color Coded Rating',
-    //         data: [
-    //             ['Green- Approaching Compliance (Achievable: 25, Achieved: 20)', 45.0],
-    //             ['Yellow - Substantial Improvement Required  (Achievable: 25, Achieved: 20)', 5.0],
-    //             {
-    //                 name: 'Orange - Immediate Remediation Required  (Achievable: 25, Achieved: 20)',
-    //                 y: 25.0,
-    //                 sliced: true,
-    //                 selected: true
-    //             },
-    //             ['Red - Zero Tolerance  (Achievable: 25, Achieved: 20)', 25.0]
-    //         ]
-    //     }]
-    // });
-
-</script>
-
 
 </html>

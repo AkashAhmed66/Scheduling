@@ -45,7 +45,7 @@ export default function JobsComponent() {
         Header: "Report No.", 
         accessor: "reportNo",
         Cell: ({ value }) => (
-          <span className="font-medium text-gray-900">{value || 'N/A'}</span>
+          <span className="text-indigo-600 hover:text-indigo-800 cursor-pointer">{value || 'N/A'}</span>
         )
       },
       { 
@@ -59,7 +59,7 @@ export default function JobsComponent() {
         Header: "Factory Location", 
         accessor: (row) => `${row.factoryCity || ''}, ${row.factoryCountry || ''}`.replace(/^,\s*|,\s*$/g, '') || 'N/A',
         Cell: ({ value }) => (
-          <span className="text-gray-600 text-sm">{value}</span>
+          <span className="text-gray-700">{value}</span>
         )
       },
       { 
@@ -73,14 +73,14 @@ export default function JobsComponent() {
         Header: "Staff Day", 
         accessor: "totalStaffDays",
         Cell: ({ value }) => (
-          <span className="text-center text-gray-700 font-medium">{value || 0}</span>
+          <span className="text-gray-700">{value || 0}</span>
         )
       },
       { 
         Header: "Job Status", 
         accessor: "jobStatus", 
         Cell: ({ value }) => (
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+          <span className={`px-2 py-1 rounded-full ${
             value?.toLowerCase() === "completed" ? "bg-green-100 text-green-800" : 
             value?.toLowerCase() === "in progress" ? "bg-blue-100 text-blue-800" : 
             value?.toLowerCase() === "pending" ? "bg-yellow-100 text-yellow-800" : 
@@ -96,28 +96,28 @@ export default function JobsComponent() {
         Header: "Request Received Date", 
         accessor: "requestReceiveDate",
         Cell: ({ value }) => (
-          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+          <span className="text-gray-700">{value || 'N/A'}</span>
         )
       },
       { 
         Header: "Audit Start Date", 
         accessor: "auditStartDate",
         Cell: ({ value }) => (
-          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+          <span className="text-gray-700">{value || 'N/A'}</span>
         )
       },
       { 
         Header: "Audit End Date", 
         accessor: "auditEndDate",
         Cell: ({ value }) => (
-          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+          <span className="text-gray-700">{value || 'N/A'}</span>
         )
       },
       { 
         Header: "Audit Due Date", 
         accessor: "auditDueDate",
         Cell: ({ value }) => (
-          <span className="text-gray-600 text-sm">{value || 'N/A'}</span>
+          <span className="text-gray-700">{value || 'N/A'}</span>
         )
       },
       { 
@@ -131,15 +131,15 @@ export default function JobsComponent() {
         Header: "Field Staffs", 
         accessor: "fieldStaffNames",
         Cell: ({ value }) => (
-          <div className="text-sm">
+          <div className="text-gray-700">
             {value && value.length > 0 ? (
               <ul className="space-y-1">
                 {value.map((name, index) => (
-                  <li key={index} className="text-gray-600">• {name}</li>
+                  <li key={index} className="text-gray-700">• {name}</li>
                 ))}
               </ul>
             ) : (
-              <span className="text-gray-400">No staff assigned</span>
+              <span className="text-gray-700">No staff assigned</span>
             )}
           </div>
         )
@@ -290,7 +290,7 @@ export default function JobsComponent() {
                           {...cell.getCellProps()}
                           className={`px-4 py-3 whitespace-nowrap ${
                             cell.column.id === "reportNo"
-                              ? "cursor-pointer text-indigo-600 font-medium hover:text-indigo-800 hover:underline"
+                              ? "cursor-pointer hover:underline"
                               : ""
                           }`}
                           onClick={

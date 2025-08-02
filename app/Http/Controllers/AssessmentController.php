@@ -107,7 +107,13 @@ class AssessmentController extends Controller
 
         // return $request->toArray();
 
-        $questions = $request->input('qestions', []);
+        $questions = $request->input('questions', []);
+        
+        // Debug logging
+        Log::info('PDF Generation - Questions received: ' . count($questions));
+        if (count($questions) > 0) {
+            Log::info('First question sample: ' . json_encode($questions[0]));
+        }
 
         // Fetch the assessment to get its type
         $assessment = \App\Models\Assessment::findOrFail($id);
@@ -269,7 +275,7 @@ class AssessmentController extends Controller
     public function generateCapaPdf($id, Request $request)
     {
         try {
-            $questions = $request->input('qestions', []);
+            $questions = $request->input('questions', []);
 
             // Get assessment info
             $assessment = \App\Models\Assessment::findOrFail($id);
@@ -355,7 +361,7 @@ class AssessmentController extends Controller
             Log::error('Error file: ' . $e->getFile() . ' on line ' . $e->getLine());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             Log::error('Assessment ID: ' . $id);
-            Log::error('Questions count: ' . count($request->input('qestions', [])));
+            Log::error('Questions count: ' . count($request->input('questions', [])));
             Log::error('AssessmentInfo exists: ' . ($assessmentInfo ? 'Yes' : 'No'));
             
             return response()->json([
@@ -365,7 +371,48 @@ class AssessmentController extends Controller
                 'file' => basename($e->getFile()),
                 'debug' => [
                     'assessment_id' => $id,
-                    'questions_count' => count($request->input('qestions', [])),
+                    'questions_count' => count($request->input('questions', [])),
+                    'assessment_info_exists' => $assessmentInfo ? true : false
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate and download Certificate PDF.
+     */
+    public function generateCertificatePdf($id, Request $request)
+    {
+        try {
+            // Get assessment info
+            $assessment = \App\Models\Assessment::findOrFail($id);
+            $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
+
+            // Create data array for certificate template
+            $data = [
+                'assessmentInfo' => $assessmentInfo,
+                'assessment' => $assessment,
+            ];
+
+            // Generate and download the Certificate PDF
+            $pdf = PDF::loadView('certificate', $data);
+            $pdf->setPaper('a4', 'portrait');
+
+            return $pdf->download('certificate_' . $id . '.pdf');
+
+        } catch (\Exception $e) {
+            Log::error('Certificate PDF generation error: ' . $e->getMessage());
+            Log::error('Error file: ' . $e->getFile() . ' on line ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Assessment ID: ' . $id);
+            
+            return response()->json([
+                'error' => 'Failed to generate Certificate PDF',
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile()),
+                'debug' => [
+                    'assessment_id' => $id,
                     'assessment_info_exists' => $assessmentInfo ? true : false
                 ]
             ], 500);
@@ -379,7 +426,7 @@ class AssessmentController extends Controller
     {
         try {
             // Get the same data as PDF generation
-            $questions = $request->input('qestions', []);
+            $questions = $request->input('questions', []);
             $assessment = Assessment::findOrFail($id);
             $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
 
@@ -949,7 +996,7 @@ class AssessmentController extends Controller
             Log::error('Error file: ' . $e->getFile() . ' on line ' . $e->getLine());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             Log::error('Assessment ID: ' . $id);
-            Log::error('Questions count: ' . count($request->input('qestions', [])));
+            Log::error('Questions count: ' . count($request->input('questions', [])));
             Log::error('AssessmentInfo exists: ' . ($assessmentInfo ? 'Yes' : 'No'));
             
             return response()->json([
@@ -959,7 +1006,7 @@ class AssessmentController extends Controller
                 'file' => basename($e->getFile()),
                 'debug' => [
                     'assessment_id' => $id,
-                    'questions_count' => count($request->input('qestions', [])),
+                    'questions_count' => count($request->input('questions', [])),
                     'assessment_info_exists' => isset($assessmentInfo) ? true : false
                 ]
             ], 500);

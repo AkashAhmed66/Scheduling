@@ -18,7 +18,8 @@ class AuditJob extends Model
         'vendorProvince', 'vendorCountry', 'vendorPostalCode', 'vendorAddress', 'vendorTel', 'factoryName', 
         'factoryCity', 'factoryProvince', 'factoryCountry', 'factoryPostalCode', 'factoryAddress', 'factoryTel', 
         'coordination', 'auditors', 'reportReview', 'team', 'reviewers', 'assesment', 'requestReceiveDate', 'fieldStaff',
-        'serviceName', 'assessmentType', 'serviceType', 'serviceScope', 'scheduleType', 'clientShadowing'
+        'serviceName', 'assessmentType', 'serviceType', 'serviceScope', 'scheduleType', 'clientShadowing',
+        'add_info_coordination', 'add_info_auditors', 'add_info_report_review'
     ];
     public function reviewer()
     {

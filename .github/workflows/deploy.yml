@@ -24,6 +24,7 @@ jobs:
             cd ${{ secrets.VPS_PATH }}
             git pull origin main
             composer install --no-interaction --prefer-dist --optimize-autoloader
+            ls
             /root/.nvm/versions/node/v22.17.1/bin/pnpm install
             /root/.nvm/versions/node/v22.17.1/bin/pnpm build
             php artisan migrate --force

@@ -125,7 +125,7 @@ export default function Navbar() {
                         href="/activate-user"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
                       >
-                        Add User
+                        Add User Akash
                       </Link>
                       <Link
                         href="/activate-user-list"

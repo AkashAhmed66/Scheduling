@@ -13,7 +13,8 @@ export default function AssessmentsList() {
     const filteredAssessments = assesments.filter(assessment =>
         assessment.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
         assessment.searchId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (assessment.assessment_info?.report_no && assessment.assessment_info.report_no.toLowerCase().includes(searchTerm.toLowerCase()))
+        (assessment.assessment_info?.report_no && assessment.assessment_info.report_no.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (assessment.job?.factoryName && assessment.job.factoryName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     // Calculate pagination range
@@ -69,7 +70,7 @@ export default function AssessmentsList() {
                             </div>
                             <input
                                 type="text"
-                                placeholder="Search by type, search ID, or report number..."
+                                placeholder="Search by type, search ID, report number, or factory name..."
                                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -83,7 +84,8 @@ export default function AssessmentsList() {
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Report No</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Search ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Factory</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ref ID</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Created At</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Updated At</th>
                                     </tr>
@@ -100,6 +102,7 @@ export default function AssessmentsList() {
                                                     {assessment.assessment_info?.report_no || 'Not Set'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{assessment.type}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{assessment.job?.factoryName || 'Not Set'}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{assessment.searchId}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(assessment.created_at).toLocaleString()}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(assessment.updated_at).toLocaleString()}</td>
@@ -107,7 +110,7 @@ export default function AssessmentsList() {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                                            <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                                                 <div className="py-8">
                                                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>

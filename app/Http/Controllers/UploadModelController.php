@@ -278,7 +278,7 @@ class UploadModelController extends Controller
         // Filter assessments based on user role and staff assignments
         if(Auth::user()->role == 0) {
             // Admin sees all assessments
-            $assessments = Assessment::get();
+            $assessments = Assessment::with('assessmentInfo')->get();
         } else {
             // Regular users see only assessments they are assigned to via staff_information table
             $assessmentIds = StaffInformation::where('user_id', $user->id)
@@ -286,7 +286,7 @@ class UploadModelController extends Controller
                                            ->pluck('assessment_id')
                                            ->unique();
             
-            $assessments = Assessment::whereIn('id', $assessmentIds)->get();
+            $assessments = Assessment::with('assessmentInfo')->whereIn('id', $assessmentIds)->get();
         }
         
         // Get all risk ratings and overall ratings

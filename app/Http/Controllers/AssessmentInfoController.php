@@ -33,6 +33,18 @@ class AssessmentInfoController extends Controller
                 $data
             );
             
+            // If report_no was updated, sync it with the associated job
+            if (isset($data['report_no']) && $assessmentInfo->report_no) {
+                $assessment = \App\Models\Assessment::find($data['assessment_id']);
+                if ($assessment) {
+                    $job = $assessment->job;
+                    if ($job && $job->reportNo !== $assessmentInfo->report_no) {
+                        $job->reportNo = $assessmentInfo->report_no;
+                        $job->save();
+                    }
+                }
+            }
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Assessment information saved successfully.',

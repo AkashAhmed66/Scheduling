@@ -423,6 +423,12 @@ class AuditJobController extends Controller
             $assesment->searchId = 'NBM' . now()->format('YmdHis');
             $assesment->save();
 
+            // Create AssessmentInfo with the job's report number
+            $assessmentInfo = new \App\Models\AssessmentInfo();
+            $assessmentInfo->assessment_id = $assesment->id;
+            $assessmentInfo->report_no = $auditJob->reportNo;
+            $assessmentInfo->save();
+
             $questions = UploadModel::where('type', $assesment->type)->get();
             foreach ($questions as $question) {
                 $draft = new AssessmentDraft();
@@ -485,6 +491,10 @@ class AuditJobController extends Controller
         }
         
         $auditJob = AuditJob::findOrFail($formData['id']);
+        
+        // Check if reportNo is being updated
+        $reportNoChanged = isset($formData['reportNo']) && $auditJob->reportNo !== $formData['reportNo'];
+        
         $auditJob->update($formData);
         
         // Update the additional fields
@@ -499,6 +509,15 @@ class AuditJobController extends Controller
         
         // Get the existing assessment for this job
         $assessment = $auditJob->assesmentts;
+        
+        // If reportNo changed and assessment exists, update the assessment's report_no
+        if ($reportNoChanged && $assessment) {
+            $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $assessment->id)->first();
+            if ($assessmentInfo) {
+                $assessmentInfo->report_no = $auditJob->reportNo;
+                $assessmentInfo->save();
+            }
+        }
         
         // Handle staff information for edit
         if ($request->has('staffList') && is_array($request->staffList)) {

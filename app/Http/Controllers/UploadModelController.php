@@ -518,16 +518,8 @@ class UploadModelController extends Controller
             
             Log::info('Unique risk ratings found: ', $uniqueRiskRatings);
             
-            // Create default overall ratings if none exist (common rating scale)
-            if (empty($uniqueOverallRatings)) {
-                $uniqueOverallRatings = [
-                    ['percentage' => '90-100', 'label' => 'Excellent', 'color' => 'green'],
-                    ['percentage' => '80-89', 'label' => 'Very Good', 'color' => 'lightgreen'],
-                    ['percentage' => '70-79', 'label' => 'Good', 'color' => 'yellow'],
-                    ['percentage' => '60-69', 'label' => 'Satisfactory', 'color' => 'orange'],
-                    ['percentage' => '0-59', 'label' => 'Needs Improvement', 'color' => 'red']
-                ];
-            }
+            // Overall ratings should be added manually by the user
+            $uniqueOverallRatings = [];
             
             return response()->json([
                 'success' => true,
@@ -567,9 +559,11 @@ class UploadModelController extends Controller
             Log::info('Overall rating data received: ', $overallRatingData);
 
             // Validate rating data
-            if (empty($riskRatingData) || empty($overallRatingData)) {
-                throw new \Exception('Risk rating and overall rating data are required.');
+            if (empty($riskRatingData)) {
+                throw new \Exception('Risk rating data is required.');
             }
+            
+            // Overall rating data is optional
 
             // Get assessment type from Excel file
             $firstRow = Excel::toArray(function ($reader) {
@@ -633,14 +627,20 @@ class UploadModelController extends Controller
             }
             Log::info("Total overall ratings saved: {$overallRatingSaved}");
 
-            // Check if we actually saved some ratings
-            if ($riskRatingSaved === 0 || $overallRatingSaved === 0) {
-                throw new \Exception("Failed to save rating data. Risk ratings saved: {$riskRatingSaved}, Overall ratings saved: {$overallRatingSaved}");
+            // Check if we actually saved some risk ratings (overall ratings are optional)
+            if ($riskRatingSaved === 0) {
+                throw new \Exception("Failed to save risk rating data. Risk ratings saved: {$riskRatingSaved}");
             }
 
             DB::commit();
             
-            return redirect()->route('upload-models.list')->with('success', "Assessment tool '{$assessmentType}' uploaded successfully! Saved {$riskRatingSaved} risk ratings and {$overallRatingSaved} overall ratings.");
+            $successMessage = "Assessment tool '{$assessmentType}' uploaded successfully! Saved {$riskRatingSaved} risk ratings";
+            if ($overallRatingSaved > 0) {
+                $successMessage .= " and {$overallRatingSaved} overall ratings";
+            }
+            $successMessage .= ".";
+            
+            return redirect()->route('upload-models.list')->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollback();

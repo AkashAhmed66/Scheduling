@@ -83,18 +83,9 @@ export default function UploadModelCreate() {
             return;
         }
 
-        if (overallRatingData.length === 0) {
-            alert('No overall ratings found. Using default ratings.');
-        }
-
         // Validate that each risk rating has all required fields filled
         const validRiskRatings = riskRatingData.filter(item => 
             item.label.trim() && item.mark.trim() && item.color.trim()
-        );
-
-        // Validate that each overall rating has all required fields filled
-        const validOverallRatings = overallRatingData.filter(item => 
-            item.percentage.trim() && item.label.trim() && item.color.trim()
         );
 
         if (validRiskRatings.length === 0) {
@@ -102,18 +93,25 @@ export default function UploadModelCreate() {
             return;
         }
 
-        if (validOverallRatings.length === 0) {
-            alert('All overall rating entries must have percentage, label, and color filled.');
+        // Overall ratings are optional - user can choose to add them or not
+        // But if they are added, validate them
+        const validOverallRatings = overallRatingData.filter(item => 
+            item.percentage.trim() && item.label.trim() && item.color.trim()
+        );
+
+        // If user added overall ratings but some are incomplete, show error
+        if (overallRatingData.length > 0 && validOverallRatings.length !== overallRatingData.length) {
+            alert('All overall rating entries must have percentage, label, and color filled, or remove incomplete entries.');
             return;
         }
 
         const formData = new FormData();
         formData.append('file', uploadedFile);
         formData.append('riskRatingData', JSON.stringify(validRiskRatings));
-        formData.append('overallRatingData', JSON.stringify(validOverallRatings));
+        formData.append('overallRatingData', JSON.stringify(validOverallRatings.length > 0 ? validOverallRatings : []));
 
         console.log('Sending risk rating data:', validRiskRatings);
-        console.log('Sending overall rating data:', validOverallRatings);
+        console.log('Sending overall rating data:', validOverallRatings.length > 0 ? validOverallRatings : []);
 
         setIsUploading(true);
         setErrorMessage(''); // Clear any previous errors
@@ -292,8 +290,8 @@ export default function UploadModelCreate() {
                                     <div className="ml-3">
                                         <p className="text-sm text-blue-700">
                                             <strong>New Automated Process:</strong> Upload your Excel file and the system will automatically extract unique risk ratings. 
-                                            The system will find all unique values from column 6 ('risk_rating') and match them with their corresponding values from column 7 ('mark') and column 12 ('color') from the same rows.
-                                            Only unique risk_rating values will be included (duplicates will be filtered out automatically).
+                                            The system will find all unique values from the 'risk_rating' column and match them with their corresponding 'mark' and 'color' values from the same rows.
+                                            Overall ratings will be added manually by you. Only unique risk_rating values will be included (duplicates will be filtered out automatically).
                                         </p>
                                     </div>
                                 </div>
@@ -362,8 +360,8 @@ export default function UploadModelCreate() {
                                         <div className="mt-2 text-sm text-green-700">
                                             <p>Assessment Type: <strong>{extractedData.assessmentType}</strong></p>
                                             <p>Found <strong>{riskRatingData.length}</strong> unique risk rating values with their corresponding marks and colors.</p>
-                                            <p>Found <strong>{overallRatingData.length}</strong> overall rating entries.</p>
-                                            <p>Please review the extracted data below. Each risk rating represents a unique value from your Excel file.</p>
+                                            <p>You can now add overall ratings manually using the "Add Overall Rating" button below.</p>
+                                            <p>Please review the extracted risk rating data and add overall ratings before uploading.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -389,7 +387,7 @@ export default function UploadModelCreate() {
                                     <div key={index} className="grid grid-cols-4 gap-3 mb-3 p-3 border border-gray-200 rounded-md bg-blue-50">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                Label (From Excel column 6)
+                                                Label (Risk Rating)
                                             </label>
                                             <input
                                                 type="text"
@@ -401,7 +399,7 @@ export default function UploadModelCreate() {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                Mark (From Excel column 7)
+                                                Mark
                                             </label>
                                             <input
                                                 type="text"
@@ -413,7 +411,7 @@ export default function UploadModelCreate() {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                Color (From Excel column 12)
+                                                Color
                                             </label>
                                             <input
                                                 type="text"
@@ -435,7 +433,7 @@ export default function UploadModelCreate() {
                                 ))}
                                 {riskRatingData.length === 0 && (
                                     <div className="text-center py-4 text-gray-500">
-                                        No unique risk ratings found in Excel file. Make sure your Excel has data in columns 6 (risk_rating), 7 (mark), and 12 (color).
+                                        No unique risk ratings found in Excel file. Make sure your Excel has data in the risk_rating, mark, and color columns.
                                     </div>
                                 )}
                             </div>
@@ -443,7 +441,12 @@ export default function UploadModelCreate() {
                             {/* Overall Rating Section */}
                             <div className="mb-6">
                                 <div className="flex justify-between items-center mb-3">
-                                    <h4 className="text-md font-semibold text-gray-800">Overall Rating Data</h4>
+                                    <h4 className="text-md font-semibold text-gray-800">
+                                        Overall Rating Data 
+                                        <span className="text-sm font-normal text-gray-600 ml-2">
+                                            (Manual Input Required)
+                                        </span>
+                                    </h4>
                                     <button
                                         onClick={addOverallRating}
                                         className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -495,7 +498,7 @@ export default function UploadModelCreate() {
                                 ))}
                                 {overallRatingData.length === 0 && (
                                     <div className="text-center py-4 text-gray-500">
-                                        No overall ratings configured. Click "Add Overall Rating" to add.
+                                        No overall ratings added yet. Click "Add Overall Rating" to add entries manually.
                                     </div>
                                 )}
                             </div>

@@ -430,6 +430,122 @@ class UploadModelController extends Controller
     }
 
     /**
+     * Extract unique risk and overall ratings from uploaded Excel file.
+     */
+    public function extractRatingsFromExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
+        ]);
+
+        try {
+            $file = $request->file('file');
+            
+            // Read Excel data to extract ratings
+            $excelData = Excel::toArray(null, $file);
+            $rows = $excelData[0]; // Get first sheet data
+            
+            Log::info('Total rows in Excel: ' . count($rows));
+            
+            // Skip header row and get assessment type
+            if (count($rows) < 2) {
+                throw new \Exception('Excel file must contain at least one data row.');
+            }
+            
+            $assessmentType = $rows[1][11] ?? null; // Get the type from first data row (column 11)
+            if (empty($assessmentType)) {
+                throw new \Exception('Assessment type not found in Excel file.');
+            }
+            
+            Log::info('Assessment type found: ' . $assessmentType);
+            
+            // Log the first few rows to understand the structure
+            if (count($rows) > 1) {
+                Log::info('Sample data from first row (index 1): ', $rows[1]);
+                Log::info('Column 6 (risk_rating): ' . ($rows[1][6] ?? 'NULL'));
+                Log::info('Column 7 (mark): ' . ($rows[1][7] ?? 'NULL'));
+                Log::info('Column 11 (type): ' . ($rows[1][11] ?? 'NULL'));
+                Log::info('Column 12 (color): ' . ($rows[1][12] ?? 'NULL'));
+            }
+
+            // Check if this assessment type already exists
+            $existingUploadModels = UploadModel::where('type', $assessmentType)->count();
+            if ($existingUploadModels > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Assessment tool of type '{$assessmentType}' already exists. Please delete the existing tool first or choose a different assessment type."
+                ], 422);
+            }
+            
+            $uniqueRiskRatings = [];
+            $uniqueOverallRatings = [];
+            $seenRiskRatings = []; // Track seen risk_rating values
+            
+            // Extract unique risk ratings based on unique risk_rating values only
+            foreach ($rows as $index => $row) {
+                if ($index === 0) continue; // Skip header row
+                
+                // Extract risk rating data using correct column indexes:
+                // Column 6 -> risk_rating, Column 7 -> mark, Column 12 -> color
+                $riskRating = trim($row[6] ?? ''); // risk_rating column (label)
+                $mark = trim($row[7] ?? ''); // mark column
+                $color = trim($row[12] ?? ''); // color column
+                
+                Log::info("Row {$index}: risk_rating='{$riskRating}', mark='{$mark}', color='{$color}'");
+                
+                // Only process if risk_rating is not empty and we haven't seen this risk_rating before
+                if (!empty($riskRating) && !in_array($riskRating, $seenRiskRatings)) {
+                    // Ensure mark and color are also not empty
+                    if (!empty($mark) && !empty($color)) {
+                        $seenRiskRatings[] = $riskRating;
+                        $uniqueRiskRatings[] = [
+                            'label' => $riskRating, // risk_rating becomes label
+                            'mark' => $mark,
+                            'color' => $color
+                        ];
+                        Log::info("Added unique risk rating: {$riskRating} -> mark: {$mark}, color: {$color}");
+                    } else {
+                        Log::info("Skipped risk rating '{$riskRating}' due to empty mark or color");
+                    }
+                } else {
+                    if (empty($riskRating)) {
+                        Log::info("Skipped row {$index} due to empty risk_rating");
+                    } else {
+                        Log::info("Skipped duplicate risk rating: {$riskRating}");
+                    }
+                }
+            }
+            
+            Log::info('Unique risk ratings found: ', $uniqueRiskRatings);
+            
+            // Create default overall ratings if none exist (common rating scale)
+            if (empty($uniqueOverallRatings)) {
+                $uniqueOverallRatings = [
+                    ['percentage' => '90-100', 'label' => 'Excellent', 'color' => 'green'],
+                    ['percentage' => '80-89', 'label' => 'Very Good', 'color' => 'lightgreen'],
+                    ['percentage' => '70-79', 'label' => 'Good', 'color' => 'yellow'],
+                    ['percentage' => '60-69', 'label' => 'Satisfactory', 'color' => 'orange'],
+                    ['percentage' => '0-59', 'label' => 'Needs Improvement', 'color' => 'red']
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'assessmentType' => $assessmentType,
+                'riskRatings' => $uniqueRiskRatings, // Already an array, no need for array_values
+                'overallRatings' => $uniqueOverallRatings
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error extracting ratings from Excel: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing Excel file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created upload model from the new workflow.
      */
     public function uploadModelsStore(Request $request)

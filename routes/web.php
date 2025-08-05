@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
     // New Upload Models Management Routes
     Route::get('/upload-models', [UploadModelController::class, 'uploadModelsList'])->name('upload-models.list');
     Route::get('/upload-models/create', [UploadModelController::class, 'uploadModelsCreate'])->name('upload-models.create');
+    Route::post('/upload-models/extract-ratings', [UploadModelController::class, 'extractRatingsFromExcel'])->name('upload-models.extract-ratings');
     Route::post('/upload-models', [UploadModelController::class, 'uploadModelsStore'])->name('upload-models.store');
     Route::get('/upload-models/{id}', [UploadModelController::class, 'uploadModelsShow'])->name('upload-models.show');
     Route::delete('/upload-models/{id}', [UploadModelController::class, 'uploadModelsDestroy'])->name('upload-models.destroy');

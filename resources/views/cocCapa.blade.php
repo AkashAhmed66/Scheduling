@@ -147,6 +147,7 @@
     </div>
     
     <main>
+        <p style="font-weight: bold; font-size: 26px">{{ $info->capaTitile }}</p>
         <table class="table table-bordered;">
             <tr>
                 <th style="text-align:left">Facility Name: {{$info->facilityName}} </th>

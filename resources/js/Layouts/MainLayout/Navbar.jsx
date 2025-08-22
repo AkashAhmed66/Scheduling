@@ -70,7 +70,14 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/home" className="flex items-center group">
-              <div className="ml-3 hidden sm:block">
+              {/* Logo image */}
+              {/* <img
+                src="/images/insight.png"
+                alt="Logo"
+                className="h-12 w-12 object-contain mr-2"
+                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.08))' }}
+              /> */}
+              <div className="hidden sm:block">
                 <span className="text-2xl font-bold text-white tracking-wide transition-all duration-300 group-hover:text-indigo-100">
                   <span className="bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent font-serif">
                     InsighT

@@ -188,14 +188,72 @@
         .performance-area {
             border: 1px solid black;
             padding: 10px;
-            height: 100px;
+            height: 120px;
             margin-bottom: 15px;
+            background: white;
         }
 
         .performance-label {
             font-size: 10px;
             color: black;
             margin-bottom: 5px;
+        }
+
+        .color-summary-item {
+            display: inline-block;
+            margin: 1px 2px;
+            font-size: 7px;
+            vertical-align: middle;
+        }
+
+        .color-indicator {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin-right: 2px;
+            border: 1px solid #999;
+            vertical-align: middle;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: end;
+            height: 35px;
+            margin: 8px 0 3px 0;
+            border: 1px solid #ddd;
+            background: white;
+            overflow: hidden;
+        }
+
+        .bar-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 7px;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .chart-legend {
+            font-size: 7px;
+            display: flex;
+            justify-content: space-around;
+            margin-top: 3px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .legend-color {
+            width: 6px;
+            height: 6px;
+            display: inline-block;
+            margin-right: 2px;
+            border: 1px solid #999;
         }
 
         .signature-section {
@@ -270,17 +328,20 @@
             <div class="nbm-company-name">NBM International LTD.</div>
 
             <!-- Certificate Title -->
-            <div class="certificate-title">CERTIFICATE</div>
+            <div class="certificate-title">
+                {{ strpos(strtoupper($reportHeading ?? 'CERTIFICATE'), 'CERTIFICATE') !== false ? 
+                   strtoupper($reportHeading ?? 'CERTIFICATE') : 'CERTIFICATE' }}
+            </div>
             
             <!-- Certification Text -->
             <div class="certify-text">This is to certify that</div>
 
             <!-- Company Name -->
-            <div class="company-name">{{ $job->factoryName ?? 'ABC Garments Limited' }}</div>
+            <div class="company-name">{{ $facilityName ?? 'Not Provided' }}</div>
 
             <!-- Company Address -->
             <div class="company-address">
-                {{ $job->factoryAddress ?? 'Plot # 34, Road # 34, Sector # 12, CEP-2, Chattogram-4204, Bangladesh' }}
+                {{ $facilityAddress ?? 'Address not provided' }}
             </div>
 
             <!-- Assessment Text -->
@@ -290,36 +351,105 @@
             </div>
 
             <!-- Compliance Title -->
-            <div class="compliance-title">SOCIAL COMPLIANCE</div>
+            <div class="compliance-title">{{ $reportHeading ?? 'not provided' }}</div>
 
             <!-- Rating -->
-            <div class="rating">Rating: <strong>GREEN</strong></div>
+            <div class="rating">
+                Rating: <strong style="color: {{ $chartData['overallRatingColor'] ?? '#000' }};">
+                    {{ strtoupper($chartData['overallRatingLabel'] ?? 'Not Determined') }}
+                </strong>
+            </div>
 
             <!-- Details Section -->
             <div class="details-section">
                 <div class="details-left">
                     <div class="detail-box">
-                        <div class="detail-label">Certificate No: {{ $job->certificateNo ?? '309884' }}</div>
-                        <div class="detail-label">Assessment Date: {{ $job->assessmentDate ?? '' }}</div>
+                        <div class="detail-label">
+                            Certificate No: {{ 
+                                (is_array($assessmentInfo) ? ($assessmentInfo['report_no'] ?? 'Not Specified') : 
+                                 (is_object($assessmentInfo) ? ($assessmentInfo->report_no ?? 'Not Specified') : 'Not Specified')) 
+                            }}
+                        </div>
+                        <div class="detail-label">Assessment Date: {{ $assessmentDate ?? 'Not Specified' }}</div>
+                        <div class="detail-label">Overall Score: {{ round($chartData['overallPercentage'] ?? 0, 1) }}%</div>
                     </div>
                 </div>
                 <div class="details-right">
                     <div class="detail-box">
-                        <div class="detail-label">Color summary</div>
+                        <div class="detail-label" style="margin-bottom: 8px;"><strong>Color Summary</strong></div>
+                        @if(!empty($overallRatings))
+                            @foreach($overallRatings as $rating)
+                                <div class="color-summary-item">
+                                    <span class="color-indicator" style="background-color: {{ $rating['color'] }};"></span>
+                                    <span>{{ $rating['label'] }} (≥{{ $rating['percentage'] }}%)</span>
+                                </div>
+                            @endforeach
+                        @endif
                     </div>
                 </div>
             </div>
 
-            <!-- Performance Area -->
+            <!-- Performance Area with Bar Chart -->
             <div class="performance-area">
-                <div class="performance-label">Performance Area:</div>
-                <div>{{ $job->performanceArea ?? 'Bar chart' }}</div>
+                <div class="performance-label"><strong>Performance Overview:</strong></div>
+                @if(!empty($chartData))
+                    <div style="margin-top: 10px;">
+                        <!-- Bar Chart Visualization -->
+                        <div class="bar-chart">
+                            @php
+                                $total = max($chartData['totalQuestions'] ?? 1, 1);
+                                $complianceWidth = ($chartData['compliance'] ?? 0) / $total * 100;
+                                $nonComplianceWidth = ($chartData['nonCompliance'] ?? 0) / $total * 100;
+                                $notApplicableWidth = ($chartData['notApplicable'] ?? 0) / $total * 100;
+                            @endphp
+                            
+                            @if($complianceWidth > 0)
+                                <div class="bar-segment" style="background-color: #4CAF50; width: {{ $complianceWidth }}%;">
+                                    {{ $chartData['compliance'] ?? 0 }}
+                                </div>
+                            @endif
+                            
+                            @if($nonComplianceWidth > 0)
+                                <div class="bar-segment" style="background-color: #F44336; width: {{ $nonComplianceWidth }}%;">
+                                    {{ $chartData['nonCompliance'] ?? 0 }}
+                                </div>
+                            @endif
+                            
+                            @if($notApplicableWidth > 0)
+                                <div class="bar-segment" style="background-color: #9E9E9E; width: {{ $notApplicableWidth }}%;">
+                                    {{ $chartData['notApplicable'] ?? 0 }}
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <!-- Legend -->
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #4CAF50;"></span>
+                                <span>Compliance</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #F44336;"></span>
+                                <span>Non-Compliance</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #9E9E9E;"></span>
+                                <span>Not Applicable</span>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <!-- Signature Section -->
             <div class="signature-section">
                 <div class="signature-label">Certificate Approved By</div>
-                <div class="signature">{{ $job->approvedBy ?? 'Signature' }}</div>
+                <div class="signature">
+                    {{ 
+                        (is_array($assessmentInfo) ? ($assessmentInfo['assessors'] ?? 'Authorized Signature') : 
+                         (is_object($assessmentInfo) ? ($assessmentInfo->assessors ?? 'Authorized Signature') : 'Authorized Signature')) 
+                    }}
+                </div>
                 <div class="managing-director">Managing Director</div>
             </div>
 

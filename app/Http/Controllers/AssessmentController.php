@@ -11,7 +11,7 @@ use App\Http\Requests\StoreAssessmentRequest;
 use App\Http\Requests\UpdateAssessmentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Shared\Converter;
@@ -384,14 +384,102 @@ class AssessmentController extends Controller
     public function generateCertificatePdf($id, Request $request)
     {
         try {
-            // Get assessment info
+            // Get assessment and assessment info
             $assessment = \App\Models\Assessment::findOrFail($id);
             $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
 
+            // Get data from request (sent from frontend)
+            $requestAssessmentInfo = $request->input('assessmentInfo');
+            $currentOverallRatings = $request->input('currentOverallRatings', []);
+            $statistics = $request->input('statistics', []);
+
+            // Use request data if available, fallback to database data
+            $finalAssessmentInfo = $requestAssessmentInfo ?: $assessmentInfo;
+
+            // Get risk ratings and overall ratings for this assessment type
+            $riskRatings = RiskRating::where('type', $assessment->type)->get();
+            $overallRatings = OverallRating::where('type', $assessment->type)->orderBy('percentage', 'desc')->get();
+
+            // Process overall ratings data
+            $overallRatingData = [];
+            if (!empty($currentOverallRatings)) {
+                foreach ($currentOverallRatings as $rating) {
+                    $overallRatingData[] = [
+                        'label' => $rating['label'] ?? 'Unknown',
+                        'percentage' => $rating['percentage'] ?? 0,
+                        'color' => $rating['color'] ?? 'red'
+                    ];
+                }
+            } else {
+                // Fallback to database overall ratings
+                foreach ($overallRatings as $rating) {
+                    $overallRatingData[] = [
+                        'label' => $rating->label,
+                        'percentage' => $rating->percentage,
+                        'color' => $rating->color
+                    ];
+                }
+            }
+
+            // Process statistics for bar chart
+            $chartData = [
+                'compliance' => $statistics['compliance'] ?? 0,
+                'nonCompliance' => $statistics['nonCompliance'] ?? 0,
+                'notApplicable' => $statistics['notApplicable'] ?? 0,
+                'totalQuestions' => $statistics['totalQuestions'] ?? 0,
+                'overallPercentage' => $statistics['overallPercentage'] ?? 0,
+                'overallRatingLabel' => $statistics['overallRatingLabel'] ?? 'Not Determined',
+                'overallRatingColor' => $statistics['overallRatingColor'] ?? 'red'
+            ];
+
+            // Determine assessment date
+            $assessmentDate = 'N/A';
+            if ($finalAssessmentInfo) {
+                if (is_array($finalAssessmentInfo) && isset($finalAssessmentInfo['assessment_date'])) {
+                    $assessmentDate = $finalAssessmentInfo['assessment_date'];
+                } elseif (is_object($finalAssessmentInfo) && $finalAssessmentInfo->assessment_date) {
+                    $assessmentDate = $finalAssessmentInfo->assessment_date;
+                }
+                
+                // Format assessment date
+                if ($assessmentDate !== 'N/A') {
+                    try {
+                        $assessmentDate = \Carbon\Carbon::parse($assessmentDate)->format('F d, Y');
+                    } catch (\Exception $e) {
+                        $assessmentDate = 'N/A';
+                    }
+                }
+            }
+
+            // Extract facility information
+            $facilityName = 'N/A';
+            $facilityAddress = 'N/A';
+            $reportHeading = 'Certificate of Assessment';
+
+            if ($finalAssessmentInfo) {
+                if (is_array($finalAssessmentInfo)) {
+                    $facilityName = $finalAssessmentInfo['facility_name'] ?? 'N/A';
+                    $facilityAddress = $finalAssessmentInfo['facility_address'] ?? 'N/A';
+                    $reportHeading = $finalAssessmentInfo['report_heading'] ?? 'Certificate of Assessment';
+                } elseif (is_object($finalAssessmentInfo)) {
+                    $facilityName = $finalAssessmentInfo->facility_name ?? 'N/A';
+                    $facilityAddress = $finalAssessmentInfo->facility_address ?? 'N/A';
+                    $reportHeading = $finalAssessmentInfo->report_heading ?? 'Certificate of Assessment';
+                }
+            }
+
             // Create data array for certificate template
             $data = [
-                'assessmentInfo' => $assessmentInfo,
                 'assessment' => $assessment,
+                'assessmentInfo' => $finalAssessmentInfo,
+                'facilityName' => $facilityName,
+                'facilityAddress' => $facilityAddress,
+                'reportHeading' => $reportHeading,
+                'assessmentDate' => $assessmentDate,
+                'overallRatings' => $overallRatingData,
+                'chartData' => $chartData,
+                'riskRatings' => $riskRatings,
+                'statistics' => $statistics
             ];
 
             // Generate and download the Certificate PDF
@@ -405,6 +493,7 @@ class AssessmentController extends Controller
             Log::error('Error file: ' . $e->getFile() . ' on line ' . $e->getLine());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             Log::error('Assessment ID: ' . $id);
+            Log::error('Request data: ' . json_encode($request->all()));
             
             return response()->json([
                 'error' => 'Failed to generate Certificate PDF',
@@ -413,7 +502,10 @@ class AssessmentController extends Controller
                 'file' => basename($e->getFile()),
                 'debug' => [
                     'assessment_id' => $id,
-                    'assessment_info_exists' => $assessmentInfo ? true : false
+                    'assessment_info_exists' => $assessmentInfo ? true : false,
+                    'request_has_assessment_info' => $request->has('assessmentInfo'),
+                    'request_has_overall_ratings' => $request->has('currentOverallRatings'),
+                    'request_has_statistics' => $request->has('statistics')
                 ]
             ], 500);
         }

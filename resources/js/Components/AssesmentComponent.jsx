@@ -549,14 +549,33 @@ export default function AssesmentComponent() {
       // Get assessment ID if available
       const assessmentId = assessment?.id || '';
       
-      // Send the current questions state (with updated answers) instead of the original question prop
+      // Calculate statistics for bar chart
+      const totalQuestions = questions.length;
+      const complianceCount = questions.filter(q => q.answer === 'Compliance').length;
+      const nonComplianceCount = questions.filter(q => q.answer === 'Non-Compliance').length;
+      const notApplicableCount = questions.filter(q => q.answer === 'Not Applicable').length;
+      const unansweredCount = totalQuestions - complianceCount - nonComplianceCount - notApplicableCount;
+      
+      // Send the current questions state, assessment info, overall ratings, and statistics
       const response = await axios({
         url: `/download-certificate-pdf/${assessmentId}`, //  Endpoint for Certificate PDF
         method: 'POST', // Change to POST
         responseType: 'blob',
-        // Include updated questions data in the request body
+        // Include updated questions data, assessment info, and overall ratings in the request body
         data: {
           questions: questions, // Send current state with all updates
+          assessmentInfo: assessmentInfo, // Send assessment info from modal
+          overallRatings: currentOverallRatings, // Send overall ratings for color summary
+          statistics: {
+            totalQuestions,
+            complianceCount,
+            nonComplianceCount,
+            notApplicableCount,
+            unansweredCount,
+            compliancePercentage: totalQuestions > 0 ? ((complianceCount / totalQuestions) * 100).toFixed(1) : 0,
+            nonCompliancePercentage: totalQuestions > 0 ? ((nonComplianceCount / totalQuestions) * 100).toFixed(1) : 0,
+            notApplicablePercentage: totalQuestions > 0 ? ((notApplicableCount / totalQuestions) * 100).toFixed(1) : 0,
+          },
         },
       });
 
@@ -629,7 +648,7 @@ export default function AssesmentComponent() {
     <div>
       <div className="w-full">
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-3 text-white">
             <h2 className="text-2xl font-bold">Assessment Evaluation</h2>
             <p className="mt-1 text-indigo-100">Evaluate and manage your assessment questions</p>
           </div>
@@ -775,12 +794,12 @@ export default function AssesmentComponent() {
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Ques Ref</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-1/3">Question</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-16">Instruction</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Answer</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Findings</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Instruction</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Answer</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Findings</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Risk Rating</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-52">Legal Reference / Standard</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Recommendation</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Legal Reference / Standard</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Recommendation</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -788,9 +807,9 @@ export default function AssesmentComponent() {
                     <React.Fragment key={category}>
                       {/* Category Header - Show only once per category */}
                       <tr id={`category-${category}`} className="bg-gradient-to-r from-indigo-500 to-purple-500 sticky z-40" style={{ top: '48px' }}>
-                        <td colSpan="8" className="py-4 px-6 text-left font-bold text-base text-white uppercase tracking-wide border-b-2 border-indigo-300 shadow-md">
+                        <td colSpan="8" className="py-2 px-6 text-left font-bold text-base text-white uppercase tracking-wide border-b-2 border-indigo-300 shadow-md">
                           <div 
-                            className="flex items-center gap-2 cursor-pointer hover:bg-white hover:bg-opacity-10 rounded p-2 -m-2 transition-colors"
+                            className="flex items-center gap-2 cursor-pointer hover:bg-white hover:bg-opacity-10 rounded p-1 -m-1 transition-colors"
                             onClick={() => toggleCategory(category)}
                           >
                             <svg 
@@ -816,10 +835,10 @@ export default function AssesmentComponent() {
                         return (
                           <React.Fragment key={subcategoryKey}>
                             {/* Subcategory Header */}
-                            <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky z-30" style={{ top: '112px' }}>
-                              <td colSpan="8" className="py-3 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
+                            <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky z-30" style={{ top: '80px' }}>
+                              <td colSpan="8" className="py-2 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
                                 <div 
-                                  className="flex items-center gap-2 pl-4 cursor-pointer hover:bg-indigo-200 hover:bg-opacity-50 rounded p-2 -m-2 transition-colors"
+                                  className="flex items-center gap-2 pl-4 cursor-pointer hover:bg-indigo-200 hover:bg-opacity-50 rounded p-1 -m-1 transition-colors"
                                   onClick={() => toggleSubcategory(subcategoryKey)}
                                 >
                                   <svg 
@@ -841,12 +860,12 @@ export default function AssesmentComponent() {
                             <tr key={questionItem.ncref} className="hover:bg-gray-50 transition-colors duration-150">
                               <td className="py-3 px-4 text-sm font-medium text-gray-900 w-32">{questionItem.ncref}</td>
                               <td className="py-3 px-4 text-sm text-gray-800">{questionItem.question}</td>
-                              <td className="py-3 px-4 w-48">
+                              <td className="py-3 px-4 w-32">
                                 <div
                                   onClick={() => openTextEditor(questionItem, 'instruction')}
-                                  className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-48 overflow-hidden text-ellipsis"
+                                  className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-32 overflow-hidden text-ellipsis"
                                   title="Click to edit instruction"
-                                  style={{ maxWidth: '12rem', minWidth: '12rem' }}
+                                  style={{ maxWidth: '8rem', minWidth: '8rem' }}
                                 >
                                   {questionItem.instruction ? (
                                     questionItem.instruction.includes('<') || questionItem.instruction.includes('>') ? (
@@ -859,7 +878,7 @@ export default function AssesmentComponent() {
                                   )}
                                 </div>
                               </td>
-                              <td className="py-3 px-4 w-32">
+                              <td className="py-3 px-4 w-56">
                                 <select
                                   value={questionItem.answer || ''}
                                   onChange={(e) => handleChange(e, questionItem, 'answer')}
@@ -879,13 +898,13 @@ export default function AssesmentComponent() {
                                   <option value="Not Applicable">Not Applicable</option>
                                 </select>
                               </td>
-                              <td className="py-3 px-4 w-56">
+                              <td className="py-3 px-4 w-32">
                                 {questionItem.answer === 'Non-Compliance' ? (
                                   <div
                                     onClick={() => openTextEditor(questionItem, 'findings')}
-                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-56 overflow-hidden"
+                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-32 overflow-hidden"
                                     title="Click to edit findings"
-                                    style={{ maxWidth: '14rem', minWidth: '14rem' }}
+                                    style={{ maxWidth: '8rem', minWidth: '8rem' }}
                                   >
                                     {questionItem.findings ? (
                                       questionItem.findings.includes('<') || questionItem.findings.includes('>') ? (
@@ -920,13 +939,13 @@ export default function AssesmentComponent() {
                                 </select>
                                 {/* {questionItem.risk_rating} */}
                               </td>
-                              <td className="py-3 px-4 w-52">
+                              <td className="py-3 px-4 w-32">
                                 {questionItem.answer === 'Non-Compliance' ? (
                                   <div
                                     onClick={() => openTextEditor(questionItem, 'legal_ref')}
-                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-52 overflow-hidden"
+                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-32 overflow-hidden"
                                     title="Click to edit legal reference"
-                                    style={{ maxWidth: '13rem', minWidth: '13rem' }}
+                                    style={{ maxWidth: '8rem', minWidth: '8rem' }}
                                   >
                                     {questionItem.legal_ref ? (
                                       questionItem.legal_ref.includes('<') || questionItem.legal_ref.includes('>') ? (
@@ -942,13 +961,13 @@ export default function AssesmentComponent() {
                                   <span className="text-gray-400 italic">N/A</span>
                                 )}
                               </td>
-                              <td className="py-3 px-4 w-56">
+                              <td className="py-3 px-4 w-32">
                                 {questionItem.answer === 'Non-Compliance' ? (
                                   <div
                                     onClick={() => openTextEditor(questionItem, 'recommendation')}
-                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-56 overflow-hidden"
+                                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus:ring focus:ring-indigo-200 focus:border-indigo-300 focus:ring-opacity-50 focus:outline-none min-h-[40px] max-w-32 overflow-hidden"
                                     title="Click to edit recommendation"
-                                    style={{ maxWidth: '14rem', minWidth: '14rem' }}
+                                    style={{ maxWidth: '8rem', minWidth: '8rem' }}
                                   >
                                     {questionItem.recommendation ? (
                                       questionItem.recommendation.includes('<') || questionItem.recommendation.includes('>') ? (

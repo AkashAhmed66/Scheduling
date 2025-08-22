@@ -32,9 +32,9 @@ export default function Login({ status, canResetPassword }) {
                 <Link href="/">
                     <div className="flex justify-center mb-3">
                         <img
-                            src="/images/logo.png"
+                            src="/images/insight.png"
                             alt="logo"
-                            className="w-10 h-10 transition-transform duration-300 hover:scale-110"
+                            className="w-14 h-12 transition-transform duration-300 hover:scale-110"
                         />
                     </div>
                 </Link>
@@ -60,19 +60,6 @@ export default function Login({ status, canResetPassword }) {
                     </div>
                 </div>
             )}
-
-            <div className="mb-6 rounded-md bg-blue-50 p-4">
-                <div className="flex">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div className="ml-3">
-                        <p className="text-sm font-medium text-blue-800">Your session will be securely logged and monitored in compliance with audit standards</p>
-                    </div>
-                </div>
-            </div>
 
             <form onSubmit={submit} className="space-y-6">
                 <div>

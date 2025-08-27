@@ -41,6 +41,15 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Check if the user exists and is not soft deleted
+        $user = \App\Models\User::where('email', $this->email)->first();
+        
+        if ($user && $user->deleted_at !== null) {
+            throw ValidationException::withMessages([
+                'email' => 'This account has been deactivated.',
+            ]);
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

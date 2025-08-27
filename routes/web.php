@@ -72,6 +72,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/activate-user', [ActivateUserController::class, 'goToActivateUser'])->name('activate-user');
     Route::get('/activate-user-list', [ActivateUserController::class, 'index'])->name('activate-user-list');
     Route::post('/delete-user', [ActivateUserController::class, 'DeleteUser'])->name('delete-user');
+    Route::post('/restore-user', [ActivateUserController::class, 'RestoreUser'])->name('restore-user');
+    
+    // Upload Test Route
+    Route::get('/upload-test', function () {
+        return Inertia::render('UploadTest');
+    })->name('upload-test');
+    
+    // Test Upload API Route
+    Route::post('/api/upload/test', [UploadModelController::class, 'testUpload'])->name('api.upload.test');
     
     Route::post('/upload-excel', [UploadModelController::class, 'upload'])->name('upload-excel');
     Route::get('/ratings-by-type/{type}', [UploadModelController::class, 'getRatingsByType'])->name('ratings-by-type');

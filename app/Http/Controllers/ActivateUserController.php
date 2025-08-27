@@ -51,12 +51,42 @@ class ActivateUserController extends Controller
         if($request->image_url == null){
             $user = ActivateUser::find($request->id);
             $user->delete();
-            return redirect()->route('activate-user-list');
         }else{
             $user = User::find($request->id);
+            // Use soft delete instead of hard delete
             $user->delete();
-            return redirect()->route('activate-user-list');
         }
+        
+        // Return updated user list data
+        return $this->getUsersData();
+    }
+
+    public function RestoreUser(Request $request)
+    {
+        $user = User::withTrashed()->find($request->id);
+        if ($user && $user->deleted_at !== null) {
+            $user->restore();
+        }
+        
+        // Return updated user list data
+        return $this->getUsersData();
+    }
+
+    private function getUsersData()
+    {
+        $users = User::where('team', Auth::user()->team)->withTrashed()->get();
+        $activateusers = ActivateUser::where('team', Auth::user()->team)
+             ->whereNotIn('email', User::where('team', Auth::user()->team)->pluck('email'))
+             ->get();
+        if(Auth::user()->role == 0){
+            $users = User::withTrashed()->get();
+            $activateusers = ActivateUser::whereNotIn('email', User::pluck('email'))->get();
+        }
+        
+        return response()->json([
+            'users' => $users,
+            'unactive' => $activateusers
+        ]);
     }
     public function GetJobs()
     {
@@ -106,12 +136,14 @@ class ActivateUserController extends Controller
         if(Auth::user()->role != 0){
             return redirect()->back();
         }
-        $users = User::where('team', Auth::user()->team)->get();
+        
+        // Include soft-deleted users using withTrashed()
+        $users = User::where('team', Auth::user()->team)->withTrashed()->get();
         $activateusers = ActivateUser::where('team', Auth::user()->team)
              ->whereNotIn('email', User::where('team', Auth::user()->team)->pluck('email'))
              ->get();
         if(Auth::user()->role == 0){
-            $users = User::all();
+            $users = User::withTrashed()->get();
             $activateusers = ActivateUser::whereNotIn('email', User::pluck('email'))->get();
         }  
         return Inertia::render('ActivateUserList', [

@@ -13,7 +13,6 @@ use App\Models\SupportingDocuments;
 use App\Models\RiskRating;
 use App\Models\OverallRating;
 use App\Models\StaffInformation;
-use App\Services\FileUploadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +22,6 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class UploadModelController extends Controller
 {
-    protected $fileUploadService;
-
-    public function __construct(FileUploadService $fileUploadService)
-    {
-        $this->fileUploadService = $fileUploadService;
-    }
     /**
      * Display a listing of the resource.
      */
@@ -134,91 +127,56 @@ class UploadModelController extends Controller
 
     public function upload(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls|max:51200', // 50MB
-            'riskRatingData' => 'sometimes|json',
-            'overallRatingData' => 'sometimes|json'
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $file = $request->file('file');
-            $riskRatingData = json_decode($request->input('riskRatingData'), true) ?? [];
-            $overallRatingData = json_decode($request->input('overallRatingData'), true) ?? [];
-            
-            // Use robust file upload service for temporary processing
-            $uploadResult = $this->fileUploadService->uploadSingleFile(
-                $file, 
-                'temp', 
-                [
-                    'allowed_extensions' => ['xlsx', 'xls'],
-                    'max_size' => 50 * 1024 * 1024, // 50MB
-                    'prefix' => 'excel_upload'
-                ]
-            );
-
-            // Process the uploaded Excel file
-            $tempFilePath = storage_path('app/public/' . $uploadResult['file_path']);
-            
-            if ($file) {
-                $firstRow = Excel::toArray(function ($reader) {
-                    $reader->limit(1); // Only read the first row
-                }, $tempFilePath)[0][1]; // Access the first row of the first sheet
+        $file = $request->file('file');
+        $riskRatingData = json_decode($request->input('riskRatingData'), true) ?? [];
+        $overallRatingData = json_decode($request->input('overallRatingData'), true) ?? [];
         
-                $assessmentType = $firstRow['10']; // Get the type from excel
-                
-                // Delete existing upload models of this type
-                UploadModel::where('type', $assessmentType)->delete();
-                
-                // Delete existing risk and overall ratings of this type
-                RiskRating::where('type', $assessmentType)->delete();
-                OverallRating::where('type', $assessmentType)->delete();
-                
-                // Import the excel data
-                Excel::import(new QuestionImport, $tempFilePath);
-                
-                // Delete any records with null type
-                UploadModel::where('type', null)->delete();
-                
-                // Save risk rating data
-                foreach ($riskRatingData as $riskRating) {
-                    if (!empty($riskRating['label']) || !empty($riskRating['mark']) || !empty($riskRating['color'])) {
-                        RiskRating::create([
-                            'label' => $riskRating['label'] ?? '',
-                            'mark' => $riskRating['mark'] ?? '',
-                            'color' => $riskRating['color'] ?? '',
-                            'type' => $assessmentType,
-                        ]);
-                    }
-                }
-                
-                // Save overall rating data
-                foreach ($overallRatingData as $overallRating) {
-                    if (!empty($overallRating['percentage']) || !empty($overallRating['label']) || !empty($overallRating['color'])) {
-                        OverallRating::create([
-                            'percentage' => $overallRating['percentage'] ?? '',
-                            'label' => $overallRating['label'] ?? '',
-                            'color' => $overallRating['color'] ?? '',
-                            'type' => $assessmentType,
-                        ]);
-                    }
+        if ($file) {
+            $firstRow = Excel::toArray(function ($reader) {
+                $reader->limit(1); // Only read the first row
+            }, $file)[0][1]; // Access the first row of the first sheet
+    
+            $assessmentType = $firstRow['10']; // Get the type from excel
+            
+            // Delete existing upload models of this type
+            UploadModel::where('type', $assessmentType)->delete();
+            
+            // Delete existing risk and overall ratings of this type
+            RiskRating::where('type', $assessmentType)->delete();
+            OverallRating::where('type', $assessmentType)->delete();
+            
+            // Import the excel data
+            Excel::import(new QuestionImport, $file);
+            
+            // Delete any records with null type
+            UploadModel::where('type', null)->delete();
+            
+            // Save risk rating data
+            foreach ($riskRatingData as $riskRating) {
+                if (!empty($riskRating['label']) || !empty($riskRating['mark']) || !empty($riskRating['color'])) {
+                    RiskRating::create([
+                        'label' => $riskRating['label'] ?? '',
+                        'mark' => $riskRating['mark'] ?? '',
+                        'color' => $riskRating['color'] ?? '',
+                        'type' => $assessmentType,
+                    ]);
                 }
             }
-
-            // Clean up temporary file
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
+            
+            // Save overall rating data
+            foreach ($overallRatingData as $overallRating) {
+                if (!empty($overallRating['percentage']) || !empty($overallRating['label']) || !empty($overallRating['color'])) {
+                    OverallRating::create([
+                        'percentage' => $overallRating['percentage'] ?? '',
+                        'label' => $overallRating['label'] ?? '',
+                        'color' => $overallRating['color'] ?? '',
+                        'type' => $assessmentType,
+                    ]);
+                }
             }
-
-            DB::commit();
-            return redirect()->back()->with('message', 'File uploaded and data inserted successfully.');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Excel upload failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Upload failed: ' . $e->getMessage());
         }
+        
+        return redirect()->back()->with('message', 'File uploaded and data inserted successfully.');
     }
     public function DeleteAssesment($id)
     {
@@ -232,108 +190,82 @@ class UploadModelController extends Controller
     }
     public function UploadAssesment(Request $request)
     {
-        $request->validate([
-            'files' => 'required|array|min:1|max:10',
-            'files.*' => 'file|max:51200|mimes:pdf,doc,docx,xlsx,xls,jpg,jpeg,png', // 50MB per file
-            'documentName' => 'required|string|max:255',
-            'jobId' => 'required|integer'
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $uploadedFiles = [];
-            $files = $request->file('files');
-
-            // Use robust file upload service for multiple files
-            $uploadResults = $this->fileUploadService->uploadMultipleFiles(
-                $files,
-                'assesment_documents',
-                [
-                    'allowed_extensions' => ['pdf', 'doc', 'docx', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'],
-                    'max_size' => 50 * 1024 * 1024, // 50MB per file
-                    'prefix' => 'assessment_doc'
-                ]
-            );
-
-            // Process successful uploads
-            foreach ($uploadResults['uploaded_files'] as $uploadResult) {
-                $formData = [
-                    'documentName' => $request->documentName,
-                    'fileName' => $uploadResult['stored_name'],
-                    'jobId' => $request->jobId,
-                    'teamId' => Auth::user()->team,
-                    'filePath' => $uploadResult['file_path'],
-                    'uploader' => Auth::user()->name,
-                    'original_name' => $uploadResult['original_name'],
-                    'file_size' => $uploadResult['size'],
-                    'mime_type' => $uploadResult['mime_type'],
-                ];
-                
-                $uploadedFiles[] = AssesmentDocuments::create($formData);
+        $uploadedFiles = [];        
+        foreach ($request->file('files') as $index => $file) {        
+            // Generate a timestamp-based filename
+            $timestamp = now()->format('YmdHis');  // e.g., 20250117_143500
+            $extension = $file->getClientOriginalExtension();
+            $newFileName = "document_{$timestamp}".$index.".{$extension}";
+            
+            // Define the storage path
+            $destinationPath = storage_path('app/public/assesment_documents');
+            
+            // Ensure the directory exists, create it if not
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
             }
-
-            DB::commit();
-
-            $message = "Successfully uploaded {$uploadResults['success_count']} file(s)";
-            if ($uploadResults['error_count'] > 0) {
-                $message .= ". {$uploadResults['error_count']} file(s) failed to upload.";
-            }
-
-            return redirect()->back()->with('message', $message);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Assessment document upload failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Upload failed: ' . $e->getMessage());
-        }
+        
+            // Move the file to the specified directory
+            $file->move($destinationPath, $newFileName);
+        
+            // Get the file path relative to the public directory
+            $filePath = 'assesment_documents/' . $newFileName;
+    
+            // Prepare data for saving into the database
+            $formData = [
+                'documentName' => $request->documentName,
+                'fileName' => $newFileName,
+                'jobId' => $request->jobId,
+                'teamId' => Auth::user()->team,
+                'filePath' => $filePath, // Save the file path in the database
+                'uploader' => Auth::user()->name,
+            ];
+            
+            // Create a new record in the 'assesment_documents' table
+            $uploadedFiles[] = AssesmentDocuments::create($formData);
+        }    
+        // Redirect back with a success message
+        return redirect()->back()->with('message', 'Files uploaded and data inserted successfully.');
     }
     public function UploadSupportingDoc(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|max:51200|mimes:pdf,doc,docx,xlsx,xls,jpg,jpeg,png', // 50MB
-            'documentName' => 'required|string|max:255',
-            'jobId' => 'required|integer'
-        ]);
 
-        try {
-            DB::beginTransaction();
-
-            $file = $request->file('file');
-
-            // Use robust file upload service
-            $uploadResult = $this->fileUploadService->uploadSingleFile(
-                $file,
-                'assesment_documents',
-                [
-                    'allowed_extensions' => ['pdf', 'doc', 'docx', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'],
-                    'max_size' => 50 * 1024 * 1024, // 50MB
-                    'prefix' => 'supporting_doc'
-                ]
-            );
-
-            // Prepare data for saving into the database
-            $formData = [
-                'name' => $request->input('documentName'),
-                'jobId' => $request->input('jobId'),
-                'teamId' => Auth::user()->team,
-                'path' => $uploadResult['file_path'],
-                'original_name' => $uploadResult['original_name'],
-                'file_size' => $uploadResult['size'],
-                'mime_type' => $uploadResult['mime_type'],
-            ];
-
-            // Create a new record in the supporting documents table
-            SupportingDocuments::create($formData);
-
-            DB::commit();
-            return redirect()->back()->with('message', 'Supporting document uploaded successfully.');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Supporting document upload failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Upload failed: ' . $e->getMessage());
+        // dd($request->toArray());
+        // Retrieve file from the request
+        $file = $request->file('file');
+    
+        // Generate a timestamp-based filename
+        $timestamp = now()->format('YmdHis');  // e.g., 20250117_143500
+        $extension = $file->getClientOriginalExtension();
+        $newFileName = "document_{$timestamp}.{$extension}";
+    
+        // Define the storage path
+        $destinationPath = storage_path('app/public/assesment_documents');
+    
+        // Ensure the directory exists, create it if not
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
         }
+    
+        // Move the file to the specified directory
+        $file->move($destinationPath, $newFileName);
+    
+        // Get the file path relative to the public directory
+        $filePath = 'assesment_documents/' . $newFileName;
+    
+        // Prepare data for saving into the database
+        $formData = [
+            'name' => $request->input('documentName'),  // Store the new file name
+            'jobId' => $request->input('jobId'),
+            'teamId' => Auth::user()->team,
+            'path' => $filePath, // Save the file path in the database
+        ];
+    
+        // Create a new record in the 'assesment_documents' table
+        SupportingDocuments::create($formData);
+    
+        // Redirect back with a success message
+        return redirect()->back()->with('message', 'File uploaded and data inserted successfully.');
     }
     
 
@@ -503,27 +435,14 @@ class UploadModelController extends Controller
     public function extractRatingsFromExcel(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls|max:51200', // 50MB max
+            'file' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
         ]);
 
         try {
             $file = $request->file('file');
             
-            // Use robust file upload service for temporary processing
-            $uploadResult = $this->fileUploadService->uploadSingleFile(
-                $file,
-                'temp',
-                [
-                    'allowed_extensions' => ['xlsx', 'xls'],
-                    'max_size' => 50 * 1024 * 1024, // 50MB
-                    'prefix' => 'excel_extract'
-                ]
-            );
-
-            $tempFilePath = storage_path('app/public/' . $uploadResult['file_path']);
-            
             // Read Excel data to extract ratings
-            $excelData = Excel::toArray(null, $tempFilePath);
+            $excelData = Excel::toArray(null, $file);
             $rows = $excelData[0]; // Get first sheet data
             
             Log::info('Total rows in Excel: ' . count($rows));
@@ -552,10 +471,6 @@ class UploadModelController extends Controller
             // Check if this assessment type already exists
             $existingUploadModels = UploadModel::where('type', $assessmentType)->count();
             if ($existingUploadModels > 0) {
-                // Clean up temp file
-                if (file_exists($tempFilePath)) {
-                    unlink($tempFilePath);
-                }
                 return response()->json([
                     'success' => false,
                     'message' => "Assessment tool of type '{$assessmentType}' already exists. Please delete the existing tool first or choose a different assessment type."
@@ -605,11 +520,6 @@ class UploadModelController extends Controller
             
             // Overall ratings should be added manually by the user
             $uniqueOverallRatings = [];
-
-            // Clean up temp file
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
-            }
             
             return response()->json([
                 'success' => true,
@@ -633,7 +543,7 @@ class UploadModelController extends Controller
     public function uploadModelsStore(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls|max:51200', // 50MB max
+            'file' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB max
             'riskRatingData' => 'required|json',
             'overallRatingData' => 'required|json'
         ]);
@@ -652,24 +562,13 @@ class UploadModelController extends Controller
             if (empty($riskRatingData)) {
                 throw new \Exception('Risk rating data is required.');
             }
-
-            // Use robust file upload service
-            $uploadResult = $this->fileUploadService->uploadSingleFile(
-                $file,
-                'temp',
-                [
-                    'allowed_extensions' => ['xlsx', 'xls'],
-                    'max_size' => 50 * 1024 * 1024, // 50MB
-                    'prefix' => 'upload_model'
-                ]
-            );
-
-            $tempFilePath = storage_path('app/public/' . $uploadResult['file_path']);
+            
+            // Overall rating data is optional
 
             // Get assessment type from Excel file
             $firstRow = Excel::toArray(function ($reader) {
                 $reader->limit(1); // Only read the first row
-            }, $tempFilePath)[0][1]; // Access the first row of the first sheet
+            }, $file)[0][1]; // Access the first row of the first sheet
 
             
             $assessmentType = $firstRow['11']; // Get the type from excel
@@ -678,11 +577,11 @@ class UploadModelController extends Controller
             // Check if this assessment type already exists
             $existingUploadModels = UploadModel::where('type', $assessmentType)->count();
             if ($existingUploadModels > 0) {
-                throw new \Exception("Assessment tool of type '{$assessmentType}' already exists. Please delete the existing tool first or choose a different assessment type.");
+                return back()->with('error', "Assessment tool of type '{$assessmentType}' already exists. Please delete the existing tool first or choose a different assessment type.");
             }
             
             // Import the excel data first
-            Excel::import(new QuestionImport, $tempFilePath);
+            Excel::import(new QuestionImport, $file);
             Log::info('Excel import completed');
             
             // Delete any records with null type
@@ -731,11 +630,6 @@ class UploadModelController extends Controller
             // Check if we actually saved some risk ratings (overall ratings are optional)
             if ($riskRatingSaved === 0) {
                 throw new \Exception("Failed to save risk rating data. Risk ratings saved: {$riskRatingSaved}");
-            }
-
-            // Clean up temporary file
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
             }
 
             DB::commit();
@@ -793,57 +687,6 @@ class UploadModelController extends Controller
             DB::rollback();
             Log::error('Error deleting upload model: ' . $e->getMessage());
             return back()->with('error', 'Error deleting upload model: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Test upload endpoint for robustness testing
-     */
-    public function testUpload(Request $request)
-    {
-        try {
-            $files = $request->file('files');
-            if (!$files) {
-                return response()->json(['error' => 'No files provided'], 400);
-            }
-
-            $results = [];
-            $fileArray = is_array($files) ? $files : [$files];
-
-            foreach ($fileArray as $file) {
-                try {
-                    $result = $this->fileUploadService->uploadSingleFile(
-                        $file,
-                        'test-uploads',
-                        [
-                            'max_file_size' => 50 * 1024 * 1024, // 50MB
-                            'allowed_extensions' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'txt'],
-                        ]
-                    );
-
-                    $results[] = [
-                        'name' => $file->getClientOriginalName(),
-                        'size' => $file->getSize(),
-                        'status' => 'success',
-                        'path' => $result['path'],
-                        'message' => 'File uploaded successfully'
-                    ];
-
-                } catch (\Exception $e) {
-                    $results[] = [
-                        'name' => $file->getClientOriginalName(),
-                        'size' => $file->getSize(),
-                        'status' => 'error',
-                        'message' => $e->getMessage()
-                    ];
-                }
-            }
-
-            return response()->json($results);
-
-        } catch (\Exception $e) {
-            Log::error('Test upload error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }

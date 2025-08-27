@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\FileUploadService;
 
 class CleanupTempFiles extends Command
 {
@@ -12,36 +11,20 @@ class CleanupTempFiles extends Command
      *
      * @var string
      */
-    protected $signature = 'files:cleanup-temp {--hours=24 : Files older than this many hours will be deleted}';
+    protected $signature = 'app:cleanup-temp-files';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Clean up temporary upload files older than specified hours';
-
-    protected $fileUploadService;
-
-    public function __construct(FileUploadService $fileUploadService)
-    {
-        parent::__construct();
-        $this->fileUploadService = $fileUploadService;
-    }
+    protected $description = 'Command description';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $hours = $this->option('hours');
-        
-        $this->info("Cleaning up temporary files older than {$hours} hours...");
-        
-        $deletedCount = $this->fileUploadService->cleanupTempFiles($hours);
-        
-        $this->info("Successfully cleaned up {$deletedCount} temporary files.");
-        
-        return Command::SUCCESS;
+        //
     }
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
-import RobustFileUpload from './RobustFileUpload';
+import { Inertia } from '@inertiajs/inertia';
 
 export default function UploadModelCreate() {
     const { user, flash } = usePage().props;
@@ -15,16 +14,15 @@ export default function UploadModelCreate() {
     const [extractedData, setExtractedData] = useState(null);
     const [step, setStep] = useState(1); // 1: File Upload, 2: Review Ratings, 3: Final Upload
 
-    // Handle file upload from robust component
-    const handleFileUpload = (files) => {
-        if (files && files.length > 0) {
-            setUploadedFile(files[0]); // Take first file for Excel upload
-            setErrorMessage(''); // Clear any previous errors when a new file is selected
-            setExtractedData(null); // Clear extracted data
-            setStep(1); // Reset to step 1
-            setRiskRatingData([]); // Clear existing rating data
-            setOverallRatingData([]);
-        }
+    // Handle file upload
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        setUploadedFile(file);
+        setErrorMessage(''); // Clear any previous errors when a new file is selected
+        setExtractedData(null); // Clear extracted data
+        setStep(1); // Reset to step 1
+        setRiskRatingData([]); // Clear existing rating data
+        setOverallRatingData([]);
     };
 
     // Extract ratings from uploaded Excel file
@@ -118,8 +116,7 @@ export default function UploadModelCreate() {
         setIsUploading(true);
         setErrorMessage(''); // Clear any previous errors
 
-        router.post('/upload-models', formData, {
-            forceFormData: true,
+        Inertia.post('/upload-models', formData, {
             onStart: () => {
                 console.log('Uploading file...');
             },
@@ -129,7 +126,7 @@ export default function UploadModelCreate() {
             },
             onSuccess: () => {
                 // Redirect to upload models list on success
-                router.get('/upload-models');
+                Inertia.get('/upload-models');
             },
             onError: (error) => {
                 console.error('Error uploading file:', error);
@@ -269,7 +266,7 @@ export default function UploadModelCreate() {
                     {/* Back Button */}
                     <div className="mb-6">
                         <button
-                            onClick={() => router.get('/upload-models')}
+                            onClick={() => Inertia.get('/upload-models')}
                             className="inline-flex items-center px-4 py-2 bg-gray-500 text-white font-medium rounded-lg transition-all duration-200 hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 shadow-md hover:shadow-lg"
                         >
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -292,31 +289,37 @@ export default function UploadModelCreate() {
                                     </div>
                                     <div className="ml-3">
                                         <p className="text-sm text-blue-700">
-                                            <strong>Robust Upload System:</strong> Our enhanced upload system now supports large files up to 50MB, 
-                                            provides progress tracking, validates file types and sizes, and includes error handling with retry capabilities. 
-                                            The system will automatically extract unique risk ratings from your Excel file and match them with their corresponding marks and colors.
+                                            <strong>New Automated Process:</strong> Upload your Excel file and the system will automatically extract unique risk ratings. 
+                                            The system will find all unique values from the 'risk_rating' column and match them with their corresponding 'mark' and 'color' values from the same rows.
+                                            Overall ratings will be added manually by you. Only unique risk_rating values will be included (duplicates will be filtered out automatically).
                                         </p>
                                     </div>
                                 </div>
                             </div>
-
-                            <RobustFileUpload
-                                onFilesSelected={handleFileUpload}
-                                maxFiles={1}
-                                maxFileSize={50 * 1024 * 1024} // 50MB
-                                allowedTypes={['xlsx', 'xls']}
-                                multiple={false}
-                                disabled={isExtractingRatings || isUploading}
-                                className="mb-4"
-                            />
-
+                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                <div className="space-y-1 text-center">
+                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <div className="flex text-sm text-gray-600">
+                                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                            <span>Upload a file</span>
+                                            <input 
+                                                type="file" 
+                                                accept=".xls,.xlsx" 
+                                                onChange={handleFileUpload}
+                                                className="sr-only" 
+                                            />
+                                        </label>
+                                        <p className="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p className="text-xs text-gray-500">Excel files only (.xls, .xlsx)</p>
+                                </div>
+                            </div>
                             {uploadedFile && (
                                 <div className="mt-4">
                                     <div className="text-sm text-gray-600 mb-3">
                                         Selected file: <span className="font-medium">{uploadedFile.name}</span>
-                                        <span className="ml-2 text-gray-500">
-                                            ({Math.round(uploadedFile.size / 1024 / 1024 * 100) / 100} MB)
-                                        </span>
                                     </div>
                                     <button
                                         onClick={handleExtractRatings}
@@ -329,7 +332,7 @@ export default function UploadModelCreate() {
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                 </svg>
-                                                Processing Large File...
+                                                Extracting Ratings...
                                             </>
                                         ) : (
                                             'Extract Ratings from Excel'

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import FolderTree from '../../Components/FolderTree';
-import '@/../resources/css/minimal-scrollbar.css';
 
 export default function Sidebar({ sideBarData = { children: [] } }) {
   const [isMinimized, setIsMinimized] = useState(false);
@@ -16,8 +15,7 @@ export default function Sidebar({ sideBarData = { children: [] } }) {
     <div
       className={`transition-all duration-300 ${
         isMinimized ? 'w-16' : 'w-64'
-      } flex flex-col bg-gray-50 border-r border-gray-200 overflow-y-auto scrollbar-thin minimal-scrollbar`}
-      style={{ scrollbarWidth: 'thin', scrollbarColor: '#c7d2fe #f3f4f6', overflowX: 'hidden' }}
+      } flex flex-col bg-gray-50 border-r border-gray-200`}
     >
       <div className="flex justify-end p-2">
         <button

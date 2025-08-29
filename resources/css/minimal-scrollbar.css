@@ -1,0 +1,12 @@
+.minimal-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  background: transparent;
+}
+.minimal-scrollbar::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 4px;
+}
+.minimal-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}

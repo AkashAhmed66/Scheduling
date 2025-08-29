@@ -33,7 +33,7 @@ class AuditDocumentsController extends Controller
             ->with(['children', 'files'])
             ->get();
         
-        return Inertia::render('AuditDocs1', [
+        return Inertia::render('AuditDocs/Index', [
             'rootFolders' => $rootFolders,
             'canManage' => $user->role === 0, // Only roles 0 and 1 can manage
         ]);

@@ -1112,33 +1112,46 @@ export default function AssesmentComponent() {
                   </h4>
                   
                   {/* Facility Image Upload */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Facility Image</label>
-                    <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                          </svg>
-                          <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span> facility image
-                          </p>
-                          <p className="text-xs text-gray-500">PNG, JPG or JPEG</p>
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Facility Image</label>
+                      <div className="flex items-center justify-center w-full">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p className="mb-2 text-sm text-gray-500">
+                              <span className="font-semibold">Click to upload</span> facility image
+                            </p>
+                            <p className="text-xs text-gray-500">PNG, JPG or JPEG</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      {/* Image Preview and Remove Button */}
+                      {assessmentInfo.facilityImage && (
+                        <div className="mt-4 flex flex-col items-center">
+                          <img
+                            src={typeof assessmentInfo.facilityImage === 'string' ? assessmentInfo.facilityImage : URL.createObjectURL(assessmentInfo.facilityImage)}
+                            alt="Facility Preview"
+                            className="h-32 w-auto rounded shadow border mb-2 object-contain"
+                            style={{ maxWidth: '100%' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleInfoChange('facilityImage', null)}
+                            className="mt-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                          >
+                            Remove Image
+                          </button>
                         </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                      </label>
+                      )}
                     </div>
-                    {assessmentInfo.facilityImage && (
-                      <p className="mt-2 text-sm text-green-600">
-                        Selected: {assessmentInfo.facilityImage.name}
-                      </p>
-                    )}
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

@@ -104,13 +104,18 @@ export default function Profile() {
                 <span className="text-sm font-medium text-gray-700">View Jobs</span>
               </a>
               
-              <a href="/create-job" className="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+              <a
+                href="/assesment"
+                className="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+              >
                 <div className="p-3 rounded-full bg-white text-green-600 shadow-sm mb-3">
+                  {/* Assessment/Checklist Icon */}
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <rect x="7" y="4" width="10" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 8h6M9 12h6M9 16h2" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-gray-700">Create Job</span>
+                <span className="text-sm font-medium text-gray-700">Assessment</span>
               </a>
               
               <a href="/calender" className="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">

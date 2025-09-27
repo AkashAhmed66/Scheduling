@@ -39,6 +39,10 @@
         td {
             border: 1px solid black;
             font-size: 14px !important;
+            word-wrap: break-word;
+            white-space: normal;
+            padding: 5px;
+            vertical-align: top;
         }
 
         .company-name {
@@ -176,7 +180,7 @@
         <thead>
             <tr>
                 <th style="background-color: darkorange;" width="5%">NC #</th>
-                <th style="background-color: darkorange;" width="125">Findings</th>
+                <th style="background-color: darkorange;" width="25%">Findings</th>
                 <th style="background-color: darkorange;" width="8%">Risk Rating</th>
                 @if($type == "social" || 
                     $type == "env" ||
@@ -187,7 +191,7 @@
                 @else
                     <th scope="col" style="background-color: darkorange;">Instructions</th>
                 @endif
-                <th style="background-color: darkorange;" width="50">Recommendation</th>
+                <th style="background-color: darkorange;" width="25%">Recommendation</th>
             </tr>
         </thead>
         @if(count($auditAnswerData) > 0)
@@ -204,10 +208,10 @@
     
                     <tr>
                         <td>{{$socialAudit->nc_ref}}</td>
-                        <td>{!! $socialAudit->findings !!}</td>
+                        <td style="word-wrap: break-word; white-space: normal; padding: 5px; vertical-align: top;">{!! strip_tags($socialAudit->findings) !!}</td>
                         <td>{{$socialAudit->rating}}</td>
-                        <td>{{$socialAudit->corrective_action_plan}}</td>
-                        <td>{{$socialAudit->target_completion_date}}</td>
+                        <td style="word-wrap: break-word; white-space: normal; padding: 5px; vertical-align: top;">{{strip_tags($socialAudit->corrective_action_plan)}}</td>
+                        <td style="word-wrap: break-word; white-space: normal; padding: 5px; vertical-align: top;">{{strip_tags($socialAudit->target_completion_date)}}</td>
                     </tr>
                 @php $prevCategory = $socialAudit->category.$socialAudit->sub_category; @endphp
                 @empty

@@ -29,6 +29,7 @@ export default function AssesmentComponent() {
   const [collapsedCategories, setCollapsedCategories] = useState({});
   const [collapsedSubcategories, setCollapsedSubcategories] = useState({});
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [complianceFilter, setComplianceFilter] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [currentRiskRatings, setCurrentRiskRatings] = useState([]);
   const [currentOverallRatings, setCurrentOverallRatings] = useState([]);
@@ -112,11 +113,15 @@ export default function AssesmentComponent() {
     facilityImage: null
   });
 
-  useEffect(() => {
-    setQuestions(question);
-    
+  // Function to update grouped questions based on filter
+  const updateGroupedQuestions = (questionsArray, filter) => {
+    // Filter questions based on compliance filter
+    const filteredQuestions = filter ? 
+      questionsArray.filter(q => q.answer === filter) : 
+      questionsArray;
+
     // Group questions by category and subcategory
-    const grouped = question.reduce((acc, q) => {
+    const grouped = filteredQuestions.reduce((acc, q) => {
       const category = q.category || 'Uncategorized';
       const subcategory = q.subcategory || 'General';
       
@@ -133,7 +138,12 @@ export default function AssesmentComponent() {
     
     setGroupedQuestions(grouped);
     console.log('Grouped questions:', grouped);
+  };
 
+  useEffect(() => {
+    setQuestions(question);
+    updateGroupedQuestions(question, complianceFilter);
+    
     // Set risk ratings and overall ratings for current assessment type
     if (assessment && assessment.type) {
       const filteredRiskRatings = (riskRatings || []).filter(rating => rating.type === assessment.type);
@@ -145,6 +155,13 @@ export default function AssesmentComponent() {
     // Load existing assessment info
     loadAssessmentInfo();
   }, [question, riskRatings, overallRatings, assessment]);
+
+  // Update grouped questions when compliance filter changes
+  useEffect(() => {
+    if (questions.length > 0) {
+      updateGroupedQuestions(questions, complianceFilter);
+    }
+  }, [complianceFilter]);
 
   const loadAssessmentInfo = async () => {
     try {
@@ -687,34 +704,62 @@ export default function AssesmentComponent() {
                 </div>
               </div>
 
-              {/* Right Side - Category Navigation Dropdown */}
-              <div className="relative">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      scrollToCategory(e.target.value);
-                      setSelectedCategory(''); // Reset to show placeholder
-                    }
-                  }}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50 transition-all duration-200 cursor-pointer border-none appearance-none pr-10 min-w-[160px]"
-                  style={{
-                    color: selectedCategory === '' ? '#acafb5ff' : 'white'
-                  }}
-                >
-                  <option value="" disabled style={{color: '#6b7280', backgroundColor: '#f9fafb'}}>
-                    {Object.keys(groupedQuestions).length > 0 ? 'Jump to Category' : 'Loading Categories...'}
-                  </option>
-                  {Object.keys(groupedQuestions).map((category) => (
-                    <option key={category} value={category} style={{color: '#374151'}}>
-                      {category}
+              {/* Right Side - Filter Dropdowns */}
+              <div className="flex gap-3">
+                {/* Compliance Filter Dropdown */}
+                <div className="relative">
+                  <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-medium rounded-lg shadow-md hover:from-teal-600 hover:to-cyan-700 focus:ring-2 focus:ring-teal-400 focus:ring-opacity-50 transition-all duration-200 cursor-pointer border-none min-w-[160px] relative">
+                    <select
+                      value={complianceFilter}
+                      onChange={(e) => setComplianceFilter(e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    >
+                      <option value="">All Questions</option>
+                      <option value="Compliance">Compliance Only</option>
+                      <option value="Non-Compliance">Non-Compliance Only</option>
+                      <option value="Not Applicable">Not Applicable Only</option>
+                    </select>
+                    <span className="flex-1">
+                      {complianceFilter === '' ? 'All Questions' : 
+                       complianceFilter === 'Compliance' ? 'Compliance Only' :
+                       complianceFilter === 'Non-Compliance' ? 'Non-Compliance Only' :
+                       complianceFilter === 'Not Applicable' ? 'Not Applicable Only' : 'All Questions'}
+                    </span>
+                    <svg className="w-4 h-4 text-white ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Category Navigation Dropdown */}
+                <div className="relative">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        scrollToCategory(e.target.value);
+                        setSelectedCategory(''); // Reset to show placeholder
+                      }
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-700 focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50 transition-all duration-200 cursor-pointer border-none appearance-none pr-10 min-w-[160px]"
+                    style={{
+                      color: selectedCategory === '' ? '#acafb5ff' : 'white'
+                    }}
+                  >
+                    <option value="" disabled style={{color: '#6b7280', backgroundColor: '#f9fafb'}}>
+                      {Object.keys(groupedQuestions).length > 0 ? 'Jump to Category' : 'Loading Categories...'}
                     </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none ">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                  </svg>
+                    {Object.keys(groupedQuestions).map((category) => (
+                      <option key={category} value={category} style={{color: '#374151'}}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none ">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>

@@ -68,6 +68,19 @@ export default function AssessmentDocumentComponent() {
       }
     };
 
+    const deleteAllDocuments = (files) => {
+      files.forEach((file) => {
+        Inertia.delete('/delete-assesment-document/' + file.id, {
+          onSuccess: () => {
+            setDocuments((prev) => prev.filter((doc) => doc.id !== file.id));
+          },
+          onError: (errors) => {
+            console.error('Delete failed:', errors);
+          },
+        });
+      });
+    };
+
     const downloadDocumentsAsZip = async (docName, files) => {
         try {
             console.log("files", files);
@@ -223,27 +236,19 @@ export default function AssessmentDocumentComponent() {
                               
                               <div className="border-r border-gray-300 h-6"></div>
                               
-                              <div className="dropdown relative">
-                                <button className="text-red-600 hover:text-red-900 inline-flex items-center">
-                                  <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                  </svg>
-                                  <span>Delete Files</span>
-                                </button>
-                                <div className="dropdown-content absolute hidden bg-white mt-2 p-2 shadow-lg rounded-md w-64 right-0 z-10 border border-gray-200">
-                                  <div className="py-1 text-sm text-gray-700 space-y-1">
-                                    {group.files.map((file) => (
-                                      <button
-                                        key={file.id}
-                                        onClick={() => deleteDocument(file.id)}
-                                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md transition-colors duration-150"
-                                      >
-                                        Delete {file.fileName}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
+                              <button 
+                                onClick={() => {
+                                  if (confirm('Are you sure you want to delete all files in this document group?')) {
+                                    deleteAllDocuments(group.files);
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-900 inline-flex items-center"
+                              >
+                                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                <span>Delete All</span>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -356,13 +361,6 @@ export default function AssessmentDocumentComponent() {
             </div>
           </div>
         )}
-        
-        {/* CSS for dropdown functionality */}
-        <style jsx>{`
-          .dropdown:hover .dropdown-content {
-            display: block;
-          }
-        `}</style>
       </div>
     );
 }

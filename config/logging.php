@@ -126,6 +126,14 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+        //add a simple daily custom log
+        'custom_daily' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/custom.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
 
     ],
 

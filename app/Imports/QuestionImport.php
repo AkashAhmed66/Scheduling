@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\UploadModel; // Assuming UploadModel is your model to store the data
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -16,12 +17,13 @@ class QuestionImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
+        Log::channel('custom_daily')->info('Row data received for import:', $row);
         return new UploadModel([
             'question'      => $row['question'],
             'instruction'   => $row['instruction'] ?? null,
             'ncref'         => $row['ncref'],
             'category'      => $row['category'],
-            'subcategory'   => $row['subcategory'],
+            'subcategory'   => $row['subcategory'] ?? $row['category'],
             'mark'          => $row['mark'],
             'color'         => $row['color'],
             'answer'        => $row['answer'],

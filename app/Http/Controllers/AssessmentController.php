@@ -706,7 +706,8 @@ class AssessmentController extends Controller
                 'borderColor' => 'CCCCCC',
                 'cellMargin' => 80,
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
             $this->addStyledTableRow($coverTable, 'Audit Company:', $assessmentInfo && $assessmentInfo->audit_company ? $assessmentInfo->audit_company : 'Not Specified', 'F8F8F8');
@@ -739,6 +740,7 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
+                'unit' => 'pct',
                 'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
@@ -838,7 +840,8 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
             // Header row for facility
@@ -867,7 +870,8 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
             // Header row for employee
@@ -892,7 +896,8 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             $overviewHeaderRow = $overviewTable->addRow();
             $overviewHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('General Assessment Overview', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
@@ -907,7 +912,8 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             $practicesHeaderRow = $practicesTable->addRow();
             $practicesHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('Facility Good Practices', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
@@ -922,7 +928,8 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             $workerInterviewHeaderRow = $workerInterviewTable->addRow();
             $workerInterviewHeaderRow->addCell(null, ['bgColor' => 'FFD966', 'gridSpan' => 1, 'valign' => 'center'])->addText('Details of Workers Interview', ['bold' => true], ['alignment' => 'center', 'spaceBefore' => 0, 'spaceAfter' => 0]);
@@ -942,7 +949,8 @@ class AssessmentController extends Controller
                         'borderSize' => 6,
                         'borderColor' => '000000',
                         'width' => 100 * 50,
-                        'unit' => 'pct'
+                        'unit' => 'pct',
+                        'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
                     ]);
                     
                     // Category header row
@@ -970,7 +978,8 @@ class AssessmentController extends Controller
                                 'borderSize' => 6,
                                 'borderColor' => '000000',
                                 'width' => 100 * 50,
-                                'unit' => 'pct'
+                                'unit' => 'pct',
+                                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
                             ]);
                             
                             // Finding header row with ID and risk rating
@@ -1031,7 +1040,8 @@ class AssessmentController extends Controller
                 'borderSize' => 6,
                 'borderColor' => '000000',
                 'width' => 100 * 50,
-                'unit' => 'pct'
+                'unit' => 'pct',
+                'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
             ]);
             
             // Header row for additional information

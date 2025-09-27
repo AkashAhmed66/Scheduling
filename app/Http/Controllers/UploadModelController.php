@@ -569,7 +569,7 @@ class UploadModelController extends Controller
             $firstRow = Excel::toArray(function ($reader) {
                 $reader->limit(1); // Only read the first row
             }, $file)[0][1]; // Access the first row of the first sheet
-
+            
             
             $assessmentType = $firstRow['11']; // Get the type from excel
             Log::info('Assessment type from Excel: ' . $assessmentType);

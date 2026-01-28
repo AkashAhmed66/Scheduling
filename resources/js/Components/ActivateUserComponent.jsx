@@ -49,8 +49,8 @@ export default function ActivateUserComponent() {
   ];
 
   return (
-    <div>
-      <div className="w-full">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl w-full">
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
             <h2 className="text-2xl font-bold">Activate User</h2>

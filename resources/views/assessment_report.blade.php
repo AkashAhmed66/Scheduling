@@ -795,6 +795,9 @@
                                     // Determine text color for readability
                                     $textColor = in_array($color, ['yellow', 'orange']) ? 'black' : 'white';
                                     
+                                    // Get NC ref from finding data or generate one
+                                    $ncRef = isset($finding['ncref']) ? $finding['ncref'] : ($categoryPrefix . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT));
+                                    
                                     // Generate finding ID
                                     $categoryPrefix = strtoupper(substr($category, 0, 2));
                                     $findingId = $categoryPrefix . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT);
@@ -802,7 +805,7 @@
                                 
                                 <table>
                                     <tr style="border: 0px solid black;">
-                                        <td width="20%">{{ $findingId }}</td>
+                                        <td width="20%">{{ $ncRef }}</td>
                                         <td style="background-color: {{ $color }}; color: {{ $textColor }}" width="20%">{{ $riskRating }}</td>
                                         <td style="border: 0px solid black"></td>
                                     </tr>

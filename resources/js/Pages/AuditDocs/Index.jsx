@@ -140,17 +140,17 @@ export default function Index({ rootFolders, canManage }) {
                 loadFolder(folder.id)
                 handleDownArrowClick(e)
               }}
-              className="flex items-center flex-1 cursor-pointer"
+              className="flex items-center flex-1 cursor-pointer min-w-0"
             >
-              <svg className="h-5 w-5 text-yellow-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
-              <span className="truncate text-sm">{folder.name}</span>
+              <span className="truncate text-sm" title={folder.name}>{folder.name}</span>
             </div>
             
             {canManage && (
-              <div className="relative group">
-                <button className="text-gray-500 hover:text-gray-700 p-1">
+              <div className="relative group flex-shrink-0">
+                <button className="text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-200 rounded">
                   <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                   </svg>
@@ -204,7 +204,7 @@ export default function Index({ rootFolders, canManage }) {
         setNewFolderName('');
         setShowNewFolderDialog(false);
         // Fetch updated folder list
-        await fetchAllFolders(currentFolder.id);
+        await fetchAllFolders(currentFolder?.id);
       }
     } catch (error) {
       console.error("Error creating folder:", error);
@@ -272,7 +272,7 @@ export default function Index({ rootFolders, canManage }) {
       setFolderToRename(null);
       setNewName('');
       // Fetch updated folder list
-      await fetchAllFolders(updatedFolder.parent_id);
+      await fetchAllFolders(updatedFolder?.parent_id);
     } catch (error) {
       console.error("Error renaming folder:", error);
       setUploadError(error.response?.data?.message || "Failed to rename folder");
@@ -320,7 +320,7 @@ export default function Index({ rootFolders, canManage }) {
         // Remove from local state for immediate feedback
         setFolders(folders.filter(folder => folder.id !== deleteTarget.folderId));
         // Fetch updated folder list
-        await fetchAllFolders(deleteTarget.parent_id);
+        await fetchAllFolders(deleteTarget?.parent_id);
       } else if (deleteTarget.type === 'files') {
         await axios.delete('/api/audit-docs/files', {
           data: { file_ids: Array.isArray(deleteTarget.fileIds) ? deleteTarget.fileIds : [deleteTarget.fileIds] }

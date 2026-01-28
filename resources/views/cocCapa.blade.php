@@ -180,8 +180,8 @@
         <thead>
             <tr>
                 <th style="background-color: darkorange;" width="5%">NC #</th>
-                <th style="background-color: darkorange;" width="25%">Findings</th>
-                <th style="background-color: darkorange;" width="8%">Risk Rating</th>
+                <th style="background-color: darkorange;" width="23%">Findings</th>
+                <th style="background-color: darkorange;" width="12%">Risk Rating</th>
                 @if($type == "social" || 
                     $type == "env" ||
                     $type == "safety" ||
@@ -189,7 +189,7 @@
                 )
                     <th scope="col" style="background-color: darkorange;">Legal Reference</th>
                 @else
-                    <th scope="col" style="background-color: darkorange;">Instructions</th>
+                    <th scope="col" style="background-color: darkorange;">Legal Reference</th>
                 @endif
                 <th style="background-color: darkorange;" width="25%">Recommendation</th>
             </tr>
@@ -221,7 +221,6 @@
         @else
             <tbody>
                 <tr>
-                    <td style="text-align:center">---</td>
                     <td style="text-align:center">---</td>
                     <td style="text-align:center">---</td>
                     <td style="text-align:center">---</td>

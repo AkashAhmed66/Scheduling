@@ -29,6 +29,9 @@ Route::middleware('auth')->group(function () {
     // Reset Assessment Route
     Route::post('/reset-assessment/{assessmentId}', [UploadModelController::class, 'resetAssessment'])->name('reset-assessment');
     
+    // Delete Assessment Route (Admin only)
+    Route::delete('/delete-assessment/{id}', [UploadModelController::class, 'deleteAssessment'])->name('delete-assessment');
+    
     // Assessment Info Routes
     Route::post('/assessment-info', [AssessmentInfoController::class, 'store'])->name('assessment-info.store');
     Route::get('/assessment-info/{assessmentId}', [AssessmentInfoController::class, 'show'])->name('assessment-info.show');

@@ -713,11 +713,12 @@ export default function AssesmentComponent() {
                       value={complianceFilter}
                       onChange={(e) => setComplianceFilter(e.target.value)}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      style={{ color: '#000000' }}
                     >
-                      <option value="">All Questions</option>
-                      <option value="Compliance">Compliance Only</option>
-                      <option value="Non-Compliance">Non-Compliance Only</option>
-                      <option value="Not Applicable">Not Applicable Only</option>
+                      <option value="" style={{ color: '#000000' }}>All Questions</option>
+                      <option value="Compliance" style={{ color: '#000000' }}>Compliance Only</option>
+                      <option value="Non-Compliance" style={{ color: '#000000' }}>Non-Compliance Only</option>
+                      <option value="Not Applicable" style={{ color: '#000000' }}>Not Applicable Only</option>
                     </select>
                     <span className="flex-1">
                       {complianceFilter === '' ? 'All Questions' : 
@@ -838,12 +839,12 @@ export default function AssesmentComponent() {
                 <thead className="sticky z-50" style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Ques Ref</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-1/3">Question</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-1/4">Question</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Instruction</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Answer</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Findings</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-56">Risk Rating</th>
-                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Legal Reference / Standard</th>
+                    <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-48">Legal Ref./Standard</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Recommendation</th>
                   </tr>
                 </thead>

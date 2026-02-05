@@ -7,6 +7,9 @@ export default function AssessmentsList() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [assessmentToDelete, setAssessmentToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const itemsPerPage = 5; // Adjust the number of items per page
 
     // Filter assessments based on search input
@@ -34,6 +37,45 @@ export default function AssessmentsList() {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page);
         }
+    };
+
+    // Handle delete button click
+    const handleDeleteClick = (e, assessment) => {
+        e.stopPropagation(); // Prevent row click from triggering
+        setAssessmentToDelete(assessment);
+        setShowDeleteModal(true);
+    };
+
+    // Confirm delete
+    const confirmDelete = async () => {
+        if (!assessmentToDelete) return;
+        
+        setIsDeleting(true);
+        try {
+            await Inertia.delete(`/delete-assessment/${assessmentToDelete.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setShowDeleteModal(false);
+                    setAssessmentToDelete(null);
+                },
+                onError: (errors) => {
+                    console.error('Delete failed:', errors);
+                    alert('Failed to delete assessment. Please try again.');
+                },
+                onFinish: () => {
+                    setIsDeleting(false);
+                }
+            });
+        } catch (error) {
+            console.error('Delete error:', error);
+            setIsDeleting(false);
+        }
+    };
+
+    // Cancel delete
+    const cancelDelete = () => {
+        setShowDeleteModal(false);
+        setAssessmentToDelete(null);
     };
 
     return (
@@ -88,6 +130,9 @@ export default function AssessmentsList() {
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ref ID</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Created At</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Updated At</th>
+                                        {user.role == '0' && (
+                                            <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Actions</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -106,11 +151,24 @@ export default function AssessmentsList() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{assessment.searchId}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(assessment.created_at).toLocaleString()}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(assessment.updated_at).toLocaleString()}</td>
+                                                {user.role == '0' && (
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        <button
+                                                            onClick={(e) => handleDeleteClick(e, assessment)}
+                                                            className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-medium rounded-md transition-all duration-200 hover:from-red-600 hover:to-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-sm hover:shadow-md"
+                                                        >
+                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                            </svg>
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                                            <td colSpan={user.role == '0' ? "7" : "6"} className="px-6 py-4 text-center text-sm text-gray-500">
                                                 <div className="py-8">
                                                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -154,6 +212,71 @@ export default function AssessmentsList() {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        {/* Background overlay */}
+                        <div 
+                            className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+                            aria-hidden="true"
+                            onClick={cancelDelete}
+                        ></div>
+
+                        {/* Center modal */}
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="sm:flex sm:items-start">
+                                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                            Delete Assessment
+                                        </h3>
+                                        <div className="mt-2">
+                                            <p className="text-sm text-gray-500">
+                                                Are you sure you want to delete this assessment? This action cannot be undone.
+                                            </p>
+                                            {assessmentToDelete && (
+                                                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                                                    <p className="text-sm font-medium text-gray-700">Assessment Details:</p>
+                                                    <p className="text-xs text-gray-600 mt-1">Type: {assessmentToDelete.type}</p>
+                                                    <p className="text-xs text-gray-600">Ref ID: {assessmentToDelete.searchId}</p>
+                                                    <p className="text-xs text-gray-600">Report No: {assessmentToDelete.assessment_info?.report_no || 'Not Set'}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                    type="button"
+                                    disabled={isDeleting}
+                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={confirmDelete}
+                                >
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isDeleting}
+                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={cancelDelete}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

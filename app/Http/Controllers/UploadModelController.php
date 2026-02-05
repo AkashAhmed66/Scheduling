@@ -9,6 +9,7 @@ use App\Imports\QuestionImport;
 use App\Models\AssesmentDocuments;
 use App\Models\Assessment;
 use App\Models\AssessmentDraft;
+use App\Models\AssessmentInfo;
 use App\Models\SupportingDocuments;
 use App\Models\RiskRating;
 use App\Models\OverallRating;
@@ -84,6 +85,51 @@ class UploadModelController extends Controller
                 'success' => false,
                 'message' => 'Failed to reset assessment: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Delete an assessment and all its related data.
+     * Only accessible by admin users (role = 0).
+     */
+    public function deleteAssessment($id)
+    {
+        try {
+            // Check if user is admin
+            $user = Auth::user();
+            if ($user->role != '0') {
+                return redirect()->back()->with('error', 'Unauthorized. Only administrators can delete assessments.');
+            }
+
+            // Find the assessment
+            $assessment = Assessment::findOrFail($id);
+            
+            // Delete related records
+            // Delete assessment drafts
+            AssessmentDraft::where('assesment_id', $id)->delete();
+            
+            // Delete assessment documents
+            // AssesmentDocuments::where('assesment_id', $id)->delete();
+            
+            // Delete supporting documents
+            // SupportingDocuments::where('assessment_id', $id)->delete();
+            
+            // Delete staff information
+            StaffInformation::where('assessment_id', $id)->delete();
+            
+            // Delete assessment info (if exists)
+            if ($assessment->assessmentInfo) {
+                $assessment->assessmentInfo->delete();
+            }
+            
+            // Finally, delete the assessment itself
+            $assessment->delete();
+            
+            return redirect()->route('home')->with('success', 'Assessment deleted successfully.');
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to delete assessment: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete assessment: ' . $e->getMessage());
         }
     }
 

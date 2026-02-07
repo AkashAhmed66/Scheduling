@@ -164,6 +164,7 @@
             overflow: hidden;
             clear: both;
             min-height: 90px;
+            margin-bottom: 10px;
         }
 
         .details-left {
@@ -182,9 +183,12 @@
             border: 1px solid black;
             padding: 9px;
             margin-bottom: 6px;
-            min-height: 45px;
+            min-height: 70px;
             box-sizing: border-box;
             background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .detail-label {
@@ -383,25 +387,39 @@
             <div class="details-section">
                 <div class="details-left">
                     <div class="detail-box">
-                        <div class="detail-label">
-                            Certificate No: {{ 
+                        <div class="detail-label" style="font-size: 12px;">
+                            <strong>Certificate No:</strong> {{ 
                                 $certificateNo ?? 'Not Specified'
                             }}
                         </div>
-                        <div class="detail-label">Assessment Date: {{ $assessmentDate ?? 'Not Specified' }}</div>
-                        <div class="detail-label">Overall Score: {{ round($chartData['overallPercentage'] ?? 0, 1) }}%</div>
+                        <div class="detail-label" style="font-size: 12px;"><strong>Assessment Date:</strong> {{ $assessmentDate ?? 'Not Specified' }}</div>
+                        <div class="detail-label" style="font-size: 12px;"><strong>Overall Score:</strong> {{ round($chartData['overallPercentage'] ?? 0, 1) }}%</div>
                     </div>
                 </div>
                 <div class="details-right">
                     <div class="detail-box">
-                        <div class="detail-label" style="margin-bottom: 8px;"><strong>Overall Rating Legend</strong></div>
+                        <div class="detail-label" style="margin-bottom: 8px;"><strong>Rating Criteria</strong></div>
                         @if(!empty($overallRatings))
-                            @foreach($overallRatings as $rating)
-                                <div class="color-summary-item">
-                                    <span class="color-indicator" style="background-color: {{ $rating['color'] }};"></span>
-                                    <span style="display: inline-flex; align-items: center;">{{ $rating['label'] }} (&gt;={{ $rating['percentage'] }}%)</span>
-                                </div>
-                            @endforeach
+                            @php
+                                $chunks = array_chunk($overallRatings, 2);
+                                $maxRows = max(array_map('count', $chunks));
+                            @endphp
+                            <table style="width: 100%; border-collapse: collapse;">
+                                @for($row = 0; $row < $maxRows; $row++)
+                                    <tr>
+                                        @foreach($chunks as $chunk)
+                                            <td style="border: none; padding: 0; vertical-align: top;">
+                                                @if(isset($chunk[$row]))
+                                                    <div class="color-summary-item" style="display: flex; margin-bottom: 3px; align-items: center;">
+                                                        <span class="color-indicator" style="background-color: {{ $chunk[$row]['color'] }};"></span>
+                                                        <span style="display: inline-flex; align-items: center;">{{ $chunk[$row]['label'] }} (&gt;={{ $chunk[$row]['percentage'] }}%)</span>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endfor
+                            </table>
                         @endif
                     </div>
                 </div>
@@ -414,7 +432,6 @@
                     <div style="margin-top: 5px;">                        
                         <!-- Section Rating Bars (like PDF) -->
                         @if(isset($scores['category_percentages']) && count($scores['category_percentages']) > 0)
-                            <div style="font-size: 9px; margin: 8px 0 3px 0;">Section Performance:</div>
                             @foreach($scores['category_percentages'] as $category => $percentage)
                                 <div style="margin-bottom: 3px;">
                                     <div style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 1px;">

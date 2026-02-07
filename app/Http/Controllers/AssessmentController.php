@@ -521,7 +521,7 @@ class AssessmentController extends Controller
                 'assessmentInfo' => $assessmentInfo,
                 'facilityName' => $assessmentInfo->facility_name ?? 'N/A',
                 'facilityAddress' => $assessmentInfo->facility_address ?? 'N/A',
-                'reportHeading' => $assessmentInfo->report_heading ?? 'Certificate of Assessment',
+                'reportHeading' => $assessmentInfo->assessment_type ?? 'Certificate of Assessment',
                 'certificateNo' => $assessmentInfo->report_no ?? 'N/A',
                 'assessmentDate' => $assessmentDate,
                 'overallRatings' => $overallRatingData,

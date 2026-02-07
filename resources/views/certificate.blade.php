@@ -412,7 +412,7 @@
                                                 @if(isset($chunk[$row]))
                                                     <div class="color-summary-item" style="display: flex; margin-bottom: 3px; align-items: center;">
                                                         <span class="color-indicator" style="background-color: {{ $chunk[$row]['color'] }};"></span>
-                                                        <span style="display: inline-flex; align-items: center;">{{ $chunk[$row]['label'] }} (&gt;={{ $chunk[$row]['percentage'] }}%)</span>
+                                                        <span style="display: inline-flex; align-items: center;">{{ $chunk[$row]['label'] }} (&lt;={{ $chunk[$row]['percentage'] }}%)</span>
                                                     </div>
                                                 @endif
                                             </td>

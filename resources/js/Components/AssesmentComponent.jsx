@@ -836,7 +836,7 @@ export default function AssesmentComponent() {
 
             <div className="overflow-x-auto shadow-md rounded-lg">
               <table className="w-full bg-white rounded-lg overflow-hidden">
-                <thead className="sticky z-50" style={{ position: 'sticky', top: '0px', backgroundColor: 'white' }}>
+                <thead className="sticky z-50" style={{ position: 'sticky', top: '64px', backgroundColor: 'white' }}>
                   <tr className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-32">Ques Ref</th>
                     <th className="py-3 px-4 text-center text-xs font-medium uppercase tracking-wider w-1/4">Question</th>
@@ -852,7 +852,7 @@ export default function AssesmentComponent() {
                   {Object.keys(groupedQuestions).map((category) => (
                     <React.Fragment key={category}>
                       {/* Category Header - Show only once per category */}
-                      <tr id={`category-${category}`} className="bg-gradient-to-r from-indigo-500 to-purple-500 sticky z-40" style={{ top: '48px' }}>
+                      <tr id={`category-${category}`} className="bg-gradient-to-r from-indigo-500 to-purple-500 sticky z-40" style={{ top: '112px' }}>
                         <td colSpan="8" className="py-2 px-6 text-left font-bold text-base text-white uppercase tracking-wide border-b-2 border-indigo-300 shadow-md">
                           <div 
                             className="flex items-center gap-2 cursor-pointer hover:bg-white hover:bg-opacity-10 rounded p-1 -m-1 transition-colors"
@@ -881,7 +881,7 @@ export default function AssesmentComponent() {
                         return (
                           <React.Fragment key={subcategoryKey}>
                             {/* Subcategory Header */}
-                            <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky z-30" style={{ top: '80px' }}>
+                            <tr className="bg-gradient-to-r from-indigo-100 to-purple-100 border-l-4 border-indigo-400 sticky z-30" style={{ top: '144px' }}>
                               <td colSpan="8" className="py-2 px-6 text-left font-semibold text-sm text-indigo-800 border-b border-indigo-200 shadow-sm">
                                 <div 
                                   className="flex items-center gap-2 pl-4 cursor-pointer hover:bg-indigo-200 hover:bg-opacity-50 rounded p-1 -m-1 transition-colors"

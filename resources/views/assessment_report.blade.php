@@ -7,10 +7,10 @@
         @page {
             margin: 50px 50px 50px 50px;
         }
-        body{
+        body {
             margin-bottom: 50px;
             margin-top: 70px;
-            font-family: Arial, sans-serif;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
         }
 
         p:last-child {

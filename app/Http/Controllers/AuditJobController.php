@@ -238,16 +238,13 @@ class AuditJobController extends Controller
             }
         }
         
-        // Add field staff names to each job and ensure proper date format
-        $jobs = $jobs->map(function ($job) {
+        // Expand jobs to show on every date between auditStartDate and auditEndDate
+        $expandedJobs = collect();
+        
+        $jobs->each(function ($job) use (&$expandedJobs) {
             $fieldStaffNames = $job->staffInformation->pluck('user.name')->filter()->toArray();
             $job->fieldStaffNames = $fieldStaffNames;
             $job->totalStaffDays = $job->staffInformation->sum('stuff_day');
-            
-            // Ensure auditEndDate is in proper format (Y-m-d)
-            if ($job->auditEndDate) {
-                $job->auditEndDate = date('Y-m-d', strtotime($job->auditEndDate));
-            }
             
             // Get auditor and reviewer names
             if ($job->auditors) {
@@ -264,11 +261,34 @@ class AuditJobController extends Controller
                 $job->reviewerName = 'Not Assigned';
             }
             
-            return $job;
+            // If job has both start and end dates, expand it across all dates
+            if ($job->auditStartDate && $job->auditEndDate) {
+                $startDate = new \DateTime($job->auditStartDate);
+                $endDate = new \DateTime($job->auditEndDate);
+                
+                // Create a period between start and end dates
+                $interval = new \DateInterval('P1D');
+                $dateRange = new \DatePeriod($startDate, $interval, $endDate->modify('+1 day'));
+                
+                // Create a job entry for each date in the range
+                foreach ($dateRange as $date) {
+                    $jobCopy = clone $job;
+                    $jobCopy->displayDate = $date->format('Y-m-d');
+                    $jobCopy->auditStartDate = $startDate->format('Y-m-d');
+                    $jobCopy->auditEndDate = $endDate->format('Y-m-d');
+                    $expandedJobs->push($jobCopy);
+                }
+            } else {
+                // If no date range, just add the job with its end date
+                $job->displayDate = $job->auditEndDate ? date('Y-m-d', strtotime($job->auditEndDate)) : null;
+                if ($job->displayDate) {
+                    $expandedJobs->push($job);
+                }
+            }
         });
         
         return Inertia::render('Calender', [
-            'jobs' => $jobs,
+            'jobs' => $expandedJobs,
         ]);
     }
     /**

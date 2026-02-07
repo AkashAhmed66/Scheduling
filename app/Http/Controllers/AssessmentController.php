@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateAssessmentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Carbon\Carbon;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Shared\Converter;
@@ -384,102 +385,158 @@ class AssessmentController extends Controller
     public function generateCertificatePdf($id, Request $request)
     {
         try {
+            // Get questions from request - same as generatePdf
+            $questions = $request->input('questions', []);
+            
             // Get assessment and assessment info
             $assessment = \App\Models\Assessment::findOrFail($id);
             $assessmentInfo = \App\Models\AssessmentInfo::where('assessment_id', $id)->first();
-
-            // Get data from request (sent from frontend)
-            $requestAssessmentInfo = $request->input('assessmentInfo');
-            $currentOverallRatings = $request->input('currentOverallRatings', []);
-            $statistics = $request->input('statistics', []);
-
-            // Use request data if available, fallback to database data
-            $finalAssessmentInfo = $requestAssessmentInfo ?: $assessmentInfo;
 
             // Get risk ratings and overall ratings for this assessment type
             $riskRatings = RiskRating::where('type', $assessment->type)->get();
             $overallRatings = OverallRating::where('type', $assessment->type)->orderBy('percentage', 'desc')->get();
 
-            // Process overall ratings data
-            $overallRatingData = [];
-            if (!empty($currentOverallRatings)) {
-                foreach ($currentOverallRatings as $rating) {
-                    $overallRatingData[] = [
-                        'label' => $rating['label'] ?? 'Unknown',
-                        'percentage' => $rating['percentage'] ?? 0,
-                        'color' => $rating['color'] ?? 'red'
-                    ];
+            $overallRatingsDescending = OverallRating::where('type', $assessment->type)->orderBy('percentage', 'desc')->get();
+            
+            // Calculate scores exactly like generatePdf does
+            $category_data = [];
+            $total_achieved_marks = 0;
+            $total_possible_marks = 0;
+
+            foreach ($questions as $question) {
+                if (!is_array($question) || !isset($question['answer'], $question['category'])) {
+                    continue;
                 }
-            } else {
-                // Fallback to database overall ratings
-                foreach ($overallRatings as $rating) {
-                    $overallRatingData[] = [
-                        'label' => $rating->label,
-                        'percentage' => $rating->percentage,
-                        'color' => $rating->color
-                    ];
+
+                $answer = strtolower(trim($question['answer']));
+                $category = $question['category'] ?? 'Uncategorized';
+
+                // Skip questions marked as "Not Applicable"
+                if ($answer === 'not applicable') {
+                    continue;
                 }
+
+                if (!isset($category_data[$category])) {
+                    $category_data[$category] = ['achieved' => 0, 'possible' => 0];
+                }
+
+                // Get the mark from risk_rating table based on the selected risk_rating value
+                $riskRating = $riskRatings->where('label', $question['risk_rating'] ?? '')->first();
+                
+                $questionMark = $riskRating ? floatval($riskRating->mark) : 0;
+
+                if ($answer === 'compliance') {
+                    // For 'Compliance' answers, add the full mark
+                    $category_data[$category]['achieved'] += $questionMark;
+                    $total_achieved_marks += $questionMark;
+                }
+                // For 'Non-Compliance' answers, achieved mark is 0 (no need to add anything)
+                
+                // For possible marks, use the mark of the selected risk rating for this specific question
+                $category_data[$category]['possible'] += $questionMark;
+                $total_possible_marks += $questionMark;
             }
 
-            // Process statistics for bar chart
+            $category_percentages = [];
+            foreach ($category_data as $category => $scores) {
+                $category_percentages[$category] = ($scores['possible'] > 0)
+                    ? round(($scores['achieved'] / $scores['possible']) * 100, 2)
+                    : 0;
+            }
+
+            $overall_percentage = ($total_possible_marks > 0)
+                ? round(($total_achieved_marks / $total_possible_marks) * 100, 2)
+                : 0;
+
+            // Determine overall rating based on percentage and overall_rating table
+            $overallRatingLabel = 'Not Determined';
+            $overallRatingColor = 'red';
+            
+            foreach ($overallRatings as $rating) {
+                if ($overall_percentage <= floatval($rating->percentage)) {
+                    $overallRatingLabel = $rating->label;
+                    $overallRatingColor = $rating->color;
+                } else {
+                    break; // Stop at first condition that fails since they're ordered by percentage
+                }
+            }
+            
+            // Calculate compliance statistics for bar chart
+            $compliance = 0;
+            $nonCompliance = 0;
+            $notApplicable = 0;
+            
+            foreach ($questions as $question) {
+                if (!is_array($question) || !isset($question['answer'])) {
+                    continue;
+                }
+                
+                $answer = strtolower(trim($question['answer']));
+                
+                if ($answer === 'compliance') {
+                    $compliance++;
+                } elseif ($answer === 'non-compliance') {
+                    $nonCompliance++;
+                } elseif ($answer === 'not applicable') {
+                    $notApplicable++;
+                }
+            }
+            
+            $totalQuestions = count($questions);
+
+            // Process overall ratings data for display
+            $overallRatingData = [];
+            foreach ($overallRatings as $rating) {
+                $overallRatingData[] = [
+                    'label' => $rating->label,
+                    'percentage' => $rating->percentage,
+                    'color' => $rating->color
+                ];
+            }
+
+            // Create chart data structure
             $chartData = [
-                'compliance' => $statistics['compliance'] ?? 0,
-                'nonCompliance' => $statistics['nonCompliance'] ?? 0,
-                'notApplicable' => $statistics['notApplicable'] ?? 0,
-                'totalQuestions' => $statistics['totalQuestions'] ?? 0,
-                'overallPercentage' => $statistics['overallPercentage'] ?? 0,
-                'overallRatingLabel' => $statistics['overallRatingLabel'] ?? 'Not Determined',
-                'overallRatingColor' => $statistics['overallRatingColor'] ?? 'red'
+                'compliance' => $compliance,
+                'nonCompliance' => $nonCompliance,
+                'notApplicable' => $notApplicable,
+                'totalQuestions' => $totalQuestions,
+                'overallPercentage' => $overall_percentage,
+                'overallRatingLabel' => $overallRatingLabel,
+                'overallRatingColor' => $overallRatingColor
             ];
 
             // Determine assessment date
             $assessmentDate = 'N/A';
-            if ($finalAssessmentInfo) {
-                if (is_array($finalAssessmentInfo) && isset($finalAssessmentInfo['assessment_date'])) {
-                    $assessmentDate = $finalAssessmentInfo['assessment_date'];
-                } elseif (is_object($finalAssessmentInfo) && $finalAssessmentInfo->assessment_date) {
-                    $assessmentDate = $finalAssessmentInfo->assessment_date;
-                }
-                
-                // Format assessment date
-                if ($assessmentDate !== 'N/A') {
-                    try {
-                        $assessmentDate = \Carbon\Carbon::parse($assessmentDate)->format('F d, Y');
-                    } catch (\Exception $e) {
-                        $assessmentDate = 'N/A';
-                    }
+            if ($assessmentInfo && $assessmentInfo->assessment_date) {
+                try {
+                    $assessmentDate = \Carbon\Carbon::parse($assessmentInfo->assessment_date)->format('F d, Y');
+                } catch (\Exception $e) {
+                    $assessmentDate = 'N/A';
                 }
             }
 
-            // Extract facility information
-            $facilityName = 'N/A';
-            $facilityAddress = 'N/A';
-            $reportHeading = 'Certificate of Assessment';
-
-            if ($finalAssessmentInfo) {
-                if (is_array($finalAssessmentInfo)) {
-                    $facilityName = $finalAssessmentInfo['facility_name'] ?? 'N/A';
-                    $facilityAddress = $finalAssessmentInfo['facility_address'] ?? 'N/A';
-                    $reportHeading = $finalAssessmentInfo['report_heading'] ?? 'Certificate of Assessment';
-                } elseif (is_object($finalAssessmentInfo)) {
-                    $facilityName = $finalAssessmentInfo->facility_name ?? 'N/A';
-                    $facilityAddress = $finalAssessmentInfo->facility_address ?? 'N/A';
-                    $reportHeading = $finalAssessmentInfo->report_heading ?? 'Certificate of Assessment';
-                }
-            }
-
-            // Create data array for certificate template
+            // Create data array for certificate template - matching generatePdf structure
             $data = [
                 'assessment' => $assessment,
-                'assessmentInfo' => $finalAssessmentInfo,
-                'facilityName' => $facilityName,
-                'facilityAddress' => $facilityAddress,
-                'reportHeading' => $reportHeading,
+                'assessmentInfo' => $assessmentInfo,
+                'facilityName' => $assessmentInfo->facility_name ?? 'N/A',
+                'facilityAddress' => $assessmentInfo->facility_address ?? 'N/A',
+                'reportHeading' => $assessmentInfo->report_heading ?? 'Certificate of Assessment',
+                'certificateNo' => $assessmentInfo->report_no ?? 'N/A',
                 'assessmentDate' => $assessmentDate,
                 'overallRatings' => $overallRatingData,
+                'overall_ratings' => $overallRatings, // Pass the collection for consistency
+                'overall_ratings_descending' => $overallRatingsDescending,
                 'chartData' => $chartData,
                 'riskRatings' => $riskRatings,
-                'statistics' => $statistics
+                'scores' => [
+                    'total_achieved' => $total_achieved_marks,
+                    'total_possible' => $total_possible_marks,
+                    'overall_percentage' => $overall_percentage,
+                    'category_percentages' => $category_percentages,
+                    'overall_rating_label' => $overallRatingLabel,
+                    'overall_rating_color' => $overallRatingColor,
+                ],
             ];
 
             // Generate and download the Certificate PDF
@@ -502,10 +559,8 @@ class AssessmentController extends Controller
                 'file' => basename($e->getFile()),
                 'debug' => [
                     'assessment_id' => $id,
-                    'assessment_info_exists' => $assessmentInfo ? true : false,
-                    'request_has_assessment_info' => $request->has('assessmentInfo'),
-                    'request_has_overall_ratings' => $request->has('currentOverallRatings'),
-                    'request_has_statistics' => $request->has('statistics')
+                    'assessment_info_exists' => isset($assessmentInfo) ? true : false,
+                    'questions_count' => count($request->input('questions', [])),
                 ]
             ], 500);
         }

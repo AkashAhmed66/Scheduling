@@ -4,15 +4,15 @@ import React, { useEffect, useState } from "react";
 export default function DateRangeCalendar() {
   const { jobs = [] } = usePage().props; // Default to empty array if jobs is undefined
 
-  // Convert jobs array into tasks format - store full job objects grouped by auditEndDate
+  // Convert jobs array into tasks format - store full job objects grouped by displayDate
   const tasks = jobs.reduce((acc, job) => {
-    const { auditEndDate } = job;
-    if (!auditEndDate) return acc; // Skip jobs without audit end date
+    const { displayDate } = job;
+    if (!displayDate) return acc; // Skip jobs without display date
     
-    if (!acc[auditEndDate]) {
-      acc[auditEndDate] = [];
+    if (!acc[displayDate]) {
+      acc[displayDate] = [];
     }
-    acc[auditEndDate].push(job);
+    acc[displayDate].push(job);
     return acc;
   }, {});
 
@@ -37,7 +37,7 @@ export default function DateRangeCalendar() {
   // Initialize calendar with the first 7 days from today
   useEffect(() => {
     console.log('jobs data:', jobs);
-    console.log('tasks grouped by auditEndDate:', tasks);
+    console.log('tasks grouped by displayDate:', tasks);
     const today = new Date();
     const formattedToday = today.toISOString().split("T")[0];
     setCurrentStartDate(formattedToday);
